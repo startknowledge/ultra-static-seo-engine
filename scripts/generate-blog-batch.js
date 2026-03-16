@@ -58,17 +58,21 @@ Content must be HTML.
 
 const result=await model.generateContent(prompt)
 const response=await result.response
-const raw=response.text()
+const raw = await response.text() // ensure you await it
 
-let blogs=[]
+let blogs = []
 
-try{
-const clean=extractJSON(raw)
-blogs=JSON.parse(clean)
-}catch(e){
-console.log("JSON ERROR")
-console.log(e)
-return
+try {
+  let clean = raw
+    .replace(/```json/g,"")
+    .replace(/```/g,"")
+    .trim()
+
+  blogs = JSON.parse(clean)
+} catch(e) {
+  console.log("JSON ERROR")
+  console.log(e)
+  return
 }
 
 //const template=fs.readFileSync("blog-template.html","utf8")
