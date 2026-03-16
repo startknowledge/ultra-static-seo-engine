@@ -1,0 +1,14 @@
+{
+  "image": [
+    "image converter"
+  ],
+  "base64": [
+    "base64 encoder"
+  ],
+  "binary": [
+    "binary converter"
+  ],
+  "json": [
+    "json formatter"
+  ]
+}
