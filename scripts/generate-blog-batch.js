@@ -1,105 +1,105 @@
-import fs from "fs"
 import { GoogleGenerativeAI } from "@google/generative-ai"
+import fs from "fs"
 
-// multiple API keys
-const keys=[
+// Random API key
+const keys = [
 process.env.GEMINI_API_KEY1,
 process.env.GEMINI_API_KEY2,
 process.env.GEMINI_API_KEY3
 ]
 
-// random key
-const key=keys[Math.floor(Math.random()*keys.length)]
+const key = keys[Math.floor(Math.random() * keys.length)]
 
-const genAI=new GoogleGenerativeAI(key)
+const genAI = new GoogleGenerativeAI(key)
 
-const model=genAI.getGenerativeModel({
+
+// Extract JSON safely
+function extractJSON(text){
+
+const start = text.indexOf("[")
+const end = text.lastIndexOf("]")
+
+if(start === -1 || end === -1){
+throw new Error("JSON not found in AI response")
+}
+
+return text.substring(start,end+1)
+
+}
+
+
+// Generate blogs
+async function generateBlogs(){
+
+const model = genAI.getGenerativeModel({
 model:"gemini-2.5-flash"
 })
 
-// create blog folder
-if(!fs.existsSync("blog")){
-fs.mkdirSync("blog",{recursive:true})
-}
+const prompt = `
+Generate 10 SEO blog posts.
 
-// delay function
-function delay(ms){
-return new Promise(r=>setTimeout(r,ms))
-}
+Return ONLY valid JSON array.
 
-async function generateBlogs(){
-
-const prompt=`
-Generate 20 SEO optimized blog articles about developer tools.
-
-Return ONLY valid JSON like this:
+Format:
 
 [
 {
-"title":"blog title",
-"slug":"blog-url-slug",
-"content":"full HTML article with headings"
+"title":"...",
+"slug":"...",
+"content":"..."
 }
 ]
 
-No markdown
-No explanation
+Rules:
+- content must be HTML
+- no markdown
+- no explanation
 `
 
-const result=await model.generateContent(prompt)
+const result = await model.generateContent(prompt)
 
-let text=result.response.text().trim()
+const response = await result.response
 
-// remove markdown
-text=text.replace(/```json/g,"")
-text=text.replace(/```/g,"")
+const raw = response.text()
 
-const blogs=JSON.parse(text)
+let blogs=[]
 
-blogs.forEach(blog=>{
+try{
 
-const html=`
-<!DOCTYPE html>
+const cleanJSON = extractJSON(raw)
+
+blogs = JSON.parse(cleanJSON)
+
+}catch(e){
+
+console.log("AI JSON ERROR")
+console.log(e)
+
+return
+}
+
+
+// Save blogs
+for(const blog of blogs){
+
+const html = `
 <html>
-
 <head>
-
 <title>${blog.title}</title>
-
-<meta name="description" content="${blog.title}">
-
 </head>
-
 <body>
-
-<h1>${blog.title}</h1>
-
 ${blog.content}
-
 </body>
-
 </html>
 `
 
 fs.writeFileSync(`blog/${blog.slug}.html`,html)
 
-})
+}
 
-console.log("20 blogs generated")
+console.log("Blogs Generated:",blogs.length)
 
 }
 
-async function run(){
 
-for(let i=0;i<2;i++){
-
-await generateBlogs()
-
-// delay to avoid rate limit
-await delay(2000)
-
-}
-
-}
-
-run()
+generateBlogs()
