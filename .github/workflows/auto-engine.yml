@@ -11,7 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_API_KEY1: ${{ secrets.GEMINI_API_KEY1 }}
+      GEMINI_API_KEY2: ${{ secrets.GEMINI_API_KEY2 }}
+      GEMINI_API_KEY3: ${{ secrets.GEMINI_API_KEY3 }}
 
     steps:
 
