@@ -17,6 +17,7 @@ jobs:
       GEMINI_API_KEY1: ${{ secrets.GEMINI_API_KEY1 }}
       GEMINI_API_KEY2: ${{ secrets.GEMINI_API_KEY2 }}
       GEMINI_API_KEY3: ${{ secrets.GEMINI_API_KEY3 }}
+      SITE_URL: ${{ secrets.SITE_URL }}
 
     steps:
 
