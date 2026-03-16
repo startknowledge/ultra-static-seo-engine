@@ -1,6 +1,16 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+///const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+// API keys
+const keys = [
+process.env.GEMINI_API_KEY1,
+process.env.GEMINI_API_KEY2,
+process.env.GEMINI_API_KEY3
+]
+
+const key = keys[Math.floor(Math.random()*keys.length)]
+
+const genAI = new GoogleGenerativeAI(key)
 
 const model = genAI.getGenerativeModel({
   model: "gemini-2.5-flash"
