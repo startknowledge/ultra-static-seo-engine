@@ -1,6 +1,8 @@
 import fs from "fs"
 
-const base = process.env.SITE_URL || "https://example.com"
+//const base = process.env.SITE_URL || "https://example.com"
+// At the top of the script
+const base = process.env.SITE_URL || "https://ultrastaticseoengine.startknowledge.in"
 
 const files = fs.existsSync("blog")
 ? fs.readdirSync("blog")
