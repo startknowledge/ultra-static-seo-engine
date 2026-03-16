@@ -1,46 +1,54 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import fs from "fs"
 
-// Random Gemini API key
+// API keys
 const keys = [
-  process.env.GEMINI_API_KEY1,
-  process.env.GEMINI_API_KEY2,
-  process.env.GEMINI_API_KEY3
+process.env.GEMINI_API_KEY1,
+process.env.GEMINI_API_KEY2,
+process.env.GEMINI_API_KEY3
 ]
 
-const key = keys[Math.floor(Math.random() * keys.length)]
+const key = keys[Math.floor(Math.random()*keys.length)]
 
 const genAI = new GoogleGenerativeAI(key)
 
-// Safe JSON extractor
-function extractJSON(text) {
-
-  const start = text.indexOf("[")
-  const end = text.lastIndexOf("]")
-
-  if (start === -1 || end === -1) {
-    throw new Error("JSON not found in AI response")
-  }
-
-  return text.substring(start, end + 1)
+function slugify(text){
+return text
+.toLowerCase()
+.replace(/[^a-z0-9\s-]/g,"")
+.replace(/\s+/g,"-")
+.replace(/-+/g,"-")
 }
 
-async function generateBlogs() {
+// extract JSON
+function extractJSON(text){
+const start=text.indexOf("[")
+const end=text.lastIndexOf("]")
 
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash"
-  })
+if(start===-1 || end===-1){
+throw new Error("JSON not found")
+}
 
-  const prompt = `
+return text.substring(start,end+1)
+}
+
+async function generateBlogs(){
+
+const model=genAI.getGenerativeModel({
+model:"gemini-2.5-flash"
+})
+
+const prompt=`
 Generate 10 SEO blog posts.
 
 Return ONLY JSON array.
 
 Format:
+
 [
 {
 "title":"...",
-"slug":"...",
+"description":"...",
 "content":"..."
 }
 ]
@@ -48,72 +56,41 @@ Format:
 Content must be HTML.
 `
 
-  const result = await model.generateContent(prompt)
-  const response = await result.response
+const result=await model.generateContent(prompt)
+const response=await result.response
+const raw=response.text()
 
-  const raw = response.text()
+let blogs=[]
 
-  let blogs = []
+try{
+const clean=extractJSON(raw)
+blogs=JSON.parse(clean)
+}catch(e){
+console.log("JSON ERROR")
+console.log(e)
+return
+}
 
-  try {
+const template=fs.readFileSync("./blog-template.html","utf8")
 
-    const cleanJSON = extractJSON(raw)
-    blogs = JSON.parse(cleanJSON)
+for(const blog of blogs){
 
-  } catch (e) {
+const slug=slugify(blog.title)
 
-    console.log("JSON parse error")
-    console.log(e)
-    return
-  }
+let html=template
+.replace(/{{title}}/g,blog.title)
+.replace(/{{description}}/g,blog.description || blog.title)
+.replace(/{{slug}}/g,slug)
+.replace(/{{image}}/g,"/assets/images/blog-default.jpg")
+.replace(/{{date}}/g,new Date().toISOString())
+.replace(/{{content}}/g,blog.content)
 
-  for (const blog of blogs) {
+fs.writeFileSync(`blog/${slug}.html`,html)
 
-    const html = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
+}
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+console.log("Blogs Generated:",blogs.length)
 
-<title>${blog.title}</title>
-
-</head>
-
-<body>
-
-<header>
-<h1>${blog.title}</h1>
-
-<form>
-<input 
-type="text"
-id="search"
-name="search"
-placeholder="Search articles..."
-autocomplete="off"
-autofocus
->
-</form>
-
-</header>
-
-<main>
-
-${blog.content}
-
-</main>
-
-</body>
-</html>
-`
-
-    fs.writeFileSync(`blog/${blog.slug}.html`, html)
-
-  }
-
-  console.log("Blogs Generated:", blogs.length)
 }
 
 generateBlogs()
