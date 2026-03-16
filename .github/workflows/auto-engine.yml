@@ -1,0 +1,79 @@
+name: Ultra Static SEO Engine
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"
+  workflow_dispatch: 
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+    steps:
+
+    - uses: actions/checkout@v3
+
+    - name: Setup Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Generate Topics
+      run: node scripts/generate-topics.js
+
+    - name: Generate Pages
+      run: node scripts/generate-pages.js
+
+    - name: Generate Blog Batch
+      run: node scripts/generate-blog-batch.js
+
+    - name: Generate Images
+      run: node scripts/generate-images.js
+
+    - name: Generate Sitemap
+      run: node scripts/generate-sitemap.js
+
+    - name: Generate RSS
+      run: node scripts/generate-rss.js
+
+    - name: Generate HTML Sitemap
+      run: node scripts/generate-html-sitemap.js
+
+    - name: Generate Categories
+      run: node scripts/generate-categories.js
+
+    - name: Generate Favicon
+      run: node scripts/generate-favicon.js
+
+    - name: Generate Internal Links
+      run: node scripts/internal-links.js
+    
+    - name: Generate Tools
+      run: node scripts/generate-tools.js
+
+    - name: Generate Comparison Pages
+      run: node scripts/generate-comparison-pages.js
+
+    - name: Generate Glossary
+      run: node scripts/generate-glossary.js
+
+    - name: Generate Programmatic Pages
+      run: node scripts/generate-programmatic-pages.js
+
+    - name: Generate Image Sitemap
+      run: node scripts/generate-image-sitemap.js
+
+    - name: Commit Changes
+      run: |
+        git config --global user.name bot
+        git config --global user.email bot@github.com
+        git add .
+        git commit -m "auto seo update"
+        git push origin main
