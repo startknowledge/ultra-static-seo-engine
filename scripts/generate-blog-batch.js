@@ -73,7 +73,7 @@ return
 
 //const template=fs.readFileSync("blog-template.html","utf8")
 const template = fs.readFileSync(
-  new URL("../templates/page-template.html", import.meta.url),
+  new URL("../templates/blog-template.html", import.meta.url),
   "utf8"
 )
 
