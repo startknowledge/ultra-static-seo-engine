@@ -3,87 +3,143 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
-<loc>https://example.com/pages/about.html</loc>
+<loc>https://tools.startknowledge.in/pages/about.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/pages/changelog.html</loc>
+<loc>https://tools.startknowledge.in/pages/changelog.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/pages/contact.html</loc>
+<loc>https://tools.startknowledge.in/pages/contact.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/pages/cookies-policy.html</loc>
+<loc>https://tools.startknowledge.in/pages/cookies-policy.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/pages/disclaimer.html</loc>
+<loc>https://tools.startknowledge.in/pages/disclaimer.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/pages/documentation.html</loc>
+<loc>https://tools.startknowledge.in/pages/documentation.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/pages/faq.html</loc>
+<loc>https://tools.startknowledge.in/pages/faq.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/pages/privacy-policy.html</loc>
+<loc>https://tools.startknowledge.in/pages/privacy-policy.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/pages/support.html</loc>
+<loc>https://tools.startknowledge.in/pages/support.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/pages/terms-and-conditions.html</loc>
+<loc>https://tools.startknowledge.in/pages/terms-and-conditions.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/blog/backlinks-why-quality-trumps-quantity-in-seo.html</loc>
+<loc>https://tools.startknowledge.in/blog/backlinks-why-quality-trumps-quantity-in-seo.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/blog/demystifying-googles-core-web-vitals-a-guide-to-page-experience.html</loc>
+<loc>https://tools.startknowledge.in/blog/demystifying-googles-core-web-vitals-a-guide-to-page-experience.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/blog/essential-technical-seo-checklist-for-a-healthy-website.html</loc>
+<loc>https://tools.startknowledge.in/blog/essential-technical-seo-checklist-for-a-healthy-website.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/blog/how-to-write-seo-friendly-blog-posts-that-rank-and-engage.html</loc>
+<loc>https://tools.startknowledge.in/blog/how-to-write-seo-friendly-blog-posts-that-rank-and-engage.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/blog/local-seo-strategies-boosting-visibility-for-small-businesses.html</loc>
+<loc>https://tools.startknowledge.in/blog/local-seo-strategies-boosting-visibility-for-small-businesses.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/blog/mastering-on-page-seo-beyond-keywords-for-higher-rankings.html</loc>
+<loc>https://tools.startknowledge.in/blog/mastering-on-page-seo-beyond-keywords-for-higher-rankings.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/blog/mobile-first-indexing-what-it-means-for-your-websites-seo.html</loc>
+<loc>https://tools.startknowledge.in/blog/mobile-first-indexing-what-it-means-for-your-websites-seo.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/blog/the-beginners-guide-to-keyword-research-for-seo-success.html</loc>
+<loc>https://tools.startknowledge.in/blog/the-beginners-guide-to-keyword-research-for-seo-success.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/blog/the-future-of-seo-navigating-ai-e-e-a-t-and-shifting-search-landscapes.html</loc>
+<loc>https://tools.startknowledge.in/blog/the-future-of-seo-navigating-ai-e-e-a-t-and-shifting-search-landscapes.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/blog/the-powerful-synergy-of-content-marketing-and-seo.html</loc>
+<loc>https://tools.startknowledge.in/blog/the-powerful-synergy-of-content-marketing-and-seo.html</loc>
 </url>
 
 <url>
-<loc>https://example.com/blog/voice-search-optimization-preparing-your-seo-for-conversational-queries.html</loc>
+<loc>https://tools.startknowledge.in/blog/voice-search-optimization-preparing-your-seo-for-conversational-queries.html</loc>
+</url>
+
+<url>
+<loc>https://tools.startknowledge.in/tools/base64-encoder.html</loc>
+</url>
+
+<url>
+<loc>https://tools.startknowledge.in/tools/binary-converter.html</loc>
+</url>
+
+<url>
+<loc>https://tools.startknowledge.in/tools/image-converter.html</loc>
+</url>
+
+<url>
+<loc>https://tools.startknowledge.in/tools/json-formatter.html</loc>
+</url>
+
+<url>
+<loc>https://tools.startknowledge.in/comparison/base64-encoder-vs-binary-converter.html</loc>
+</url>
+
+<url>
+<loc>https://tools.startknowledge.in/comparison/base64-encoder-vs-json-formatter.html</loc>
+</url>
+
+<url>
+<loc>https://tools.startknowledge.in/comparison/binary-converter-vs-json-formatter.html</loc>
+</url>
+
+<url>
+<loc>https://tools.startknowledge.in/comparison/image-converter-vs-base64-encoder.html</loc>
+</url>
+
+<url>
+<loc>https://tools.startknowledge.in/comparison/image-converter-vs-binary-converter.html</loc>
+</url>
+
+<url>
+<loc>https://tools.startknowledge.in/comparison/image-converter-vs-json-formatter.html</loc>
+</url>
+
+<url>
+<loc>https://tools.startknowledge.in/glossary/base64.html</loc>
+</url>
+
+<url>
+<loc>https://tools.startknowledge.in/glossary/binary.html</loc>
+</url>
+
+<url>
+<loc>https://tools.startknowledge.in/glossary/encoding.html</loc>
+</url>
+
+<url>
+<loc>https://tools.startknowledge.in/glossary/json.html</loc>
 </url>
 
 </urlset>
