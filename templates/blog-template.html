@@ -84,18 +84,36 @@ margin-top:25px;
 
 <body>
 
-
-<div class="blog">
+<header class="blog">
 
 <h1>{{title}}</h1>
+
+<form>
+
+<label for="search">Search</label>
+
+<input
+type="text"
+id="search"
+name="search"
+placeholder="Search articles"
+autocomplete="off"
+>
+
+</form>
+
+</header>
+
+<main class="blog">
 
 <img src="{{image}}" alt="{{title}}" loading="lazy">
 
 {{content}}
 
-</div>
+</main>
 
-<footer>
+<footer class="blog">
+
 
         <h3>Website Pages</h3>
 
