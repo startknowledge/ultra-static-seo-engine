@@ -72,7 +72,10 @@ return
 }
 
 //const template=fs.readFileSync("blog-template.html","utf8")
-const template=fs.readFileSync(new URL("../blog-template.html",import.meta.url),"utf8")
+const template = fs.readFileSync(
+  new URL("../templates/page-template.html", import.meta.url),
+  "utf8"
+)
 
 for(const blog of blogs){
 
