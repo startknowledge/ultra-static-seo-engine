@@ -53,32 +53,7 @@
 }
 </script>
 
-<style>
-
-body{
-font-family:Arial, sans-serif;
-margin:0;
-background:#f5f5f5;
-line-height:1.7;
-}
-
-.blog{
-max-width:900px;
-margin:auto;
-padding:25px;
-background:white;
-}
-
-img{
-max-width:100%;
-height:auto;
-}
-
-h1,h2,h3{
-margin-top:25px;
-}
-
-</style>
+<link rel="stylesheet" href="/css/blog.css">
 
 <body>
 
@@ -104,9 +79,24 @@ autocomplete="on"
 
 <main class="blog">
 
-<img src="{{image}}" alt="{{title}}" loading="lazy">
+<img src="https://source.unsplash.com/800x400/?{{keyword}}" alt="{{title}}" loading="lazy">
 
 {{content}}
+
+<section class="internal-links">
+
+<h3>Related Articles</h3>
+
+<ul>
+
+<li><a href="/blog/{{related1}}">{{related1}}</a></li>
+<li><a href="/blog/{{related2}}">{{related2}}</a></li>
+<li><a href="/blog/{{related3}}">{{related3}}</a></li>
+<li><a href="/blog/{{related4}}">{{related4}}</a></li>
+
+</ul>
+
+</section>
 
 </main>
 
