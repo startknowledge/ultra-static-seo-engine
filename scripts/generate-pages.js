@@ -19,8 +19,8 @@ fs.mkdirSync("pages",{recursive:true})
 }
 
 const template = fs.readFileSync(
-"templates/page-template.html",
-"utf8"
+  new URL("../templates/page-template.html", import.meta.url),
+  "utf8"
 )
 
 pages.forEach(page=>{
