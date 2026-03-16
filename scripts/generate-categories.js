@@ -1,4 +1,4 @@
-const fs=require("fs")
+import fs from "fs"
 
 const tools=JSON.parse(
 fs.readFileSync("data/tool-topics.json")
