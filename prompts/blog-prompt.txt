@@ -1,0 +1,12 @@
+Write SEO optimized blog article
+Keyword: {{keyword}}
+Structure:
+intro
+H2 sections
+internal links
+conclusion
+Rules:
+- never change structure
+- always use templates
+- maintain internal linking
+- use SEO format
