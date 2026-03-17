@@ -78,7 +78,7 @@ autocomplete="on"
 
 <main class="blog">
 
-<img src="https://source.unsplash.com/800x400/?{{keyword}}" alt="{{title}}" loading="lazy">
+<img src="{{image}}" loading="lazy" onerror="this.src='/assets/images/blog-default.jpg'">
 
 {{content}}
 
