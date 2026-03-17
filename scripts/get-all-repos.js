@@ -3,7 +3,7 @@ import fetch from "node-fetch"
 export async function getAllRepos(){
 
   const username = "startknowledge"
-  const token = process.env.GITHUB_TOKEN
+  const token = process.env.DETECT_REPO_TOKEN
 
   const res = await fetch(`https://api.github.com/users/${username}/repos`, {
     headers: {

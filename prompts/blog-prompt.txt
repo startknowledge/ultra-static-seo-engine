@@ -1,16 +1,24 @@
-Generate 10 SEO optimized blog posts.
+Analyze the content and generate : 
+
+1. Niche
+2. 5 trending SEO keywords
+3. 5 SEO optimized blog posts
 
 Return ONLY valid JSON array.
 
 STRICT FORMAT:
 
-[
 {
-"title":"string",
-"description":"string",
-"content":"string (HTML only)"
+"niche":"...",
+"keywords":["..."],
+"blogs":[
+{
+"title":"...",
+"description":"...",
+"content":"<p>HTML content</p>"
 }
 ]
+}
 
 CRITICAL RULES (VERY IMPORTANT):
 
@@ -71,3 +79,5 @@ SEO RULES:
 - Engaging and informative tone
 
 Keyword: {{keyword}}
+
+Content: {{content}}

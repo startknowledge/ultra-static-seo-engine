@@ -18,7 +18,7 @@ jobs:
       GEMINI_API_KEY2: ${{ secrets.GEMINI_API_KEY2 }}
       GEMINI_API_KEY3: ${{ secrets.GEMINI_API_KEY3 }}
       SITE_URL: ${{ secrets.SITE_URL }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      DETECT_REPO_TOKEN: ${{ secrets.DETECT_REPO_TOKEN }}
 
     steps:
 

@@ -3,61 +3,65 @@ import { execSync } from "child_process"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { getAllRepos } from "./get-all-repos.js"
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY1)
+// ================== API KEYS ==================
+const keys = [
+  process.env.GEMINI_API_KEY1,
+  process.env.GEMINI_API_KEY2,
+  process.env.GEMINI_API_KEY3
+].filter(Boolean)
 
+const key = keys[Math.floor(Math.random() * keys.length)]
+const genAI = new GoogleGenerativeAI(key)
+const detectRepoToken = process.env.DETECT_REPO_TOKEN
 // ================== HELPERS ==================
 
 function slugify(text){
-  return text.toLowerCase().replace(/[^a-z0-9\s]/g,"").replace(/\s+/g,"-")
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g,"")
+    .replace(/\s+/g,"-")
 }
 
+// ✅ Safe JSON extractor (object based)
+function extractJSONObject(text){
+  try{
+    const clean = text.replace(/```json|```/g,"").trim()
+    const start = clean.indexOf("{")
+    const end = clean.lastIndexOf("}")
+    return JSON.parse(clean.substring(start, end+1))
+  }catch{
+    return null
+  }
+}
+
+// ✅ Retry system
+async function safeGenerate(model, prompt, retries=5){
+  for(let i=0;i<retries;i++){
+    try{
+      return await model.generateContent(prompt)
+    }catch(err){
+      console.log(`⚠️ Retry ${i+1}`)
+      await new Promise(r=>setTimeout(r, 2000*(i+1)))
+    }
+  }
+  throw new Error("❌ Failed after retries")
+}
+
+// ✅ Read repo content
 function readRepoContent(path){
   let content = ""
 
+  if(!fs.existsSync(path)) return ""
+
   const files = fs.readdirSync(path)
 
-  files.forEach(file => {
+  files.forEach(file=>{
     if(file.endsWith(".html") || file.endsWith(".md")){
       content += fs.readFileSync(`${path}/${file}`, "utf8").slice(0, 2000)
     }
   })
 
   return content.slice(0, 5000)
-}
-
-async function detectNicheKeywords(content){
-
-  const prompt = `
-Analyze website content and return:
-
-{
-"niche":"...",
-"keywords":["10 trending keywords"]
-}
-
-Rules:
-- SEO optimized
-- trending topics
-- based on content
-- return ONLY JSON
-
-Content:
-${content}
-`
-
-  const model = genAI.getGenerativeModel({
-    model:"gemini-2.5-flash"
-  })
-
-  const res = await model.generateContent(prompt)
-  const raw = await res.response.text()
-
-  try{
-    return JSON.parse(raw)
-  }catch{
-    console.log("❌ niche detect fail")
-    return null
-  }
 }
 
 // ================== MAIN ==================
@@ -68,85 +72,95 @@ const repos = await getAllRepos()
 
 for(const repo of repos){
 
-console.log("🚀 Processing:", repo)
+  // ❌ Skip engine repo
+  if(repo.includes("ultra-static-seo-engine")) continue
 
-// clone
-execSync(`git clone https://${process.env.GITHUB_TOKEN}@github.com/${repo}.git temp-site`)
+  console.log("🚀 Processing:", repo)
 
-// read content
-const content = readRepoContent("./temp-site")
+  const tempDir = `temp-${repo.replace("/", "-")}`
 
-if(!content){
-  console.log("❌ No content, skipping")
-  execSync("rm -rf temp-site")
-  continue
-}
+  try{
 
-// detect niche + keywords
-const data = await detectNicheKeywords(content)
+  // ================== CLONE ==================
+  execSync(
+    `git clone https://${detectRepoToken}@github.com/${repo}.git ${tempDir}`,
+    { stdio:"inherit" }
+  )
 
-if(!data){
-  execSync("rm -rf temp-site")
-  continue
-}
+  // ================== READ CONTENT ==================
+  const content = readRepoContent(tempDir)
 
-console.log("📊 Niche:", data.niche)
+  if(!content || content.length < 500){
+    console.log("⚠️ Low content, skipping")
+    execSync(`rm -rf ${tempDir}`)
+    continue
+  }
 
-// read prompt
-const promptTemplate = fs.readFileSync("./prompts/blog-prompt.txt","utf8")
+  // ================== LOAD FILES ==================
+  const promptTemplate = fs.readFileSync("./prompts/blog-prompt.txt","utf8")
+  const template = fs.readFileSync("./templates/blog-template.html","utf8")
 
-for(const keyword of data.keywords){
+  // ================== SINGLE AI CALL ==================
+  const prompt = promptTemplate.replace(/{{content}}/g, content)
 
-const prompt = promptTemplate
-.replace(/{{keyword}}/g, keyword)
-.replace(/{{niche}}/g, data.niche)
+  const model = genAI.getGenerativeModel({
+    model:"gemini-2.5-flash"
+  })
 
-// generate blogs
-const model = genAI.getGenerativeModel({
-model:"gemini-2.5-flash"
-})
+  const result = await safeGenerate(model, prompt)
+  const raw = await result.response.text()
 
-const result = await model.generateContent(prompt)
-const raw = await result.response.text()
+  const data = extractJSONObject(raw)
 
-let blogs
-try{
-blogs = JSON.parse(raw)
-}catch{
-console.log("❌ blog JSON fail")
-continue
-}
+  if(!data || !data.blogs){
+    console.log("❌ JSON fail or no blogs")
+    execSync(`rm -rf ${tempDir}`)
+    continue
+  }
 
-// ensure blog folder
-if(!fs.existsSync("./temp-site/blog")){
-  fs.mkdirSync("./temp-site/blog")
-}
+  console.log("📊 Niche:", data.niche)
 
-// save blogs
-for(const blog of blogs){
+  // ================== BLOG FOLDER ==================
+  if(!fs.existsSync(`${tempDir}/blog`)){
+    fs.mkdirSync(`${tempDir}/blog`)
+  }
 
-const slug = slugify(blog.title)
+  // ================== SAVE BLOGS ==================
+  for(const blog of data.blogs){
 
-fs.writeFileSync(
-`temp-site/blog/${slug}.html`,
-blog.content
-)
+    if(!blog.title || !blog.content) continue
 
-console.log("✅", slug)
-}
+    const slug = slugify(blog.title)
 
-}
+    // ❌ Skip duplicate
+    if(fs.existsSync(`${tempDir}/blog/${slug}.html`)){
+      console.log("⏩ Skip duplicate:", slug)
+      continue
+    }
 
-// push back
-execSync(`
-cd temp-site
-git add .
-git commit -m "auto AI blogs"
-git push
+    const html = template
+      .replace(/{{title}}/g, blog.title)
+      .replace(/{{description}}/g, blog.description || blog.title)
+      .replace(/{{content}}/g, blog.content)
+
+    fs.writeFileSync(`${tempDir}/blog/${slug}.html`, html)
+
+    console.log("✅", slug)
+  }
+
+  // ================== GIT PUSH ==================
+  execSync(`
+cd ${tempDir}
+git remote set-url origin https://${githubToken}@github.com/${repo}.git
+git push origin main || git push origin master
 `)
 
-// cleanup
-execSync("rm -rf temp-site")
+  }catch(err){
+    console.log("❌ ERROR:", err.message)
+  }
+
+  // ================== CLEANUP ==================
+  execSync(`rm -rf ${tempDir}`)
 
 }
 
