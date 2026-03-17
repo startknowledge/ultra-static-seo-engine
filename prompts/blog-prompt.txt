@@ -1,4 +1,19 @@
-Write SEO optimized blog article
+Generate 5 SEO optimized blog posts.
+
+Return ONLY JSON array.
+
+[
+{
+"title":"...",
+"description":"...",
+"content":"<p>HTML content</p>"
+}
+]
+
+IMPORTANT:
+- No markdown
+- No explanation
+- Only JSON
 Keyword: {{keyword}}
 Structure:
 intro
@@ -8,5 +23,14 @@ conclusion
 Rules:
 - never change structure
 - always use templates
-- maintain internal linking
 - use SEO format
+- Minimum 1200 words
+- Use headings H2 H3
+- Include bullet points
+- Include/ maintain add internal links section naturally
+- Human readable language
+- Global audience
+- FAQ
+- Conclusion
+- Write in simple English
+
