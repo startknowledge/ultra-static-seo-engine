@@ -13,11 +13,10 @@ const key = keys[Math.floor(Math.random() * keys.length)]
 
 const genAI = new GoogleGenerativeAI(key)
 
-// ================== PATHS ==================
-const ROOT = new URL("../", import.meta.url)
-const BLOG_DIR = new URL("../blog/", import.meta.url)
-const TEMPLATE_PATH = new URL("../templates/blog-template.html", import.meta.url)
-const PROMPT_PATH = new URL("../prompts/blog-prompt.txt", import.meta.url)
+// ================== PATHS (FIXED) ==================
+const BLOG_DIR = path.resolve("blog")
+const TEMPLATE_PATH = path.resolve("templates/blog-template.html")
+const PROMPT_PATH = path.resolve("prompts/blog-prompt.txt")
 
 // ================== HELPERS ==================
 
@@ -29,7 +28,26 @@ function slugify(text) {
     .replace(/-+/g, "-")
 }
 
-// ✅ BULLETPROOF JSON EXTRACTOR
+// ✅ SAFE GENERATE (NEW)
+async function safeGenerate(model, prompt, retries = 5) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const result = await model.generateContent(prompt)
+      return result
+    } catch (err) {
+      console.log(`⚠️ Retry ${i + 1}`)
+
+      if (err.status === 503) {
+        await new Promise(r => setTimeout(r, 2000 * (i + 1)))
+      } else {
+        throw err
+      }
+    }
+  }
+  throw new Error("❌ Failed after retries")
+}
+
+// ✅ JSON EXTRACTOR
 function extractJSON(text) {
   try {
     let clean = text
@@ -45,18 +63,18 @@ function extractJSON(text) {
     }
 
     return JSON.parse(clean.substring(start, end + 1))
-  } catch (e) {
+  } catch {
     console.log("❌ JSON PARSE FAILED")
     return null
   }
 }
 
-// ✅ IMAGE FALLBACK
+// ✅ IMAGE
 function getImage(keyword) {
   return `https://source.unsplash.com/800x400/?${encodeURIComponent(keyword)}`
 }
 
-// ✅ SIMPLE INTERNAL LINKING
+// ✅ INTERNAL LINKS
 function insertInternalLinks(content, existingSlugs) {
   if (!existingSlugs.length) return content
 
@@ -80,31 +98,40 @@ async function generateBlogs() {
 
   const prompt = fs.readFileSync(PROMPT_PATH, "utf8")
 
-  // 📌 Existing blogs for linking
+  // existing blogs
   const existingFiles = fs.existsSync(BLOG_DIR)
     ? fs.readdirSync(BLOG_DIR).map(f => f.replace(".html", ""))
     : []
 
   let blogs = null
 
-  // ✅ RETRY SYSTEM (MAX 3)
+  // ✅ RETRY SYSTEM WITH SAFE GENERATE
   for (let attempt = 1; attempt <= 3; attempt++) {
     console.log(`⚡ Attempt ${attempt}`)
 
-    const result = await model.generateContent(prompt)
-    const raw = await result.response.text()
+    try {
+      const result = await safeGenerate(model, prompt)
+      const raw = await result.response.text()
 
-    blogs = extractJSON(raw)
+      blogs = extractJSON(raw)
 
-    if (blogs) break
+      if (blogs) break
+
+    } catch (err) {
+      console.log("❌ API FAIL", err.message)
+    }
   }
 
   if (!blogs) {
-    console.log("🚨 FINAL FAIL: JSON not parsed")
+    console.log("🚨 FINAL FAIL")
     return
   }
 
   const template = fs.readFileSync(TEMPLATE_PATH, "utf8")
+
+  if (!fs.existsSync(BLOG_DIR)) {
+    fs.mkdirSync(BLOG_DIR, { recursive: true })
+  }
 
   for (const blog of blogs) {
 
@@ -112,10 +139,7 @@ async function generateBlogs() {
 
     const slug = slugify(blog.title)
 
-    // ✅ INTERNAL LINKING
     let content = insertInternalLinks(blog.content, existingFiles)
-
-    // ✅ IMAGE FIX
     const image = blog.image || getImage(blog.title)
 
     let html = template
@@ -126,20 +150,15 @@ async function generateBlogs() {
       .replace(/{{date}}/g, new Date().toISOString())
       .replace(/{{content}}/g, content)
 
-    // ✅ ENSURE FOLDER EXISTS
-    if (!fs.existsSync(BLOG_DIR)) {
-      fs.mkdirSync(BLOG_DIR, { recursive: true })
-    }
-
     fs.writeFileSync(
-      new URL(`../blog/${slug}.html`, import.meta.url),
+      path.join(BLOG_DIR, `${slug}.html`),
       html
     )
 
     console.log("✅ Generated:", slug)
   }
 
-  console.log("🚀 Total Blogs Generated:", blogs.length)
+  console.log("🚀 Total Blogs:", blogs.length)
 }
 
 generateBlogs()
