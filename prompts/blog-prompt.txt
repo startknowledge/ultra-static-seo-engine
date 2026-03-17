@@ -1,36 +1,73 @@
-Generate 5 SEO optimized blog posts.
+Generate 10 SEO optimized blog posts.
 
-Return ONLY JSON array.
+Return ONLY valid JSON array.
+
+STRICT FORMAT:
 
 [
 {
-"title":"...",
-"description":"...",
-"content":"<p>HTML content</p>"
+"title":"string",
+"description":"string",
+"content":"string (HTML only)"
 }
 ]
 
-IMPORTANT:
-- No markdown
-- No explanation
-- Only JSON
-Keyword: {{keyword}}
-Structure:
-intro
-H2 sections
-internal links
-conclusion
-Rules:
-- never change structure
-- always use templates
-- use SEO format
+CRITICAL RULES (VERY IMPORTANT):
+
+- Output MUST be valid JSON
+- Do NOT use markdown (no ```json)
+- Do NOT add explanation
+- Do NOT add text outside JSON
+- Use double quotes only (")
+- Escape quotes inside content properly
+- Ensure JSON is parseable
+
+CONTENT RULES:
+
 - Minimum 1200 words
-- Use headings H2 H3
-- Include bullet points
-- Include/ maintain add internal links section naturally
+- Use clean HTML tags only
+- Use:
+  <p>, <h2>, <h3>, <ul>, <li>, <strong>
+
+STRUCTURE (FOLLOW EXACTLY):
+
+<p>Intro paragraph</p>
+
+<h2>Main Section 1</h2>
+<p>Content</p>
+
+<h2>Main Section 2</h2>
+<p>Content</p>
+
+<h3>Subsection</h3>
+<ul>
+<li>Point</li>
+<li>Point</li>
+</ul>
+
+<h2>FAQs</h2>
+<ul>
+<li><strong>Question?</strong> Answer</li>
+<li><strong>Question?</strong> Answer</li>
+</ul>
+
+<h2>Conclusion</h2>
+<p>Final summary</p>
+
+INTERNAL LINKING (MANDATORY):
+
+- Add 2–3 internal links inside content
+- Format:
+  <a href="/blog/sample-post.html">Relevant Anchor Text</a>
+- Links must appear naturally inside paragraphs
+- Do NOT put all links in one place
+
+SEO RULES:
+
 - Human readable language
 - Global audience
-- FAQ
-- Conclusion
-- Write in simple English
+- Use keywords naturally
+- No keyword stuffing
+- Engaging and informative tone
 
+Keyword: {{keyword}}
