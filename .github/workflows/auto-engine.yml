@@ -18,6 +18,7 @@ jobs:
       GEMINI_API_KEY2: ${{ secrets.GEMINI_API_KEY2 }}
       GEMINI_API_KEY3: ${{ secrets.GEMINI_API_KEY3 }}
       SITE_URL: ${{ secrets.SITE_URL }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
 
@@ -30,6 +31,9 @@ jobs:
 
     - name: Install Dependencies
       run: npm install
+
+    - name: Auto Engine
+      run : node scripts/auto-engine.js
 
     - name: Generate Topics
       run: node scripts/generate-topics.js
@@ -83,3 +87,4 @@ jobs:
         git add .
         git commit -m "auto seo update"
         git push origin main
+        
