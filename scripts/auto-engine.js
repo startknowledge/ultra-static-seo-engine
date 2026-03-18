@@ -24,12 +24,24 @@ function slugify(text){
 
 // ✅ Safe JSON extractor (object based)
 function extractJSONObject(text){
+  let clean = text
+    .replace(/```json/g, "")
+    .replace(/```/g, "")
+    .trim()
+
   try{
-    const clean = text.replace(/```json|```/g,"").trim()
     const start = clean.indexOf("{")
     const end = clean.lastIndexOf("}")
-    return JSON.parse(clean.substring(start, end+1))
-  }catch{
+
+    if(start === -1 || end === -1){
+      console.log("❌ JSON NOT FOUND")
+      return null
+    }
+
+    return JSON.parse(clean.substring(start, end + 1))
+
+  }catch(e){
+    console.log("❌ JSON PARSE FAILED")
     return null
   }
 }
@@ -117,8 +129,15 @@ for(const repo of repos){
     execSync(`rm -rf ${tempDir}`)
     continue
   }
+//fallback niche code
+ let niche = data.niche
 
-  console.log("📊 Niche:", data.niche)
+if(!niche || niche.length < 5){
+  niche = repo.split("/")[1].replace(/-/g, " ")
+  console.log("⚠️ Fallback Niche:", niche)
+}
+
+console.log("📊 Niche:", niche)
 
   // ================== BLOG FOLDER ==================
   if(!fs.existsSync(`${tempDir}/blog`)){
