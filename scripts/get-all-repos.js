@@ -1,11 +1,11 @@
 export async function getAllRepos(){
 
   const username = "startknowledge"
-  const token = process.env.DETECT_REPO_TOKEN
+  const githubToken = process.env.DETECT_REPO_TOKEN
 
   const res = await fetch(`https://api.github.com/users/${username}/repos`, {
     headers: {
-      Authorization: `token ${token}`
+      Authorization: `token ${githubToken}`
     }
   })
 
