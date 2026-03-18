@@ -12,7 +12,7 @@ const keys = [
 
 const key = keys[Math.floor(Math.random() * keys.length)]
 const genAI = new GoogleGenerativeAI(key)
-const detectRepoToken = process.env.DETECT_REPO_TOKEN
+const githubToken = process.env.DETECT_REPO_TOKEN
 // ================== HELPERS ==================
 
 function slugify(text){
@@ -83,7 +83,7 @@ for(const repo of repos){
 
   // ================== CLONE ==================
   execSync(
-    `git clone https://${detectRepoToken}@github.com/${repo}.git ${tempDir}`,
+    `git clone https://${githubToken}@github.com/${repo}.git ${tempDir}`,
     { stdio:"inherit" }
   )
 
