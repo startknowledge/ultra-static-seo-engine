@@ -1,23 +1,84 @@
-import { generateBlogs } from "./generator-blog.js"
-import { generatePages } from "./generator-pages.js"
-import { generateLinks } from "./link-engine.js"
-import { generateSEOFiles } from "./seo-engine.js"
-import { generateSitemap } from "./generate-sitemap.js"
-import { generateRSS } from "./generate-rss.js"
+import fs from "fs"
+import { execSync } from "child_process"
 
-async function run(){
+import { processRepo } from "./repo-processor.js"
+import { getAllRepos } from "./get-all-repos.js"
 
-console.log("🚀 PHASE 1 + 2 START")
+const TOKEN = process.env.DETECT_REPO_TOKEN
 
-await generateBlogs()
-await generatePages()
-generateLinks()
-generateSEOFiles()
-generateSitemap()
-generateRSS()
+// ================= CONFIG =================
+const CONFIG = {
+  MAX_REPOS: 50,
+  PARALLEL: false,
+  RETRY: 2
+}
 
-console.log("✅ SYSTEM COMPLETE")
+// ================= LOGGER =================
+function log(type, msg){
+  console.log(`[${type}] ${msg}`)
+}
+
+// ================= SAFE EXEC =================
+async function safeProcess(repo){
+
+  for(let i=0;i<CONFIG.RETRY;i++){
+    try{
+      await processRepo(repo)
+      return true
+    }catch(err){
+      log("RETRY", `${repo} attempt ${i+1}`)
+    }
+  }
+
+  log("FAIL", repo)
+  return false
+}
+
+// ================= REPO FILTER =================
+function filterRepos(repos){
+
+  return repos
+    .filter(r => !r.includes("ultra-static-seo-engine")) // self skip
+    .slice(0, CONFIG.MAX_REPOS)
 
 }
 
+// ================= MAIN =================
+async function run(){
+
+  log("START","Ultra Core Engine Running...")
+
+  if(!TOKEN){
+    throw new Error("❌ Missing GitHub Token")
+  }
+
+  const repos = await getAllRepos()
+
+  const filtered = filterRepos(repos)
+
+  log("INFO",`Total repos: ${filtered.length}`)
+
+  let success = 0
+  let failed = 0
+
+  for(const repo of filtered){
+
+    log("PROCESS", repo)
+
+    const ok = await safeProcess(repo)
+
+    if(ok){
+      success++
+    }else{
+      failed++
+    }
+
+  }
+
+  log("DONE",`Success: ${success}`)
+  log("DONE",`Failed: ${failed}`)
+
+}
+
+// ================= RUN =================
 run()
