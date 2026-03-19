@@ -1,0 +1,119 @@
+/* ================= ROOT ================= */
+:root{
+  --bg:#0f172a;
+  --card:#111827;
+  --text:#e5e7eb;
+  --accent:#3b82f6;
+  --border:#1f2937;
+}
+
+/* ================= RESET ================= */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+/* ================= BODY ================= */
+body{
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding:20px;
+}
+
+/* ================= CONTAINER ================= */
+.container{
+  max-width:1200px;
+  margin:auto;
+}
+
+/* ================= HEADER ================= */
+.header{
+  text-align:center;
+  margin-bottom:20px;
+}
+
+.header h1{
+  font-size:2rem;
+}
+
+/* ================= GRID ================= */
+.sitemap-grid{
+  list-style:none;
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
+  gap:12px;
+}
+
+/* ================= CARD ================= */
+.sitemap-item{
+  background: var(--card);
+  border:1px solid var(--border);
+  padding:12px;
+  border-radius:10px;
+  transition:0.2s;
+}
+
+/* ================= LINK ================= */
+.sitemap-item a{
+  text-decoration:none;
+  color: var(--accent);
+  display:block;
+  font-size:0.95rem;
+  word-break:break-word;
+}
+
+/* ================= HOVER ================= */
+.sitemap-item:hover{
+  transform:translateY(-3px);
+  border-color: var(--accent);
+}
+
+/* ================= FOOTER ================= */
+.footer{
+  margin-top:30px;
+  text-align:center;
+  font-size:0.8rem;
+  opacity:0.7;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width:600px){
+  body{padding:10px}
+  .header h1{font-size:1.5rem}
+}
+
+/* ================= LIGHT MODE ================= */
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#f9fafb;
+    --card:#ffffff;
+    --text:#111827;
+    --border:#e5e7eb;
+  }
+}
+/* NAVBAR */
+.navbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:15px;
+  background:var(--card);
+  border-bottom:1px solid var(--border);
+}
+
+.navbar a{
+  margin-left:15px;
+  color:var(--text);
+}
+
+/* MAIN */
+.main{
+  padding:20px;
+}
+
+/* LOGO */
+.logo{
+  font-size:1.2rem;
+}

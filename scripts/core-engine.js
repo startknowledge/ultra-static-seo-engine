@@ -38,13 +38,13 @@ async function safeProcess(repo){
 function filterRepos(repos){
 
   return repos
-    .filter(r => !r.includes("ultra-static-seo-engine")) // self skip
+    .filter(r => !r.includes("ultra-static-seo-engine"))
     .slice(0, CONFIG.MAX_REPOS)
 
 }
 
-// ================= MAIN =================
-async function run(){
+// ================= MAIN ENGINE =================
+export async function runCore(){
 
   log("START","Ultra Core Engine Running...")
 
@@ -80,5 +80,7 @@ async function run(){
 
 }
 
-// ================= RUN =================
-run()
+// ================= DIRECT RUN FIX =================
+if (process.argv[1].includes("core-engine.js")) {
+  runCore()
+}

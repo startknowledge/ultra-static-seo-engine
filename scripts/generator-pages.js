@@ -96,3 +96,7 @@ console.log("✅ Page:",page)
 }
 
 }
+
+if (process.argv[1].includes("generator-pages.js")) {
+ generatePages()
+}

@@ -1,7 +1,7 @@
 import { getAllRepos } from "./get-all-repos.js"
 import { processRepo } from "./repo-processor.js"
 
-async function run(){
+export async function runMultiRepo(){
 
 console.log("🚀 PHASE 3 START")
 
@@ -22,4 +22,6 @@ console.log("✅ ALL REPOS PROCESSED")
 
 }
 
-run()
+if (process.argv[1].includes("multi-repo-engine.js")) {
+ runMultiRepo()
+}

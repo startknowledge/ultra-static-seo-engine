@@ -1,5 +1,7 @@
 import fs from "fs"
 
+export function generateFavicon(){
+
 const svg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">
 <defs>
@@ -21,4 +23,11 @@ SEO
 fs.mkdirSync("assets/images",{recursive:true})
 fs.writeFileSync("assets/images/favicon.svg", svg)
 
-console.log("✅ Modern favicon generated")
+console.log("✅ Favicon generated")
+
+}
+
+// direct run
+if (process.argv[1].includes("generate-favicon.js")) {
+ generateFavicon()
+}

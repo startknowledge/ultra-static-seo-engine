@@ -3,8 +3,9 @@ Analyze the content and generate :
 1. Niche
 2. 5 trending SEO keywords
 3. 5 SEO optimized blog posts
+4. 5 high-quality SEO blog posts
 
-Return ONLY valid JSON array.
+Return ONLY valid JSON.
 
 STRICT FORMAT:
 
@@ -32,10 +33,13 @@ CRITICAL RULES (VERY IMPORTANT):
 
 CONTENT RULES:
 
-- Minimum 1200 words
+- Minimum 2200-2800 words per blog
 - Use clean HTML tags only
 - Use:
-  <p>, <h2>, <h3>, <ul>, <li>, <strong>
+  <p>, <h2>, <h3>, <ul>, <li>, <strong>, <a>
+- Write like a human expert (NOT AI tone)
+- Global audience
+- No keyword stuffing
 
 STRUCTURE (FOLLOW EXACTLY):
 

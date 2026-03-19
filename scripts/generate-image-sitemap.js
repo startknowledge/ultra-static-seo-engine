@@ -1,5 +1,7 @@
 import fs from "fs"
 
+export function generateImageSitemap(){
+
 const base = process.env.SITE_URL
 
 let xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -29,4 +31,11 @@ xml += "</urlset>"
 
 fs.writeFileSync("image-sitemap.xml",xml)
 
-console.log("✅ Image sitemap optimized")
+console.log("✅ Image sitemap generated")
+
+}
+
+// direct run
+if (process.argv[1].includes("generate-image-sitemap.js")) {
+ generateImageSitemap()
+}

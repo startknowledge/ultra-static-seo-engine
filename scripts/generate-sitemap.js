@@ -1,5 +1,7 @@
 import fs from "fs"
 
+export function generateSitemap(){
+
 const base = process.env.SITE_URL
 
 const folders = ["","pages","blog","tools","comparison","glossary"]
@@ -42,4 +44,11 @@ ${urls}
 
 fs.writeFileSync("sitemap.xml",xml)
 
-console.log("✅ Sitemap advanced")
+console.log("✅ Sitemap generated")
+
+}
+
+// direct run
+if (process.argv[1].includes("generate-sitemap.js")) {
+ generateSitemap()
+}

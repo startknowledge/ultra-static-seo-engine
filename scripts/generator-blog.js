@@ -97,3 +97,6 @@ console.log("✅ Blog:",slug)
 }
 
 }
+if (process.argv[1].includes("generator-blog.js")) {
+ generateBlogs()
+}
