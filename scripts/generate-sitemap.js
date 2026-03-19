@@ -1,30 +1,32 @@
 import fs from "fs"
 
-//const base = process.env.SITE_URL || "https://example.com"
-// At the top of the script
-const base = process.env.SITE_URL || "https://ultrastaticseoengine.startknowledge.in"
+const base = process.env.SITE_URL
 
-const folders=[
-"pages",
-"blog",
-"tools",
-"comparison",
-"glossary"
-]
+const folders = ["","pages","blog","tools","comparison","glossary"]
 
-let urls=[]
+let urls = ""
 
 folders.forEach(folder=>{
 
-if(!fs.existsSync(folder)) return
+if(folder && !fs.existsSync(folder)) return
 
-const files=fs.readdirSync(folder)
+const files = folder
+? fs.readdirSync(folder)
+: ["index.html"]
 
 files.forEach(file=>{
 
 if(file.endsWith(".html")){
 
-urls.push(`${base}/${folder}/${file}`)
+const path = folder ? `${folder}/${file}` : file
+
+urls += `
+<url>
+<loc>${base}/${path}</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+`
 
 }
 
@@ -32,25 +34,12 @@ urls.push(`${base}/${folder}/${file}`)
 
 })
 
-let xml=`<?xml version="1.0" encoding="UTF-8"?>
-
+const xml = `<?xml version="1.0"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-`
-
-urls.forEach(url=>{
-
-xml+=`
-<url>
-<loc>${url}</loc>
-</url>
-`
-
-})
-
-xml+=`
+${urls}
 </urlset>
 `
 
 fs.writeFileSync("sitemap.xml",xml)
 
-console.log("Sitemap generated")
+console.log("✅ Sitemap advanced")

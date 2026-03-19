@@ -1,38 +1,34 @@
 import fs from "fs"
-import path from "path"
+import { render } from "./template-engine.js"
 
 const pages = [
-"about",
-"privacy-policy",
-"terms-and-conditions",
-"contact",
-"disclaimer",
-"cookies-policy",
-"support",
-"documentation",
-"changelog"
+"about","privacy-policy","terms-and-conditions",
+"contact","disclaimer","cookies-policy",
+"support","documentation","changelog","faq"
 ]
 
-// ensure pages folder exists
-if(!fs.existsSync("pages")){
 fs.mkdirSync("pages",{recursive:true})
-}
 
-const template = fs.readFileSync(
-  new URL("../templates/page-template.html", import.meta.url),
-  "utf8"
-)
+pages.forEach(p=>{
 
-pages.forEach(page=>{
+const title = p.replace(/-/g," ")
 
-const title = page.replace(/-/g," ")
+const content = `
+<h2>${title}</h2>
+<p>This page explains ${title} of the website.</p>
+<p>We ensure transparency, user privacy, and compliance.</p>
+`
 
-let html = template
-.replace(/{{title}}/g,title)
-.replace(/{{description}}/g,`${title} page of the website`)
+const html = render("templates/page-template.html",{
+title,
+description: `${title} page`,
+content,
+slug: `pages/${p}`,
+keyword: title
+})
 
-fs.writeFileSync(`pages/${page}.html`,html)
+fs.writeFileSync(`pages/${p}.html`,html)
 
 })
 
-console.log("Pages generated")
+console.log("✅ SEO pages generated")

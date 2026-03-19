@@ -1,41 +1,36 @@
 import fs from "fs"
 
-//const base = process.env.SITE_URL || "https://example.com"
-// At the top of the script
-const base = process.env.SITE_URL || "https://ultrastaticseoengine.startknowledge.in"
+const base = process.env.SITE_URL
 
-const files = fs.existsSync("blog")
-? fs.readdirSync("blog")
-: []
-
-let rss=`<?xml version="1.0" encoding="UTF-8"?>
-
+let rss = `<?xml version="1.0"?>
 <rss version="2.0">
 <channel>
 
-<title>Ultra Static SEO Engine Blog</title>
+<title>SEO Engine Blog</title>
 <link>${base}</link>
-<description>Latest AI generated blog posts</description>
+<description>Latest AI blogs</description>
 `
 
-files.forEach(file=>{
+if(fs.existsSync("blog")){
 
-const slug=file.replace(".html","")
+fs.readdirSync("blog").forEach(file=>{
 
-rss+=`
+const slug = file.replace(".html","")
+
+rss += `
 <item>
 <title>${slug}</title>
 <link>${base}/blog/${slug}.html</link>
+<pubDate>${new Date().toUTCString()}</pubDate>
 </item>
 `
 
 })
 
-rss+=`
-</channel>
-</rss>
-`
+}
+
+rss += "</channel></rss>"
 
 fs.writeFileSync("rss.xml",rss)
 
-console.log("RSS generated")
+console.log("✅ RSS improved")

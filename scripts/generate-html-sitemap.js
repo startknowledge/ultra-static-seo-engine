@@ -1,68 +1,43 @@
 import fs from "fs"
 
-const pagesDir = "pages"
-const blogDir = "blog"
+const folders = ["pages","blog","tools","comparison","glossary"]
 
-let html = `
+let links = ""
+
+folders.forEach(folder=>{
+if(!fs.existsSync(folder)) return
+
+fs.readdirSync(folder).forEach(file=>{
+if(file.endsWith(".html")){
+links += `<li><a href="/${folder}/${file}">${file.replace(".html","")}</a></li>`
+}
+})
+})
+
+const html = `
 <!DOCTYPE html>
 <html>
 <head>
 <title>HTML Sitemap</title>
-<meta charset="UTF-8">
+<meta name="robots" content="index, follow">
+
+<style>
+body{font-family:sans-serif;background:#f5f5f5;padding:20px}
+ul{columns:3}
+a{text-decoration:none;color:#2563eb}
+</style>
+
 </head>
 
 <body>
 
-<h1>HTML Sitemap</h1>
-
-<h2>Pages</h2>
-<ul>
-`
-
-// pages
-if (fs.existsSync(pagesDir)) {
-
-const pages = fs.readdirSync(pagesDir)
-
-pages.forEach(page => {
-
-if(page.endsWith(".html")){
-html += `<li><a href="/pages/${page}">${page.replace(".html","")}</a></li>`
-}
-
-})
-
-}
-
-html += `
-</ul>
-
-<h2>Blog</h2>
-<ul>
-`
-
-// blog
-if (fs.existsSync(blogDir)) {
-
-const blogs = fs.readdirSync(blogDir)
-
-blogs.forEach(blog => {
-
-if(blog.endsWith(".html")){
-html += `<li><a href="/blog/${blog}">${blog.replace(".html","")}</a></li>`
-}
-
-})
-
-}
-
-html += `
-</ul>
+<h1>Website Sitemap</h1>
+<ul>${links}</ul>
 
 </body>
 </html>
 `
 
-fs.writeFileSync("sitemap.html", html)
+fs.writeFileSync("sitemap.html",html)
 
-console.log("HTML sitemap generated")
+console.log("✅ HTML sitemap enhanced")

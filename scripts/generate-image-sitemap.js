@@ -1,41 +1,32 @@
 import fs from "fs"
 
-//const base = process.env.SITE_URL || "https://example.com"
-// At the top of the script
-const base = process.env.SITE_URL || "https://ultrastaticseoengine.startknowledge.in"
+const base = process.env.SITE_URL
 
-const images = fs.readdirSync("assets/images")
-
-let xml=`<?xml version="1.0" encoding="UTF-8"?>
-
-<urlset
-xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-
+let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 `
 
-images.forEach(img=>{
+if(fs.existsSync("blog")){
 
-if(img.endsWith(".svg")){
+fs.readdirSync("blog").forEach(file=>{
 
-xml+=`
+const slug = file.replace(".html","")
+
+xml += `
 <url>
-
-<loc>${base}</loc>
-
+<loc>${base}/blog/${slug}.html</loc>
 <image:image>
-<image:loc>${base}/assets/images/${img}</image:loc>
+<image:loc>${base}/assets/images/${slug}.svg</image:loc>
 </image:image>
-
 </url>
 `
 
-}
-
 })
 
-xml+=`</urlset>`
+}
+
+xml += "</urlset>"
 
 fs.writeFileSync("image-sitemap.xml",xml)
 
-console.log("Image sitemap generated")
+console.log("✅ Image sitemap optimized")
