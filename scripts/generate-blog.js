@@ -2,42 +2,80 @@ import fs from "fs"
 import { render } from "./template-engine.js"
 import { generateAI } from "./ai-engine.js"
 
+// ✅ PHASE 5 IMPORTS
+import { predictRanking } from "./ranking-engine.js"
+import { optimizeTitle } from "./ctr-engine.js"
+import { injectAds } from "./monetization-engine.js"
+
 const BLOG_DIR = "blog"
 
 function slugify(text){
-return text.toLowerCase().replace(/[^a-z0-9\s]/g,"").replace(/\s+/g,"-")
+return text
+.toLowerCase()
+.replace(/[^a-z0-9\s]/g,"")
+.replace(/\s+/g,"-")
 }
 
-export async function generateBlogs(){
+// ✅ UPDATED FUNCTION (niche + keywords support)
+export async function generateBlogs(niche, keywords){
 
 if(!fs.existsSync(BLOG_DIR)){
 fs.mkdirSync(BLOG_DIR)
 }
 
+// existing blogs
 const existing = fs.readdirSync(BLOG_DIR)
 .map(f=>f.replace(".html",""))
 
-const blogs = await generateAI(existing)
+// ✅ AI CALL WITH CONTEXT
+const blogs = await generateAI(existing, niche, keywords)
 
 for(const blog of blogs){
 
-const slug = slugify(blog.title)
+if(!blog.title || !blog.content) continue
 
-if(existing.includes(slug)) continue
+// 🔥 CTR OPTIMIZATION
+let title = optimizeTitle(blog.title)
 
+// 🔥 ADS INJECTION
+let content = injectAds(blog.content)
+
+// 🔥 RANKING SCORE
+const score = predictRanking(content)
+
+// ❌ LOW QUALITY SKIP
+if(score < 50){
+console.log("⚠️ Skipped low quality:", title)
+continue
+}
+
+// slug
+const slug = slugify(title)
+
+// ❌ duplicate skip
+if(existing.includes(slug)){
+console.log("⏩ Duplicate:", slug)
+continue
+}
+
+// image
+const image = `https://source.unsplash.com/800x400/?${slug}`
+
+// render template
 const html = render("templates/blog-template.html",{
-title: blog.title,
-description: blog.description,
-content: blog.content,
+title: title,
+description: blog.description || title,
+content: content,
 slug: slug,
-keywords: blog.keywords?.join(","),
-image: `https://source.unsplash.com/800x400/?${slug}`,
+keywords: (keywords || []).join(","),
+image: image,
 date: new Date().toISOString()
 })
 
+// save
 fs.writeFileSync(`${BLOG_DIR}/${slug}.html`,html)
 
-console.log("✅ Blog:",slug)
+console.log("✅ Blog:",slug,"Score:",score)
 
 }
 

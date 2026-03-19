@@ -47,6 +47,9 @@ jobs:
     - name: Generate Images
       run: node scripts/generate-images.js
 
+    - name: Generate multi repo 
+      run: node scripts/multi-repo-engine.js
+
     - name: Generate Sitemap
       run: node scripts/generate-sitemap.js
 
