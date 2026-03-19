@@ -1,16 +1,19 @@
-name: Ultra Static SEO Engine
+name: 🚀 Ultra Autonomous SEO Engine
 
 on:
   schedule:
     - cron: "0 */6 * * *"
-  workflow_dispatch: 
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: ultra-seo-engine
+  cancel-in-progress: false
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     env:
@@ -22,72 +25,117 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v3
+    # ================= CHECKOUT =================
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
 
-    - name: Setup Node
-      uses: actions/setup-node@v3
+    # ================= NODE =================
+    - name: ⚙️ Setup Node.js
+      uses: actions/setup-node@v4
       with:
         node-version: 18
+        cache: npm
 
-    - name: Install Dependencies
-      run: npm install
+    # ================= INSTALL =================
+    - name: 📦 Install Dependencies
+      run: npm ci
 
-    - name: Core Engine
-      run : node scripts/core-engine.js
+    # ================= CORE ENGINE =================
+    - name: 🧠 Run Core Engine (Main Brain)
+      run: node scripts/core-engine.js
 
-    - name: Generate Topics
-      run: node scripts/generate-topics.js
-
-    - name: Generate Pages
-      run: node scripts/generate-pages.js
-
-    - name: Generate Blog Batch
-      run: node scripts/generate-blog-batch.js
-
-    - name: Generate Images
-      run: node scripts/generate-images.js
-
-    - name: Generate multi repo 
-      run: node scripts/multi-repo-engine.js
-
-    - name: Generate Sitemap
-      run: node scripts/generate-sitemap.js
-
-    - name: Generate RSS
-      run: node scripts/generate-rss.js
-
-    - name: Generate HTML Sitemap
-      run: node scripts/generate-html-sitemap.js
-
-    - name: Generate Categories
-      run: node scripts/generate-categories.js
-
-    - name: Generate Favicon
-      run: node scripts/generate-favicon.js
-
-    - name: Generate Internal Links
-      run: node scripts/internal-links.js
-    
-    - name: Generate Tools
-      run: node scripts/generate-tools.js
-
-    - name: Generate Comparison Pages
-      run: node scripts/generate-comparison-pages.js
-
-    - name: Generate Glossary
-      run: node scripts/generate-glossary.js
-
-    - name: Generate Programmatic Pages
-      run: node scripts/generate-programmatic-pages.js
-
-    - name: Generate Image Sitemap
-      run: node scripts/generate-image-sitemap.js
-
-    - name: Commit Changes
+    # ================= MULTI REPO =================
+    - name: 🌐 Multi Repo Engine
       run: |
-        git config --global user.name bot
-        git config --global user.email bot@github.com
+        if [ -f scripts/multi-repo-engine.js ]; then
+          echo "🚀 Running Multi Repo Engine"
+          node scripts/multi-repo-engine.js
+        else
+          echo "⚠️ Skipped: multi-repo-engine.js not found"
+        fi
+
+    # ================= ADVANCED MODULES =================
+    - name: ⚙️ Advanced Engines (Self Optimization)
+      run: |
+        ADV_FILES=(
+          "keyword-engine.js"
+          "niche-engine.js"
+          "quality-engine.js"
+          "ranking-engine.js"
+          "ctr-engine.js"
+          "traffic-engine.js"
+          "backlink-engine.js"
+          "network-engine.js"
+          "ping-engine.js"
+        )
+
+        for file in "${ADV_FILES[@]}"; do
+          if [ -f "scripts/$file" ]; then
+            echo "▶ Running $file"
+            node "scripts/$file"
+          else
+            echo "⚠️ Skipping $file"
+          fi
+        done
+
+    # ================= GENERATORS =================
+    - name: 🏗 Content & Page Generators
+      run: |
+        GEN_FILES=(
+          "generator-blog.js"
+          "generator-pages.js"
+          "generate-images.js"
+        )
+
+        for file in "${GEN_FILES[@]}"; do
+          if [ -f "scripts/$file" ]; then
+            echo "▶ Running $file"
+            node "scripts/$file"
+          else
+            echo "⚠️ Skipping $file"
+          fi
+        done
+
+    # ================= SEO FILES =================
+    - name: 📊 SEO System (Sitemap + RSS + Links)
+      run: |
+        SEO_FILES=(
+          "generate-sitemap.js"
+          "generate-rss.js"
+          "generate-html-sitemap.js"
+          "generate-image-sitemap.js"
+          "internal-links.js"
+          "generate-favicon.js"
+        )
+
+        for file in "${SEO_FILES[@]}"; do
+          if [ -f "scripts/$file" ]; then
+            echo "▶ Running $file"
+            node "scripts/$file"
+          else
+            echo "⚠️ Skipping $file"
+          fi
+        done
+
+    # ================= INDEX AUTO UPDATE =================
+    - name: 🧩 Update Index (Auto Navigation + Blog Injection)
+      run: |
+        if [ -f scripts/core-engine.js ]; then
+          echo "🔁 Updating Index via Core Engine"
+          node scripts/core-engine.js
+        fi
+
+    # ================= COMMIT =================
+    - name: 💾 Commit & Push Changes
+      run: |
+        git config --global user.name "seo-bot"
+        git config --global user.email "bot@seo.com"
+
         git add .
-        git commit -m "auto seo update"
-        git push origin main
-        
+
+        if git diff --cached --quiet; then
+          echo "🟢 No changes to commit"
+        else
+          git commit -m "🚀 ultra autonomous seo update"
+          git push
+        fi

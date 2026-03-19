@@ -1,19 +1,25 @@
 import fs from "fs"
 
-const base = process.env.SITE_URL
+const base = process.env.SITE_URL || "https://ultrastaticseoengine.startknowledge.in"
 
-let rss = `<?xml version="1.0"?>
+// ✅ FIX: function export
+export function generateRSS(){
+
+const files = fs.existsSync("blog")
+? fs.readdirSync("blog")
+: []
+
+let rss = `<?xml version="1.0" encoding="UTF-8"?>
+
 <rss version="2.0">
 <channel>
 
-<title>SEO Engine Blog</title>
+<title>SEO Blog</title>
 <link>${base}</link>
-<description>Latest AI blogs</description>
+<description>Latest AI Generated Blogs</description>
 `
 
-if(fs.existsSync("blog")){
-
-fs.readdirSync("blog").forEach(file=>{
+files.forEach(file=>{
 
 const slug = file.replace(".html","")
 
@@ -21,16 +27,21 @@ rss += `
 <item>
 <title>${slug}</title>
 <link>${base}/blog/${slug}.html</link>
-<pubDate>${new Date().toUTCString()}</pubDate>
 </item>
 `
 
 })
 
+rss += `
+</channel>
+</rss>
+`
+
+fs.writeFileSync("rss.xml", rss)
+
+console.log("✅ RSS Generated")
+
 }
-
-rss += "</channel></rss>"
-
-fs.writeFileSync("rss.xml",rss)
-
-console.log("✅ RSS improved")
+if (process.argv[1].includes("generate-rss.js")) {
+ generateRSS()
+}
