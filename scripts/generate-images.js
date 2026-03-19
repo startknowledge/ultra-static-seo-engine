@@ -1,27 +1,51 @@
 import fs from "fs"
 
-const folder = "assets/images"
+// ================= MAIN FUNCTION =================
+export function generateImages(){
 
-fs.mkdirSync(folder,{recursive:true})
+  if(!fs.existsSync("blog")){
+    console.log("⚠️ Blog folder not found, skipping images")
+    return
+  }
 
-if(!fs.existsSync("blog")) return
+  const folder = "assets/images"
 
-fs.readdirSync("blog").forEach(file=>{
+  if(!fs.existsSync(folder)){
+    fs.mkdirSync(folder, { recursive: true })
+  }
 
-const slug = file.replace(".html","")
+  const blogs = fs.readdirSync("blog")
 
-const svg = `
+  blogs.forEach(file => {
+
+    const slug = file.replace(".html","")
+
+    const svg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
-<rect width="100%" height="100%" fill="#0f172a"/>
-<text x="50%" y="50%" fill="#fff"
-font-size="48" text-anchor="middle">
-${slug.replace(/-/g," ")}
+<rect width="1200" height="630" fill="#111"/>
+<text 
+x="50%" 
+y="50%" 
+dominant-baseline="middle" 
+text-anchor="middle"
+font-size="48"
+fill="white"
+font-family="Arial"
+>
+${slug}
 </text>
 </svg>
 `
 
-fs.writeFileSync(`${folder}/${slug}.svg`,svg)
+    fs.writeFileSync(`${folder}/${slug}.svg`, svg)
 
-})
+  })
 
-console.log("✅ SEO images generated")
+  console.log("✅ Images Generated")
+
+}
+
+// ================= DIRECT RUN FIX =================
+if (process.argv[1].includes("generate-images.js")) {
+  generateImages()
+}
