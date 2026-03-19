@@ -2,11 +2,6 @@ import fs from "fs"
 import { render } from "./template-engine.js"
 import { generateAI } from "./ai-engine.js"
 
-// ✅ PHASE 5 IMPORTS
-import { predictRanking } from "./ranking-engine.js"
-import { optimizeTitle } from "./ctr-engine.js"
-import { injectAds } from "./monetization-engine.js"
-
 const BLOG_DIR = "blog"
 
 function slugify(text){
@@ -16,66 +11,88 @@ return text
 .replace(/\s+/g,"-")
 }
 
-// ✅ UPDATED FUNCTION (niche + keywords support)
-export async function generateBlogs(niche, keywords){
+// 🔥 PHASE-5 OPTIMIZATION
+function optimizeTitle(title){
+return title.length > 60 ? title.slice(0,60) : title
+}
+
+function injectAds(content){
+
+const adTop = `<div class="ad ad-top">Ad Space Top</div>`
+const adMid = `<div class="ad ad-mid">Ad Space Middle</div>`
+const adBottom = `<div class="ad ad-bottom">Ad Space Bottom</div>`
+
+let parts = content.split("</p>")
+
+if(parts.length > 3){
+parts.splice(1,0,adTop)
+parts.splice(Math.floor(parts.length/2),0,adMid)
+parts.push(adBottom)
+}
+
+return parts.join("</p>")
+}
+
+function predictRanking(content){
+
+let score = 0
+
+if(content.includes("<h2>")) score += 20
+if(content.length > 3000) score += 30
+if(content.includes("<ul>")) score += 10
+if(content.includes("<strong>")) score += 10
+if(content.includes("FAQ")) score += 20
+
+return score
+}
+
+// ================= MAIN =================
+
+export async function generateBlogs(niche="", keywords=[]){
 
 if(!fs.existsSync(BLOG_DIR)){
 fs.mkdirSync(BLOG_DIR)
 }
 
-// existing blogs
 const existing = fs.readdirSync(BLOG_DIR)
 .map(f=>f.replace(".html",""))
 
-// ✅ AI CALL WITH CONTEXT
-const blogs = await generateAI(existing, niche, keywords)
+const blogs = await generateAI(niche, keywords)
 
 for(const blog of blogs){
 
 if(!blog.title || !blog.content) continue
 
-// 🔥 CTR OPTIMIZATION
 let title = optimizeTitle(blog.title)
-
-// 🔥 ADS INJECTION
 let content = injectAds(blog.content)
 
-// 🔥 RANKING SCORE
 const score = predictRanking(content)
 
-// ❌ LOW QUALITY SKIP
 if(score < 50){
-console.log("⚠️ Skipped low quality:", title)
+console.log("⚠️ Low quality skipped:", title)
 continue
 }
 
-// slug
 const slug = slugify(title)
 
-// ❌ duplicate skip
 if(existing.includes(slug)){
-console.log("⏩ Duplicate:", slug)
+console.log("⏩ Skip duplicate:", slug)
 continue
 }
 
-// image
-const image = `https://source.unsplash.com/800x400/?${slug}`
-
-// render template
 const html = render("templates/blog-template.html",{
 title: title,
 description: blog.description || title,
 content: content,
 slug: slug,
-keywords: (keywords || []).join(","),
-image: image,
+keywords: blog.keywords?.join(",") || "",
+image: `https://source.unsplash.com/800x400/?${slug}`,
 date: new Date().toISOString()
 })
 
-// save
 fs.writeFileSync(`${BLOG_DIR}/${slug}.html`,html)
 
-console.log("✅ Blog:",slug,"Score:",score)
+console.log("✅ Blog:",slug)
 
 }
 
