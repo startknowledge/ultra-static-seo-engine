@@ -32,8 +32,8 @@ jobs:
     - name: Install Dependencies
       run: npm install
 
-    - name: Auto Engine
-      run : node scripts/auto-engine.js
+    - name: Core Engine
+      run : node scripts/core-engine.js
 
     - name: Generate Topics
       run: node scripts/generate-topics.js
