@@ -20,24 +20,53 @@ body{
   background: var(--bg);
   color: var(--text);
   padding:20px;
+  line-height:1.6;
 }
 
 /* ================= CONTAINER ================= */
 .container{
-  max-width:1200px;
+  max-width:1100px;
   margin:auto;
+  padding:20px;
 }
 
 /* ================= HEADER ================= */
 .header{
   text-align:center;
   margin-bottom:20px;
+  background:#020617;
+  padding:15px;
+  border-bottom:1px solid #1e293b;
 }
 
 .header h1{
   font-size:2rem;
 }
+/* NAVBAR */
+.navbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:15px;
+  background:var(--card);
+  border-bottom:1px solid var(--border);
+}
 
+.navbar a{
+  margin-left:15px;
+  color:var(--text);
+   text-decoration:none;
+}
+
+/* MAIN */
+.main{
+  padding:20px;
+}
+
+/* LOGO */
+.logo{
+  font-size:1.2rem;
+}
 /* ================= GRID ================= */
 .sitemap-grid{
   list-style:none;
@@ -72,18 +101,30 @@ body{
 
 /* ================= FOOTER ================= */
 .footer{
-  margin-top:30px;
+  margin-top:40px;
+  padding:20px;
+  background:#020617;
   text-align:center;
+  border-top:1px solid #1e293b;
   font-size:0.8rem;
-  opacity:0.7;
 }
-
+.ad{
+  background:#1e293b;
+  padding:15px;
+  margin:20px 0;
+  text-align:center;
+  border-radius:8px;
+}
 /* ================= RESPONSIVE ================= */
 @media (max-width:600px){
   body{padding:10px}
   .header h1{font-size:1.5rem}
 }
-
+@media(max-width:768px){
+  .container{
+    padding:10px;
+  }
+}
 /* ================= LIGHT MODE ================= */
 @media (prefers-color-scheme: light){
   :root{
@@ -92,28 +133,4 @@ body{
     --text:#111827;
     --border:#e5e7eb;
   }
-}
-/* NAVBAR */
-.navbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:15px;
-  background:var(--card);
-  border-bottom:1px solid var(--border);
-}
-
-.navbar a{
-  margin-left:15px;
-  color:var(--text);
-}
-
-/* MAIN */
-.main{
-  padding:20px;
-}
-
-/* LOGO */
-.logo{
-  font-size:1.2rem;
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{lang}}">
+<html lang="{{SITE_LANG}}">
 <head>
 
 <meta charset="UTF-8">
@@ -24,21 +24,25 @@
 
 <body>
 
-<header class="navbar">
-  <h2 class="logo">🚀 SEO Engine</h2>
-  <nav>
-    <a href="/">Home</a>
-    <a href="/sitemap.html">Sitemap</a>
-  </nav>
+<header>
+  <div class="container">
+    <nav>
+      <a href="/">Home</a>
+      <a href="/pages/about.html">About</a>
+      <a href="/pages/contact.html">Contact</a>
+    </nav>
+  </div>
 </header>
 
-<main class="main">
+<main class="container">
   {{content}}
 </main>
 
 <footer class="footer">
   <p>© 2026 SEO Engine</p>
+  <p>© {{SITE_URL}} | AI Powered SEO Engine</p>
 </footer>
+
 
 </body>
 </html>

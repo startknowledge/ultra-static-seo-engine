@@ -57,7 +57,7 @@ fs.mkdirSync(BLOG_DIR)
 const existing = fs.readdirSync(BLOG_DIR)
 .map(f=>f.replace(".html",""))
 
-const blogs = await generateAI(niche, keywords)
+const blogs = await generateAI(niche, keywords, existing)
 
 for(const blog of blogs){
 
@@ -95,8 +95,7 @@ fs.writeFileSync(`${BLOG_DIR}/${slug}.html`,html)
 console.log("✅ Blog:",slug)
 
 }
-
 }
 if (process.argv[1].includes("generator-blog.js")) {
- generateBlogs()
+ generateBlogs(niche, keywords)
 }
