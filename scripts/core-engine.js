@@ -23,8 +23,8 @@ async function safeProcess(repo){
 
   for(let i=0;i<CONFIG.RETRY;i++){
     try{
-      await processRepo(repo)
-      return true
+      const result = await processRepo(repo)
+      return result !== false
     }catch(err){
       log("RETRY", `${repo} attempt ${i+1}`)
     }

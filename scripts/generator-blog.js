@@ -80,7 +80,7 @@ console.log("⏩ Skip duplicate:", slug)
 continue
 }
 
-const html = render("templates/blog-template.html",{
+const html = render("../templates/blog-template.html",{
 title: title,
 description: blog.description || title,
 content: content,
@@ -97,5 +97,9 @@ console.log("✅ Blog:",slug)
 }
 }
 if (process.argv[1].includes("generator-blog.js")) {
- generateBlogs(niche, keywords)
+
+  const niche = "technology"
+  const keywords = ["seo","ai","automation"]
+
+  generateBlogs(niche, keywords)
 }

@@ -62,6 +62,11 @@ if(!fs.existsSync("pages")){
 fs.mkdirSync("pages")
 }
 
+// copy templates into cloned repo
+if(!fs.existsSync("templates")){
+  fs.cpSync("../templates","templates",{recursive:true})
+}
+
 // ================= GENERATE =================
 await generateBlogs(niche, keywords)
 await generatePages()
@@ -90,15 +95,13 @@ git push
 `)
 
 }catch(err){
-
 console.log("❌ ERROR:",repo,err.message)
-
+return false
 }
 
 // ================= CLEAN =================
 process.chdir("../")
 cleanDir(temp)
-
 }
 
 // ================= INDEX =================
@@ -122,7 +125,6 @@ list += `<li><a href="/blog/${slug}.html">${slug}</a></li>`
 html = html.replace("{{blogs}}",list)
 
 fs.writeFileSync("index.html",html)
-
 }
 
 // ================= BASE =================
