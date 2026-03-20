@@ -35,7 +35,7 @@ body{
   text-align:center;
   margin-bottom:20px;
   background:#020617;
-  padding:15px;
+  padding:15px 0;
   border-bottom:1px solid #1e293b;
 }
 
@@ -43,7 +43,7 @@ body{
   font-size:2rem;
 }
 /* NAVBAR */
-.navbar{
+.nav{
   display:flex;
   justify-content:space-between;
   align-items:center;
@@ -52,12 +52,15 @@ body{
   border-bottom:1px solid var(--border);
 }
 
-.navbar a{
+.nav a{
   margin-left:15px;
   color:var(--text);
    text-decoration:none;
+   font-size: 14px;
 }
-
+.nav a:hover{
+  color:#fff;
+}
 /* MAIN */
 .main{
   padding:20px;
@@ -66,6 +69,35 @@ body{
 /* LOGO */
 .logo{
   font-size:1.2rem;
+}
+.logo a{
+  color:#fff;
+  text-decoration:none;
+  font-size:22px;
+  font-weight: bold;
+}
+/* BLOG */
+.blog-post h1{
+font-size:28px;
+margin-bottom:15px;
+}
+
+.blog-image{
+width:100%;
+border-radius:10px;
+margin:20px 0;
+}
+
+.blog-content p{
+margin-bottom:15px;
+}
+
+.blog-content h2{
+margin:20px 0 10px;
+}
+
+.blog-content ul{
+padding-left:20px;
 }
 /* ================= GRID ================= */
 .sitemap-grid{
@@ -108,6 +140,12 @@ body{
   border-top:1px solid #1e293b;
   font-size:0.8rem;
 }
+.footer a{
+  color: #aaa;
+  margin:0 10px;
+  text-decoration:none;
+}
+
 .ad{
   background:#1e293b;
   padding:15px;
@@ -121,9 +159,15 @@ body{
   .header h1{font-size:1.5rem}
 }
 @media(max-width:768px){
-  .container{
-    padding:10px;
-  }
+
+.nav{
+flex-direction:column;
+}
+
+.blog-post h1{
+font-size:22px;
+}
+
 }
 /* ================= LIGHT MODE ================= */
 @media (prefers-color-scheme: light){

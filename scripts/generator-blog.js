@@ -97,9 +97,5 @@ console.log("✅ Blog:",slug)
 }
 }
 if (process.argv[1].includes("generator-blog.js")) {
-
-  const niche = "technology"
-  const keywords = ["seo","ai","automation"]
-
-  generateBlogs(niche, keywords)
+  generateBlogs("general", ["seo","ai","tools"])
 }

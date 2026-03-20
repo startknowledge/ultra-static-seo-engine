@@ -6,31 +6,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>{{title}}</title>
+
 <meta name="description" content="{{description}}">
 <meta name="keywords" content="{{keywords}}">
 
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="{{url}}">
 
-<!-- Open Graph -->
-<meta property="og:title" content="{{title}}">
-<meta property="og:description" content="{{description}}">
-<meta property="og:url" content="{{url}}">
-<meta property="og:type" content="article">
+<link rel="canonical" href="{{SITE_URL}}/{{path}}">
+<link rel="icon" href="/assets/images/favicon.svg">
 
+<!-- CSS -->
 <link rel="stylesheet" href="/css/style.css">
 
 </head>
 
 <body>
 
-<header>
+<header class="header">
   <div class="container">
-    <nav>
-      <a href="/">Home</a>
-      <a href="/pages/about.html">About</a>
-      <a href="/pages/contact.html">Contact</a>
+
+    <h1 class="logo">
+      <a href="/">{{SITE_NAME}}</a>
+    </h1>
+
+    <nav class="nav">
+      {{NAVBAR}}
     </nav>
+
   </div>
 </header>
 
@@ -39,10 +41,18 @@
 </main>
 
 <footer class="footer">
-  <p>© 2026 SEO Engine</p>
-  <p>© {{SITE_URL}} | AI Powered SEO Engine</p>
-</footer>
+  <div class="container">
 
+    <p>© {{year}} {{SITE_NAME}}</p>
+
+    <div class="links">
+      <a href="/pages/privacy-policy.html">Privacy</a>
+      <a href="/pages/terms-and-conditions.html">Terms</a>
+      <a href="/pages/disclaimer.html">Disclaimer</a>
+    </div>
+
+  </div>
+</footer>
 
 </body>
 </html>

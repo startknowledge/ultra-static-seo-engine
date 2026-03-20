@@ -40,7 +40,11 @@ execSync(
 
 // ================= ENTER =================
 process.chdir(temp)
-
+// ================= TEMPLATE FIX =================
+if(!fs.existsSync("templates")){
+  fs.cpSync("../templates","templates",{recursive:true})
+  console.log("📦 Templates injected")
+}
 // ================= READ =================
 const contentSample = fs.existsSync("index.html")
 ? fs.readFileSync("index.html","utf8")
@@ -60,11 +64,6 @@ fs.mkdirSync("blog")
 
 if(!fs.existsSync("pages")){
 fs.mkdirSync("pages")
-}
-
-// copy templates into cloned repo
-if(!fs.existsSync("templates")){
-  fs.cpSync("../templates","templates",{recursive:true})
 }
 
 // ================= GENERATE =================

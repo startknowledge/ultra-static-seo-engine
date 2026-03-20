@@ -99,10 +99,10 @@ RULES:
 
     const data = safeJSON(text)
 
-    if(!Array.isArray(data)){
-      console.log("⚠️ Invalid AI response → fallback")
-      return fallback(niche, keywords)
-    }
+if(!Array.isArray(data) || data.length === 0){
+  console.log("⚠️ Empty AI → fallback")
+  return fallback(niche, keywords)
+}
 
     return data
 
