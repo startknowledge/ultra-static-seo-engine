@@ -1,4 +1,3 @@
-
 export function generateKeywords(niche){
 
   const base = {

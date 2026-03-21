@@ -7,7 +7,10 @@ console.log("🚀 PHASE 3 START")
 
 const repos = await getAllRepos()
 
-for(const repo of repos){
+const sleep = (ms) => new Promise(r => setTimeout(r, ms))
+
+for (const repo of repos) {
+  await sleep(3000) // 3 sec delay
 
 // ❌ skip self repo
 if(repo.includes("ultra-static-seo-engine")) continue
