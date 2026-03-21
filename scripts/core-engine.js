@@ -3,6 +3,8 @@ import { execSync } from "child_process"
 
 import { processRepo } from "./repo-processor.js"
 import { getAllRepos } from "./get-all-repos.js"
+import { generateBlogs } from "./generator-blog.js"
+import { runLinkEngine } from "./link-engine.js"
 
 const TOKEN = process.env.DETECT_REPO_TOKEN
 
@@ -46,6 +48,14 @@ function filterRepos(repos){
 // ================= MAIN ENGINE =================
 export async function runCore(){
 
+  console.log("🚀 Core Engine Start")
+
+  await generateBlogs("general",["seo","ai","tools"])
+
+  runLinkEngine()
+
+  console.log("✅ Core Engine Done")
+  
   log("START","Ultra Core Engine Running...")
 
   if(!TOKEN){
@@ -72,6 +82,7 @@ export async function runCore(){
     }else{
       failed++
     }
+
 
   }
 

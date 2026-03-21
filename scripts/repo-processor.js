@@ -4,7 +4,7 @@ import { execSync } from "child_process"
 // core
 import { generateBlogs } from "../scripts/generator-blog.js"
 import { generatePages } from "../scripts/generator-pages.js"
-import { generateLinks } from "./link-engine.js"
+import { runLinkEngine } from "./link-engine.js"
 import { generateSEOFiles } from "../scripts/seo-engine.js"
 
 // phase 4
@@ -15,7 +15,7 @@ import { crawlCheck } from "../scripts/crawl-engine.js"
 // phase 6
 import { createBacklinks } from "../scripts/backlink-engine.js"
 import { simulateTraffic } from "../scripts/traffic-engine.js"
-import { interlinkNetwork } from "./network-engine.js"
+
 import { pingSearchEngines } from "../scripts/ping-engine.js"
 
 const TOKEN = process.env.DETECT_REPO_TOKEN
@@ -101,6 +101,13 @@ return false
 // ================= CLEAN =================
 process.chdir("../")
 cleanDir(temp)
+}export async function runRepoProcessor(){
+
+  console.log("⚙️ Repo processing...")
+
+  runLinkEngine()
+
+  console.log("✅ Repo processed")
 }
 
 // ================= INDEX =================
@@ -149,4 +156,8 @@ a{color:#0af}
 </body>
 </html>
 `
+}
+// auto run
+if (process.argv[1].includes("repo-processor.js")) {
+  runRepoProcessor()
 }
