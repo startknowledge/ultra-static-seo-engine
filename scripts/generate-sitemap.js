@@ -16,7 +16,9 @@ const files = folder
 ? fs.readdirSync(folder)
 : ["index.html"]
 
-files.forEach(file=>{
+files.filter(f => f.endsWith(".html") && !f
+.includes(".gitkeep"))
+.forEach(file=>{
 
 if(file.endsWith(".html")){
 

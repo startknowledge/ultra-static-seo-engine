@@ -19,7 +19,9 @@ let rss = `<?xml version="1.0" encoding="UTF-8"?>
 <description>Latest AI Generated Blogs</description>
 `
 
-files.forEach(file=>{
+files
+.filter(f => f.endsWith(".html") && !f.includes(".gitkeep"))
+.forEach(file=>{
 
 const slug = file.replace(".html","")
 

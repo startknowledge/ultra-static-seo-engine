@@ -10,7 +10,9 @@ let xml = `<?xml version="1.0" encoding="UTF-8"?>
 
 if(fs.existsSync("blog")){
 
-fs.readdirSync("blog").forEach(file=>{
+fs.readdirSync("blog")
+.filter(f => f.endsWith(".html") && !f.includes(".gitkeep"))
+.forEach(file=>{
 
 const slug = file.replace(".html","")
 

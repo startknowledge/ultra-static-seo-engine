@@ -12,7 +12,9 @@ let links = ""
 folders.forEach(folder=>{
 if(!fs.existsSync(folder)) return
 
-fs.readdirSync(folder).forEach(file=>{
+fs.readdirSync("blog")
+.filter(f => f.endsWith(".html") && !f.includes(".gitkeep"))
+.forEach(file=>{
 if(file.endsWith(".html")){
 
 const slug = file.replace(".html","")

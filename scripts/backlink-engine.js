@@ -5,6 +5,7 @@ export function createBacklinks(){
 if(!fs.existsSync("blog")) return
 
 const files = fs.readdirSync("blog")
+.filter(f => f.endsWith(".html") && !f.includes(".gitkeep"))
 
 files.forEach(file=>{
 

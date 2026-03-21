@@ -2,36 +2,23 @@ import fs from "fs"
 
 const BLOG_DIR = "./blog"
 
-// 🔗 extract links
-function extractLinks(html){
-  const regex = /<a href="(.*?)"/g
-  let links = []
-  let match
+function addInternalLinks(html, slugs){
 
-  while((match = regex.exec(html))){
-    links.push(match[1])
-  }
+  let added = 0
 
-  return links
+  return html.replace(/<p>(.*?)<\/p>/g, (match, content)=>{
+
+    if(added >= 3) return match
+
+    const randomSlug = slugs[Math.floor(Math.random()*slugs.length)]
+
+    if(!randomSlug || content.includes("/blog/")) return match
+
+    added++
+
+    return `<p>${content} <a href="/blog/${randomSlug}.html">Read more</a></p>`
+  })
 }
-
-// 🔥 auto internal linking
-function addInternalLinks(html, allSlugs){
-
-  let words = html.split(" ")
-
-  return words.map(word=>{
-    const clean = word.toLowerCase().replace(/[^a-z0-9]/g,"")
-
-    if(allSlugs.includes(clean)){
-      return `<a href="/blog/${clean}.html">${word}</a>`
-    }
-
-    return word
-  }).join(" ")
-}
-
-// ================= MAIN =================
 
 export function runLinkEngine(){
 
@@ -40,7 +27,8 @@ export function runLinkEngine(){
     return
   }
 
-  const files = fs.readdirSync(BLOG_DIR).filter(f=>f.endsWith(".html"))
+  const files = fs.readdirSync(BLOG_DIR)
+  .filter(f => f.endsWith(".html") && !f.includes(".gitkeep"))
 
   const slugs = files.map(f=>f.replace(".html",""))
 
@@ -48,13 +36,12 @@ export function runLinkEngine(){
 
     const path = `${BLOG_DIR}/${file}`
 
-    let html = fs.readFileSync(path,"utf-8")
+    let html = fs.readFileSync(path, "utf-8")
 
     html = addInternalLinks(html, slugs)
 
     fs.writeFileSync(path, html)
 
-    console.log("🔗 Links optimized:", file)
+    console.log("🔗 Safe Links:", file)
   }
-
 }

@@ -1,5 +1,5 @@
 import fs from "fs"
-import { selfLearn } from "../ai/self-learning.js"
+import { learn } from "../ai/self-learning.js"
 
 const BLOG_DIR = "./blog"
 
@@ -25,17 +25,13 @@ async function run() {
       continue
     }
 
-    try{
-      const improved = await selfLearn(html)
+    // simple learning (Phase 6 stable)
+    learn(file, true)
 
-      fs.writeFileSync(path, improved)
-
-      console.log("🧠 AI Improved:", file)
-
-    }catch(err){
-      console.log("❌ Learn error:", file)
-    }
+    console.log("🧠 Learned:", file)
   }
 }
-
-run()
+// auto run
+if (process.argv[1].includes("self-learn-runner.js")) {
+  run()
+}

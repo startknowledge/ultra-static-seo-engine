@@ -9,7 +9,7 @@ import { generateSEOFiles } from "../scripts/seo-engine.js"
 
 // phase 4
 import { detectNiche } from "../scripts/niche-engine.js"
-import { generateKeywords } from "./keyword-engine.js"
+import { expand as generateKeywords } from "../aikeyword-engine.js"
 import { crawlCheck } from "../scripts/crawl-engine.js"
 
 // phase 6
@@ -69,7 +69,7 @@ fs.mkdirSync("pages")
 // ================= GENERATE =================
 await generateBlogs(niche, keywords)
 await generatePages()
-generateLinks()
+runLinkEngine()
 generateSEOFiles()
 
 // ================= SEO FIX =================
@@ -77,7 +77,6 @@ crawlCheck()
 
 // ================= NETWORK (PHASE 6) =================
 createBacklinks()
-interlinkNetwork()
 simulateTraffic()
 pingSearchEngines()
 

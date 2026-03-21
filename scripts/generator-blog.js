@@ -1,6 +1,6 @@
 import fs from "fs"
-import { render } from "./template-engine.js"
-import { generateAI } from "./ai-engine.js"
+import { render } from "../core/template-engine.js"
+import { generateAI } from "../core/ai-engine.js"
 
 const BLOG_DIR = "blog"
 
@@ -55,6 +55,7 @@ fs.mkdirSync(BLOG_DIR)
 }
 
 const existing = fs.readdirSync(BLOG_DIR)
+.filter(f => f.endsWith(".html") && !f.includes(".gitkeep"))
 .map(f=>f.replace(".html",""))
 
 const blogs = await generateAI(niche, keywords, existing)
