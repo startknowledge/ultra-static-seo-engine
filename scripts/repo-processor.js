@@ -2,21 +2,21 @@ import fs from "fs"
 import { execSync } from "child_process"
 
 // core
-import { generateBlogs } from "./generator-blog.js"
-import { generatePages } from "./generator-pages.js"
+import { generateBlogs } from "../scripts/generator-blog.js"
+import { generatePages } from "../scripts/generator-pages.js"
 import { generateLinks } from "./link-engine.js"
-import { generateSEOFiles } from "./seo-engine.js"
+import { generateSEOFiles } from "../scripts/seo-engine.js"
 
 // phase 4
-import { detectNiche } from "./niche-engine.js"
+import { detectNiche } from "../scripts/niche-engine.js"
 import { generateKeywords } from "./keyword-engine.js"
-import { crawlCheck } from "./crawl-engine.js"
+import { crawlCheck } from "../scripts/crawl-engine.js"
 
 // phase 6
-import { createBacklinks } from "./backlink-engine.js"
-import { simulateTraffic } from "./traffic-engine.js"
+import { createBacklinks } from "../scripts/backlink-engine.js"
+import { simulateTraffic } from "../scripts/traffic-engine.js"
 import { interlinkNetwork } from "./network-engine.js"
-import { pingSearchEngines } from "./ping-engine.js"
+import { pingSearchEngines } from "../scripts/ping-engine.js"
 
 const TOKEN = process.env.DETECT_REPO_TOKEN
 

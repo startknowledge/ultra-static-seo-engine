@@ -20,6 +20,9 @@ jobs:
       GEMINI_API_KEY1: ${{ secrets.GEMINI_API_KEY1 }}
       GEMINI_API_KEY2: ${{ secrets.GEMINI_API_KEY2 }}
       GEMINI_API_KEY3: ${{ secrets.GEMINI_API_KEY3 }}
+      GEMINI_API_KEY4: ${{ secrets.GEMINI_API_KEY4 }}
+      GEMINI_API_KEY5: ${{ secrets.GEMINI_API_KEY5 }}
+      GEMINI_API_KEY6: ${{ secrets.GEMINI_API_KEY6 }}
       SITE_URL: ${{ secrets.SITE_URL }}
       DETECT_REPO_TOKEN: ${{ secrets.DETECT_REPO_TOKEN }}
 
@@ -44,6 +47,14 @@ jobs:
     - name: 🧠 Run Core Engine (Main Brain)
       run: node scripts/core-engine.js
 
+     # ================= GENERATE =================
+    - name: 🚀 Generate Blogs
+      run: node scripts/generate.js
+
+    # ================= SELF LEARNING =================
+    - name: 🧠 Self Learning
+      run: node scripts/self-learn-runner.js
+
     # ================= MULTI REPO =================
     - name: 🌐 Multi Repo Engine
       run: |
@@ -65,7 +76,6 @@ jobs:
           "ctr-engine.js"
           "traffic-engine.js"
           "backlink-engine.js"
-          "network-engine.js"
           "ping-engine.js"
         )
 
@@ -104,7 +114,6 @@ jobs:
           "generate-rss.js"
           "generate-html-sitemap.js"
           "generate-image-sitemap.js"
-          "internal-links.js"
           "generate-favicon.js"
         )
 

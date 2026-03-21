@@ -1,9 +1,14 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
+import { retry } from "./retry.js"
+import { log } from "./logger.js"
 
 const keys = [
   process.env.GEMINI_API_KEY1,
   process.env.GEMINI_API_KEY2,
-  process.env.GEMINI_API_KEY3
+  process.env.GEMINI_API_KEY3,
+  process.env.GEMINI_API_KEY4,
+  process.env.GEMINI_API_KEY5,
+  process.env.GEMINI_API_KEY6
 ].filter(Boolean)
 
 function getKey(){
@@ -15,7 +20,6 @@ function safeJSON(text){
   try{
     return JSON.parse(text)
   }catch{
-
     try{
       const cleaned = text
         .replace(/```json/g,"")
@@ -23,9 +27,8 @@ function safeJSON(text){
         .trim()
 
       return JSON.parse(cleaned)
-
-    }catch(err){
-      console.log("❌ JSON Parse Failed")
+    }catch{
+      log("❌ JSON Parse Failed")
       return []
     }
   }
@@ -33,34 +36,39 @@ function safeJSON(text){
 
 // 🔥 KEYWORD EXPANSION
 function expandKeywords(base=[]){
-
-  const extra = [
-    "best","2026","guide","tools","free","advanced","strategy"
-  ]
-
+  const extra = ["best","2026","guide","tools","free","advanced","strategy"]
   return [...new Set([...base, ...extra])]
+}
+
+// 🔥 TIMEOUT WRAPPER
+function timeoutPromise(ms){
+  return new Promise((_, reject)=>
+    setTimeout(()=>reject(new Error("Timeout")), ms)
+  )
 }
 
 // ================= MAIN =================
 
 export async function generateAI(niche="", keywords=[], existingSlugs=[]){
 
-  const key = getKey()
+  return retry(async ()=>{
 
-  if(!key){
-    console.log("⚠️ No API key → fallback mode")
-    return fallback(niche, keywords)
-  }
+    const key = getKey()
 
-  const genAI = new GoogleGenerativeAI(key)
+    if(!key){
+      log("⚠️ No API key → fallback")
+      return fallback(niche, keywords)
+    }
 
-  const model = genAI.getGenerativeModel({
-    model:"gemini-2.5-flash"
-  })
+    const genAI = new GoogleGenerativeAI(key)
 
-  const finalKeywords = expandKeywords(keywords)
+    const model = genAI.getGenerativeModel({
+      model:"gemini-2.5-flash"
+    })
 
-  const prompt = `
+    const finalKeywords = expandKeywords(keywords)
+
+    const prompt = `
 Act as Ultra Advanced SEO AI Engine.
 
 Niche: ${niche}
@@ -91,28 +99,23 @@ RULES:
 - Only JSON output
 `
 
-  try{
-
-    const result = await model.generateContent(prompt)
+    const result = await Promise.race([
+      model.generateContent(prompt),
+      timeoutPromise(20000)
+    ])
 
     let text = result.response.text()
 
     const data = safeJSON(text)
 
-if(!Array.isArray(data) || data.length === 0){
-  console.log("⚠️ Empty AI → fallback")
-  return fallback(niche, keywords)
-}
+    if(!Array.isArray(data) || data.length === 0){
+      log("⚠️ Empty AI → fallback")
+      return fallback(niche, keywords)
+    }
 
     return data
 
-  }catch(err){
-
-    console.log("❌ AI ERROR:", err.message)
-
-    return fallback(niche, keywords)
-  }
-
+  },5)
 }
 
 // ================= FALLBACK =================
@@ -146,50 +149,4 @@ function fallback(niche, keywords){
 `
     }
   ]
-
 }
-
-/* import { GoogleGenerativeAI } from "@google/generative-ai"
-
-const keys = [
-process.env.GEMINI_API_KEY1,
-process.env.GEMINI_API_KEY2,
-process.env.GEMINI_API_KEY3
-]
-
-const key = keys[Math.floor(Math.random()*keys.length)]
-const genAI = new GoogleGenerativeAI(key)
-
-export async function generateAI(existingSlugs){
-
-const model = genAI.getGenerativeModel({
-model:"gemini-2.5-flash"
-})
-
-const prompt = `
-Act as advanced SEO AI.
-
-Generate 3 high quality blog posts.
-
-Avoid topics similar to:
-${existingSlugs.join(",")}
-
-Return JSON:
-[
-{
-"title":"",
-"description":"",
-"content":"<article>HTML</article>",
-"keywords":["seo","tools","ai"]
-}
-]
-`
-
-const result = await model.generateContent(prompt)
-
-let text = result.response.text()
-
-text = text.replace(/```json/g,"").replace(/```/g,"")
-
-return JSON.parse(text)
-} */
