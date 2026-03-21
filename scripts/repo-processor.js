@@ -4,7 +4,7 @@ import { execSync } from "child_process"
 // core
 import { generateBlogs } from "../scripts/generator-blog.js"
 import { generatePages } from "../scripts/generator-pages.js"
-import { runLinkEngine } from "./link-engine.js"
+import { runLinkEngine } from "../scripts/link-engine.js"
 import { generateSEOFiles } from "../scripts/seo-engine.js"
 
 // phase 4

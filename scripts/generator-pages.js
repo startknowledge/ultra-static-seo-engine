@@ -1,5 +1,5 @@
 import fs from "fs"
-import { render } from "./template-engine.js"
+import { render } from "../core/template-engine.js"
 
 const PAGES_DIR = "pages"
 
