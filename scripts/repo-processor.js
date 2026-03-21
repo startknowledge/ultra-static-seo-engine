@@ -9,7 +9,7 @@ import { generateSEOFiles } from "../scripts/seo-engine.js"
 
 // phase 4
 import { detectNiche } from "../scripts/niche-engine.js"
-import { expand as generateKeywords } from "../aikeyword-engine.js"
+import { expand as generateKeywords } from "../ai/keyword-engine.js"
 import { crawlCheck } from "../scripts/crawl-engine.js"
 
 // phase 6

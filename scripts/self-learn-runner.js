@@ -25,10 +25,13 @@ async function run() {
       continue
     }
 
-    // simple learning (Phase 6 stable)
-    learn(file, true)
-
-    console.log("🧠 Learned:", file)
+    try{
+      // simple learning (Phase 6 stable)
+      learn(file, true)
+      console.log("🧠 Learning updated:", file)
+    }catch(err){
+      console.log("🧠 Learn error:", file)
+      }
   }
 }
 // auto run
