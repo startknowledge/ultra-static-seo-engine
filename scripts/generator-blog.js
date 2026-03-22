@@ -61,7 +61,11 @@ const existing = fs.readdirSync(BLOG_DIR)
 const blogs = await generateAI(niche, keywords, existing)
 
 for(const blog of blogs){
-
+  
+if(!validateContent(article)){
+  console.log("❌ Skipped low quality")
+  return
+}
 if(!blog.title || !blog.content) continue
 
 let title = optimizeTitle(blog.title)
