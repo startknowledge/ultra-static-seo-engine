@@ -1,6 +1,3 @@
-import fs from "fs"
-import { execSync } from "child_process"
-
 import { processRepo } from "./repo-processor.js"
 import { getAllRepos } from "./get-all-repos.js"
 import { generateBlogs } from "./generator-blog.js"
@@ -12,7 +9,6 @@ const TOKEN = process.env.DETECT_REPO_TOKEN
 // ================= CONFIG =================
 const CONFIG = {
   MAX_REPOS: 50,
-  PARALLEL: false,
   RETRY: 2
 }
 
@@ -37,34 +33,39 @@ async function safeProcess(repo){
   return false
 }
 
-// ================= REPO FILTER =================
+// ================= FILTER =================
 function filterRepos(repos){
-
   return repos
     .filter(r => !r.includes("ultra-static-seo-engine"))
     .slice(0, CONFIG.MAX_REPOS)
-
 }
 
-// ================= MAIN ENGINE =================
+// ================= MAIN =================
 export async function runCore(){
 
   console.log("🚀 Core Engine Start")
 
-  await generateBlogs("general",["seo","ai","tools"])
+  // 🔥 STEP 1: Cluster-based blog generation
+  for(const topic in clusters){
 
+    const keywords = clusters[topic]
+
+    log("CLUSTER", topic)
+
+    await generateBlogs(topic, keywords)
+  }
+
+  // 🔥 STEP 2: Internal linking
   runLinkEngine()
 
-  console.log("✅ Core Engine Done")
-  
-  log("START","Ultra Core Engine Running...")
-
+  // 🔥 STEP 3: Repo automation
   if(!TOKEN){
     throw new Error("❌ Missing GitHub Token")
   }
 
-  const repos = await getAllRepos()
+  log("START","Repo Processing...")
 
+  const repos = await getAllRepos()
   const filtered = filterRepos(repos)
 
   log("INFO",`Total repos: ${filtered.length}`)
@@ -78,35 +79,17 @@ export async function runCore(){
 
     const ok = await safeProcess(repo)
 
-    if(ok){
-      success++
-    }else{
-      failed++
-    }
-
-
+    if(ok) success++
+    else failed++
   }
 
-  log("DONE",`Success: ${success}`)
-  log("DONE",`Failed: ${failed}`)
-
+  // 🔥 FINAL LOG
+  console.log("✅ Core Engine Done")
+  log("RESULT",`Success: ${success}`)
+  log("RESULT",`Failed: ${failed}`)
 }
-export async function runEngine(){
 
-  const keywords = ["seo","ai","tools","marketing","ranking"]
-
-  const batch = keywords.slice(0, 5)
-
-  await Promise.all(
-    batch.map(k => generateBlogs("general", [k]))
-  )
-for(const topic in clusters){
-  const keywords = clusters[topic]
-
-  await generateBlogs(topic, keywords)
-}
-}
-// ================= DIRECT RUN FIX =================
+// ================= AUTO RUN =================
 if (process.argv[1].includes("core-engine.js")) {
   runCore()
 }

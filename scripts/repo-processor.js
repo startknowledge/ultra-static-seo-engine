@@ -6,6 +6,7 @@ import { generateBlogs } from "../scripts/generator-blog.js"
 import { generatePages } from "../scripts/generator-pages.js"
 import { runLinkEngine } from "../scripts/link-engine.js"
 import { generateSEOFiles } from "../scripts/seo-engine.js"
+import map from "../data/content-map.json" assert { type: "json" }
 
 // phase 4
 import { detectNiche } from "../scripts/niche-engine.js"
@@ -28,9 +29,18 @@ function cleanDir(dir){
 
 export async function processRepo(repo){
 
+  const slug = repo.toLowerCase().replace(/[^a-z0-9]/g,"-")
   const temp = `temp-${repo.replace("/","-")}`
 
+  // ❌ duplicate रोकना
+  if(map[slug]){
+    console.log("⏩ Skip existing:", slug)
+    return false
+  }
+
   try{
+
+    console.log("⚙️ Processing:", repo)
 
     // ================= CLONE =================
     execSync(
@@ -38,16 +48,15 @@ export async function processRepo(repo){
       {stdio:"inherit"}
     )
 
-    // ================= ENTER =================
     process.chdir(temp)
 
-    // ================= TEMPLATE FIX =================
+    // ================= TEMPLATE =================
     if(!fs.existsSync("templates")){
       fs.cpSync("../templates","templates",{recursive:true})
       console.log("📦 Templates injected")
     }
 
-    // ================= READ =================
+    // ================= SAMPLE =================
     const contentSample = fs.existsSync("index.html")
       ? fs.readFileSync("index.html","utf8")
       : ""
@@ -55,13 +64,9 @@ export async function processRepo(repo){
     // ================= NICHE =================
     const niche = detectNiche(repo, contentSample)
 
-    // base keywords
     const base = baseKeywords(niche)
-
-    // AI keywords
     const extra = await aiKeywords(niche)
 
-    // merge + remove duplicates
     const keywords = [...new Set([
       ...(Array.isArray(base) ? base : []),
       ...(Array.isArray(extra) ? extra : [])
@@ -71,30 +76,35 @@ export async function processRepo(repo){
     console.log("📊 Keywords:", keywords)
 
     // ================= STRUCTURE =================
-    if(!fs.existsSync("blog")){
-      fs.mkdirSync("blog")
-    }
-
-    if(!fs.existsSync("pages")){
-      fs.mkdirSync("pages")
-    }
+    if(!fs.existsSync("blog")) fs.mkdirSync("blog")
+    if(!fs.existsSync("pages")) fs.mkdirSync("pages")
 
     // ================= GENERATE =================
     await generateBlogs(niche, keywords)
     await generatePages()
+
     runLinkEngine()
     generateSEOFiles()
 
-    // ================= SEO FIX =================
+    // ================= SEO =================
     crawlCheck()
 
-    // ================= NETWORK (PHASE 6) =================
-    createBacklinks()
-    simulateTraffic()
+    // ⚠️ OPTIONAL (RECOMMENDED OFF)
+    // simulateTraffic() ❌ risky
+    // createBacklinks() ⚠️ control karo
+
     pingSearchEngines()
 
-    // ================= INDEX =================
-    updateIndex()
+    // ================= SAVE MAP =================
+    map[slug] = {
+      pillar: `/pages/${slug}.html`,
+      blogs: []
+    }
+
+    fs.writeFileSync(
+      "../data/content-map.json",
+      JSON.stringify(map, null, 2)
+    )
 
     // ================= PUSH =================
     execSync(`
@@ -113,64 +123,16 @@ export async function processRepo(repo){
   // ================= CLEAN =================
   process.chdir("../")
   cleanDir(temp)
+
+  return true
 }
 
 // ================= RUN =================
 export async function runRepoProcessor(){
   console.log("⚙️ Repo processing...")
-  runLinkEngine()
-  console.log("✅ Repo processed")
 }
 
-// ================= INDEX =================
-function updateIndex(){
-
-  let html = fs.existsSync("index.html")
-    ? fs.readFileSync("index.html","utf8")
-    : baseIndex()
-
-  const blogs = fs.existsSync("blog")
-    ? fs.readdirSync("blog").filter(f => f.endsWith(".html"))
-    : []
-
-  let list = ""
-
-  blogs.slice(0,10).forEach(file=>{
-    const slug = file.replace(".html","")
-    list += `<li><a href="/blog/${slug}.html">${slug}</a></li>`
-  })
-
-  html = html.replace("{{blogs}}",list)
-
-  fs.writeFileSync("index.html",html)
-}
-
-// ================= BASE =================
-function baseIndex(){
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-<title>SEO Engine</title>
-<style>
-body{font-family:sans-serif;background:#111;color:#fff}
-a{color:#0af}
-</style>
-</head>
-<body>
-
-<h1>Auto SEO Site</h1>
-
-<ul>
-{{blogs}}
-</ul>
-
-</body>
-</html>
-`
-}
-
-// ================= AUTO RUN =================
+// auto run
 if (process.argv[1].includes("repo-processor.js")) {
   runRepoProcessor()
 }
