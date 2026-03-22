@@ -23,7 +23,6 @@ jobs:
       GEMINI_API_KEY4: ${{ secrets.GEMINI_API_KEY4 }}
       GEMINI_API_KEY5: ${{ secrets.GEMINI_API_KEY5 }}
       GEMINI_API_KEY6: ${{ secrets.GEMINI_API_KEY6 }}
-      SITE_URL: ${{ secrets.SITE_URL }}
       DETECT_REPO_TOKEN: ${{ secrets.DETECT_REPO_TOKEN }}
 
     steps:
@@ -44,16 +43,8 @@ jobs:
       run: npm ci
 
     # ================= CORE ENGINE =================
-    - name: 🧠 Run Core Engine (Main Brain)
+    - name: 🧠 Run Core Engine (Main System)
       run: node scripts/core-engine.js
-
-     # ================= GENERATE =================
-    - name: 🚀 Generate Blogs
-      run: node scripts/generate.js
-
-    # ================= SELF LEARNING =================
-    - name: 🧠 Self Learning
-      run: node scripts/self-learn-runner.js
 
     # ================= MULTI REPO =================
     - name: 🌐 Multi Repo Engine
@@ -65,56 +56,12 @@ jobs:
           echo "⚠️ Skipped: multi-repo-engine.js not found"
         fi
 
-    # ================= ADVANCED MODULES =================
-    - name: ⚙️ Advanced Engines (Self Optimization)
-      run: |
-        ADV_FILES=(
-          "keyword-engine.js"
-          "niche-engine.js"
-          "quality-engine.js"
-          "ranking-engine.js"
-          "ctr-engine.js"
-          "traffic-engine.js"
-          "backlink-engine.js"
-          "ping-engine.js"
-        )
-
-        for file in "${ADV_FILES[@]}"; do
-          if [ -f "scripts/$file" ]; then
-            echo "▶ Running $file"
-            node "scripts/$file"
-          else
-            echo "⚠️ Skipping $file"
-          fi
-        done
-
-    # ================= GENERATORS =================
-    - name: 🏗 Content & Page Generators
-      run: |
-        GEN_FILES=(
-          "generator-blog.js"
-          "generator-pages.js"
-          "generate-images.js"
-        )
-
-        for file in "${GEN_FILES[@]}"; do
-          if [ -f "scripts/$file" ]; then
-            echo "▶ Running $file"
-            node "scripts/$file"
-          else
-            echo "⚠️ Skipping $file"
-          fi
-        done
-
     # ================= SEO FILES =================
-    - name: 📊 SEO System (Sitemap + RSS + Links)
+    - name: 📊 Generate SEO Files
       run: |
         SEO_FILES=(
           "generate-sitemap.js"
           "generate-rss.js"
-          "generate-html-sitemap.js"
-          "generate-image-sitemap.js"
-          "generate-favicon.js"
         )
 
         for file in "${SEO_FILES[@]}"; do
@@ -125,14 +72,6 @@ jobs:
             echo "⚠️ Skipping $file"
           fi
         done
-
-    # ================= INDEX AUTO UPDATE =================
-    - name: 🧩 Update Index (Auto Navigation + Blog Injection)
-      run: |
-        if [ -f scripts/core-engine.js ]; then
-          echo "🔁 Updating Index via Core Engine"
-          node scripts/core-engine.js
-        fi
 
     # ================= COMMIT =================
     - name: 💾 Commit & Push Changes
@@ -145,6 +84,6 @@ jobs:
         if git diff --cached --quiet; then
           echo "🟢 No changes to commit"
         else
-          git commit -m "🚀 ultra autonomous seo update"
+          git commit -m "🚀 ultra seo update"
           git push
         fi
