@@ -1,6 +1,7 @@
 import fs from "fs"
 import { render } from "../core/template-engine.js"
 import { generateAI } from "../core/ai-engine.js"
+import { validateContent } from "../scripts/content-quality.js"
 
 const BLOG_DIR = "blog"
 

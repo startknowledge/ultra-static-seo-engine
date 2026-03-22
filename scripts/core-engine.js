@@ -5,6 +5,7 @@ import { processRepo } from "./repo-processor.js"
 import { getAllRepos } from "./get-all-repos.js"
 import { generateBlogs } from "./generator-blog.js"
 import { runLinkEngine } from "./link-engine.js"
+import clusters from "../data/keyword-cluster.json" assert { type: "json" }
 
 const TOKEN = process.env.DETECT_REPO_TOKEN
 
@@ -90,7 +91,21 @@ export async function runCore(){
   log("DONE",`Failed: ${failed}`)
 
 }
+export async function runEngine(){
 
+  const keywords = ["seo","ai","tools","marketing","ranking"]
+
+  const batch = keywords.slice(0, 5)
+
+  await Promise.all(
+    batch.map(k => generateBlogs("general", [k]))
+  )
+for(const topic in clusters){
+  const keywords = clusters[topic]
+
+  await generateBlogs(topic, keywords)
+}
+}
 // ================= DIRECT RUN FIX =================
 if (process.argv[1].includes("core-engine.js")) {
   runCore()
