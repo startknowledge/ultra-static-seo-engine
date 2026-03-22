@@ -2,14 +2,15 @@ import { processRepo } from "./repo-processor.js"
 import { getAllRepos } from "./get-all-repos.js"
 import { generateBlogs } from "./generator-blog.js"
 import { runLinkEngine } from "./link-engine.js"
-import clusters from "../data/keyword-cluster.json" assert { type: "json" }
+import clusters from "../data/keyword-cluster.json" with { type: "json" }
 
 const TOKEN = process.env.DETECT_REPO_TOKEN
 
 // ================= CONFIG =================
 const CONFIG = {
   MAX_REPOS: 50,
-  RETRY: 2
+  RETRY: 2,
+  CLUSTER_LIMIT: 2 // 🔥 limit for testing (avoid timeout)
 }
 
 // ================= LOGGER =================
@@ -45,18 +46,28 @@ export async function runCore(){
 
   console.log("🚀 Core Engine Start")
 
-  // 🔥 STEP 1: Cluster-based blog generation
-  for(const topic in clusters){
+  // 🔥 STEP 1: Controlled cluster execution (prevents timeout)
+  const clusterKeys = Object.keys(clusters).slice(0, CONFIG.CLUSTER_LIMIT)
+
+  for(const topic of clusterKeys){
 
     const keywords = clusters[topic]
 
     log("CLUSTER", topic)
 
-    await generateBlogs(topic, keywords)
+    try{
+      await generateBlogs(topic, keywords)
+    }catch(err){
+      log("ERROR", `Blog generation failed for ${topic}`)
+    }
   }
 
-  // 🔥 STEP 2: Internal linking
-  runLinkEngine()
+  // 🔥 STEP 2: Internal linking (only if blogs exist)
+  try{
+    runLinkEngine()
+  }catch(err){
+    log("ERROR", "Link engine failed")
+  }
 
   // 🔥 STEP 3: Repo automation
   if(!TOKEN){

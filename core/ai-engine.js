@@ -101,7 +101,7 @@ RULES:
 
     const result = await Promise.race([
       model.generateContent(prompt),
-      timeoutPromise(20000)
+      timeoutPromise(40000)
     ])
 
     let text = result.response.text()

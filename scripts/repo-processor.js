@@ -6,7 +6,7 @@ import { generateBlogs } from "../scripts/generator-blog.js"
 import { generatePages } from "../scripts/generator-pages.js"
 import { runLinkEngine } from "../scripts/link-engine.js"
 import { generateSEOFiles } from "../scripts/seo-engine.js"
-import map from "../data/content-map.json" assert { type: "json" }
+import clusters from "../data/keyword-cluster.json" with { type: "json" }
 
 // phase 4
 import { detectNiche } from "../scripts/niche-engine.js"
