@@ -78,7 +78,7 @@ jobs:
         git config --global user.name "seo-bot"
         git config --global user.email "bot@seo.com"
 
-        git add blog pages index.html data
+        git add .
 
         if git diff --cached --quiet; then
           echo "🟢 No changes to commit"
