@@ -1,6 +1,6 @@
 import fs from "fs"
 import { render } from "../core/template-engine.js"
-import { generateAI } from "../core/ai-engine.js"
+import { generateAI } from "../ai/ai-engine.js"
 import map from "../data/content-map.json" with { type: "json" }
 
 const BLOG_DIR = "blog"

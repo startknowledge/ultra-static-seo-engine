@@ -1,0 +1,10 @@
+{
+  "seo": {
+    "pillar": "seo-guide.html",
+    "clusters": [
+      "on-page-seo.html",
+      "off-page-seo.html",
+      "technical-seo.html"
+    ]
+  }
+}

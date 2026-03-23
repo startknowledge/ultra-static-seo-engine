@@ -5,14 +5,22 @@ import { generateBlogs } from "../scripts/generator-blog.js"
 import { generatePages } from "../scripts/generator-pages.js"
 import { runLinkEngine } from "../scripts/link-engine.js"
 import { generateSEOFiles } from "../scripts/seo-engine.js"
+
 import map from "../data/content-map.json" with { type: "json" }
 
 import { detectNiche } from "../scripts/niche-engine.js"
 import { expand as aiKeywords } from "../ai/keyword-engine.js"
 import { generateKeywords as baseKeywords } from "../scripts/keyword-engine.js"
-import { crawlCheck } from "../scripts/crawl-engine.js"
 
+import { crawlCheck } from "../scripts/crawl-engine.js"
 import { pingSearchEngines } from "../scripts/ping-engine.js"
+
+import { analyzePages } from "../core/learning-engine.js"
+import { rewriteContent } from "../scripts/rewrite-engine.js"
+import { smartLinking } from "../scripts/link-engine-v2.js"
+import { shouldRefresh } from "../scripts/refresh-engine.js"
+
+import { OPTIMIZE_MODE } from "../config.js"
 
 const TOKEN = process.env.DETECT_REPO_TOKEN
 
@@ -22,6 +30,24 @@ function cleanDir(dir){
   }
 }
 
+function getAllPages(){
+  const pages = []
+
+  if(fs.existsSync("blog")){
+    fs.readdirSync("blog").forEach(f=>{
+      pages.push(`blog/${f}`)
+    })
+  }
+
+  if(fs.existsSync("pages")){
+    fs.readdirSync("pages").forEach(f=>{
+      pages.push(`pages/${f}`)
+    })
+  }
+
+  return pages
+}
+
 export async function processRepo(repo){
 
   const slug = repo.toLowerCase().replace(/[^a-z0-9]/g,"-")
@@ -29,10 +55,6 @@ export async function processRepo(repo){
 
   if(fs.existsSync(temp)){
     execSync(`rm -rf ${temp}`)
-  }
-
-  if(map[slug]){
-    console.log("♻️ Reprocessing:", slug)
   }
 
   const rootDir = process.cwd()
@@ -48,45 +70,66 @@ export async function processRepo(repo){
 
     process.chdir(temp)
 
-    // ✅ TEMPLATE FIX
+    // TEMPLATE FIX
     if(!fs.existsSync("templates") && fs.existsSync(`${rootDir}/templates`)){
       fs.cpSync(`${rootDir}/templates`, "templates", {recursive:true})
     }
 
-    const contentSample = fs.existsSync("index.html")
-      ? fs.readFileSync("index.html","utf8")
-      : ""
+    // ================= NORMAL MODE =================
+    if(!OPTIMIZE_MODE){
 
-    const niche = detectNiche(repo, contentSample)
+      const contentSample = fs.existsSync("index.html")
+        ? fs.readFileSync("index.html","utf8")
+        : ""
 
-    const base = baseKeywords(niche)
-    const extra = await aiKeywords(niche)
+      const niche = detectNiche(repo, contentSample)
 
-    const keywords = [...new Set([...(base||[]), ...(extra||[])])]
+      const base = baseKeywords(niche)
+      const extra = await aiKeywords(niche)
 
-    if(!fs.existsSync("blog")) fs.mkdirSync("blog")
-    if(!fs.existsSync("pages")) fs.mkdirSync("pages")
+      const keywords = [...new Set([...(base||[]), ...(extra||[])])]
 
-    await generateBlogs(niche, keywords)
-    await generatePages()
+      if(!fs.existsSync("blog")) fs.mkdirSync("blog")
+      if(!fs.existsSync("pages")) fs.mkdirSync("pages")
 
-    runLinkEngine()
-    generateSEOFiles()
+      await generateBlogs(niche, keywords)
+      await generatePages()
 
-    crawlCheck()
-    pingSearchEngines()
+      runLinkEngine()
+      generateSEOFiles()
 
-    map[slug] = {
-      pillar: `/pages/${slug}.html`,
-      blogs: []
+      crawlCheck()
+      pingSearchEngines()
+
+      map[slug] = {
+        pillar: `/pages/${slug}.html`,
+        blogs: []
+      }
+
+      fs.writeFileSync(
+        `${rootDir}/data/content-map.json`,
+        JSON.stringify(map, null, 2)
+      )
     }
 
-    // ✅ FIXED PATH
-    fs.writeFileSync(
-      `${rootDir}/data/content-map.json`,
-      JSON.stringify(map, null, 2)
-    )
+    // ================= OPTIMIZE MODE =================
+    if(OPTIMIZE_MODE){
 
+      console.log("⚡ OPTIMIZE MODE ACTIVE")
+
+      const pages = getAllPages()
+
+      const { rewriteQueue } = analyzePages(pages)
+
+      for (const page of rewriteQueue) {
+        if (shouldRefresh(page.page)) {
+          await rewriteContent(page)
+          smartLinking(page.page)
+        }
+      }
+    }
+
+    // ================= COMMIT =================
     execSync(`
       git config user.name "seo-bot"
       git config user.email "bot@seo.com"

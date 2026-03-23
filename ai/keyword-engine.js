@@ -1,4 +1,4 @@
-import { generateAI } from "../core/ai-engine.js"
+import { generateAI } from "./ai-engine.js"
 
 export async function expand(niche) {
 
