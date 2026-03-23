@@ -1,69 +1,50 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
-// ================= CONFIG =================
-const MODELS = [
-  "gemini-2.0-flash",
-  "gemini-1.5-flash"
-]
+const model = genAI.getGenerativeModel({
+  model: "gemini-2.0-flash"
+})
 
-function getModel(){
-  return MODELS[Math.floor(Math.random() * MODELS.length)]
-}
+const result = await model.generateContent(prompt)
+const text = result.response.text()
 
-// ================= MAIN =================
 export async function generateAI(niche="", keywords=[], existingSlugs=[]){
 
   const prompt = `
-Act as Ultra Advanced SEO AI Engine.
+Generate 3 SEO blog posts in JSON.
 
 Niche: ${niche}
+Keywords: ${keywords.join(",")}
+Avoid: ${existingSlugs.join(",")}
 
-Keywords:
-${keywords.join(",")}
-
-Avoid duplicate topics:
-${existingSlugs.join(",")}
-
-Generate 3 HIGH QUALITY blog posts.
-
-STRICT JSON FORMAT:
+Format:
 [
 {
-"title":"SEO optimized title",
-"description":"meta description",
-"content":"<p>HTML content</p>",
-"keywords":["k1","k2"]
+"title":"",
+"description":"",
+"content":"<p>...</p>",
+"keywords":[]
 }
 ]
 
-RULES:
-- Minimum 1200 words
-- Use <h2>, <h3>, <p>, <ul>, <strong>
+Rules:
+- 1200+ words
+- HTML only
 - No markdown
-- Only JSON output
 `
 
-  for(let attempt = 0; attempt < 5; attempt++){
+  for(let i=0;i<5;i++){
     try{
 
-      const key = process.env.GEMINI_API_KEY1
-
-      if(!key){
-        console.log("⚠️ No API key")
-        return []
-      }
-
-      const genAI = new GoogleGenerativeAI(key)
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY1)
 
       const model = genAI.getGenerativeModel({
-        model: getModel()   // ✅ AUTO SWITCH MODEL
+        model: getModel()
       })
 
       const result = await model.generateContent(prompt)
 
       const text = result.response.text()
 
-      // 🔥 SAFE JSON PARSE
       const clean = text
         .replace(/```json/g,"")
         .replace(/```/g,"")
@@ -71,13 +52,11 @@ RULES:
 
       const data = JSON.parse(clean)
 
-      if(Array.isArray(data)){
-        return data
-      }
+      if(Array.isArray(data)) return data
 
-    }catch(err){
-      console.log(`⚠️ Retry ${attempt + 1}:`, err.message)
-      await new Promise(r => setTimeout(r, 2000 * (attempt+1)))
+    }catch(e){
+      console.log("⚠️ Retry:", i+1, e.message)
+      await new Promise(r=>setTimeout(r,2000))
     }
   }
 
