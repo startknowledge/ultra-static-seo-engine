@@ -55,10 +55,10 @@ export async function generateBlogs(niche="", keywords=[]){
 
   for(const blog of blogs){
 
-    if(!validateContent(blog.content)){
-      console.log("❌ Skipped low quality")
-      continue
-    }
+    if(!blog.content || blog.content.length < 500){
+  console.log("❌ Too small content")
+  continue
+}
 
     if(!blog.title || !blog.content) continue
 
