@@ -2,9 +2,9 @@ import { getAllRepos } from "./get-all-repos.js"
 import { processRepo } from "./repo-processor.js"
 
 const CONFIG = {
-  BATCH_SIZE: 2,     // 🔥 reduce load
-  DELAY: 8000,       // 8 sec gap
-  RETRY: 2
+  BATCH_SIZE: 1,
+  DELAY: 10000,
+  RETRY: 1
 }
 
 function sleep(ms){
@@ -15,8 +15,7 @@ async function safeProcess(repo){
 
   for(let i=0;i<CONFIG.RETRY;i++){
     try{
-      const ok = await processRepo(repo)
-      return ok
+      return await processRepo(repo)
     }catch(e){
       console.log("🔁 Retry:", repo)
       await sleep(3000)
@@ -29,11 +28,9 @@ async function safeProcess(repo){
 
 export async function runMultiRepo(){
 
-  console.log("🚀 PHASE 6: Multi Repo Engine Start")
+  console.log("🚀 PHASE 6 Start")
 
   const repos = await getAllRepos()
-
-  console.log("📦 Total repos:", repos.length)
 
   let success = 0
   let failed = 0
@@ -42,30 +39,23 @@ export async function runMultiRepo(){
 
     const batch = repos.slice(i, i + CONFIG.BATCH_SIZE)
 
-    console.log(`⚡ Batch ${i / CONFIG.BATCH_SIZE + 1}`)
-
-    // ✅ NO PARALLEL (IMPORTANT)
     for(const repo of batch){
 
       const ok = await safeProcess(repo)
 
-      if(ok) success++
-      else failed++
+      ok ? success++ : failed++
 
-      // 🔥 small delay between repos
       await sleep(3000)
     }
 
-    console.log(`📊 Progress: ${success} success / ${failed} failed`)
+    console.log(`📊 ${success} success / ${failed} failed`)
 
     await sleep(CONFIG.DELAY)
   }
 
-  console.log("✅ Multi Repo Done")
   console.log("🎯 Final:", {success, failed})
 }
 
-// auto run
 if (process.argv[1].includes("multi-repo-engine.js")) {
   runMultiRepo()
 }

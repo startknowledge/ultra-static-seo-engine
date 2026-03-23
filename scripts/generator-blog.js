@@ -17,7 +17,6 @@ function optimizeTitle(title){
 }
 
 function injectAds(content){
-
   const adTop = `<div class="ad ad-top">Ad Space Top</div>`
   const adMid = `<div class="ad ad-mid">Ad Space Middle</div>`
   const adBottom = `<div class="ad ad-bottom">Ad Space Bottom</div>`
@@ -34,18 +33,13 @@ function injectAds(content){
 }
 
 function predictRanking(content){
-
   let score = 0
-
   if(content.includes("<h2>")) score += 20
   if(content.length > 1500) score += 30
   if(content.includes("<ul>")) score += 10
   if(content.includes("<strong>")) score += 10
-
   return score
 }
-
-// ================= MAIN =================
 
 export async function generateBlogs(niche="", keywords=[]){
 
@@ -61,7 +55,6 @@ export async function generateBlogs(niche="", keywords=[]){
 
   for(const blog of blogs){
 
-    // ✅ FIXED (article → blog.content)
     if(!validateContent(blog.content)){
       console.log("❌ Skipped low quality")
       continue
@@ -86,11 +79,11 @@ export async function generateBlogs(niche="", keywords=[]){
       continue
     }
 
-    const html = render("../templates/blog-template.html",{
-      title: title,
+    const html = render("templates/blog-template.html",{
+      title,
       description: blog.description || title,
-      content: content,
-      slug: slug,
+      content,
+      slug,
       keywords: blog.keywords?.join(",") || "",
       image: `https://source.unsplash.com/800x400/?${slug}`,
       date: new Date().toISOString()
@@ -102,7 +95,6 @@ export async function generateBlogs(niche="", keywords=[]){
   }
 }
 
-// direct run
 if (process.argv[1].includes("generator-blog.js")) {
   generateBlogs("general", ["seo","ai","tools"])
 }
