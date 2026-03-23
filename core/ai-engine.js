@@ -11,15 +11,13 @@ const keys = [
 ].filter(Boolean)
 
 function getKey(){
-  return keys[Math.floor(Math.random()*keys.length)]
+  return keys[Math.floor(Math.random() * keys.length)]
 }
 
-// ✅ DELAY SYSTEM
 function sleep(ms){
   return new Promise(r => setTimeout(r, ms))
 }
 
-// ✅ CLEAN JSON
 function safeJSON(text){
   try{
     return JSON.parse(text)
@@ -29,7 +27,6 @@ function safeJSON(text){
         .replace(/```json/g,"")
         .replace(/```/g,"")
         .trim()
-
       return JSON.parse(cleaned)
     }catch{
       log("❌ JSON Parse Failed")
@@ -38,13 +35,10 @@ function safeJSON(text){
   }
 }
 
-// ✅ KEYWORD EXPANSION
 function expandKeywords(base=[]){
   const extra = ["best","2026","guide","tools","free"]
   return [...new Set([...base, ...extra])]
 }
-
-// ================= MAIN =================
 
 export async function generateAI(niche="", keywords=[], existingSlugs=[]){
 
@@ -54,9 +48,7 @@ export async function generateAI(niche="", keywords=[], existingSlugs=[]){
 Act as Ultra Advanced SEO AI Engine.
 
 Niche: ${niche}
-
-Keywords:
-${finalKeywords.join(",")}
+Keywords: ${finalKeywords.join(",")}
 
 Avoid duplicate topics:
 ${existingSlugs.join(",")}
@@ -80,49 +72,32 @@ RULES:
 - Only JSON output
 `
 
-  // 🔥 RETRY LOOP WITH DELAY
-  for(let attempt=0; attempt<5; attempt++){
-
+  for(let attempt = 0; attempt < 5; attempt++){
     try{
 
       const key = getKey()
-
-      if(!key){
-        log("⚠️ No API key → fallback")
-        return fallback(niche, keywords)
-      }
+      if(!key) return fallback(niche, keywords)
 
       const genAI = new GoogleGenerativeAI(key)
 
       const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash"
+        model: "gemini-1.5-flash"
       })
 
-      // ✅ FIXED API CALL
-      const result = await model.generateContent({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt }]
-          }
-        ]
-      })
+      const result = await model.generateContent(prompt)
 
       const text = result.response.text()
 
       const data = safeJSON(text)
 
-      if(Array.isArray(data) && data.length > 0){
+      if(Array.isArray(data) && data.length){
         return data
       }
 
       log("⚠️ Empty AI response")
 
     }catch(err){
-
-      log(`⚠️ Rate limit retry... ${attempt+1}`)
-
-      // ✅ EXPONENTIAL DELAY
+      log(`⚠️ Retry ${attempt + 1}: ${err.message}`)
       await sleep(2000 * (attempt + 1))
     }
   }
@@ -130,15 +105,18 @@ RULES:
   return fallback(niche, keywords)
 }
 
-// ================= FALLBACK =================
-
 function fallback(niche, keywords){
   return [
     {
       title: `${keywords[0] || "SEO"} Guide 2026`,
-      description: "SEO Guide fallback",
-      keywords: keywords,
-      content: `<p>Fallback content for ${niche}</p>`
+      description: "Auto fallback content",
+      keywords,
+      content: `<p>Complete guide about ${niche}. This is fallback content with SEO structure.</p>
+      <h2>Introduction</h2>
+      <p>This article covers ${keywords.join(", ")}</p>
+      <h2>Details</h2>
+      <ul><li>Point 1</li><li>Point 2</li></ul>
+      <p>More content...</p>`
     }
   ]
 }

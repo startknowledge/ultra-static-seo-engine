@@ -1,7 +1,7 @@
 import fs from "fs"
 import { render } from "../core/template-engine.js"
 import { generateAI } from "../core/ai-engine.js"
-import { validateContent } from "./content-quality.js"
+import map from "../data/content-map.json" with { type: "json" }
 
 const BLOG_DIR = "blog"
 
@@ -35,7 +35,7 @@ function injectAds(content){
 function predictRanking(content){
   let score = 0
   if(content.includes("<h2>")) score += 20
-  if(content.length > 1500) score += 30
+  if(content.length > 800) score += 30   // 🔥 FIXED
   if(content.includes("<ul>")) score += 10
   if(content.includes("<strong>")) score += 10
   return score
@@ -48,35 +48,35 @@ export async function generateBlogs(niche="", keywords=[]){
   }
 
   const existing = fs.readdirSync(BLOG_DIR)
-    .filter(f => f.endsWith(".html") && !f.includes(".gitkeep"))
+    .filter(f => f.endsWith(".html"))
     .map(f=>f.replace(".html",""))
 
   const blogs = await generateAI(niche, keywords, existing)
 
   for(const blog of blogs){
 
-    if(!blog.content || blog.content.length < 500){
-  console.log("❌ Too small content")
-  continue
-}
-
     if(!blog.title || !blog.content) continue
+
+    if(blog.content.length < 300){
+      console.log("❌ Too small content")
+      continue
+    }
 
     let title = optimizeTitle(blog.title)
     let content = injectAds(blog.content)
 
     const score = predictRanking(content)
 
-    if(score < 40){
+    if(score < 30){
       console.log("⚠️ Low quality skipped:", title)
       continue
     }
 
     const slug = slugify(title)
 
-    if(existing.includes(slug)){
-      console.log("⏩ Skip duplicate:", slug)
-      continue
+    // 🔥 REPROCESS ENABLE
+    if(map[slug]){
+      console.log("♻️ Reprocessing:", slug)
     }
 
     const html = render("templates/blog-template.html",{
@@ -93,8 +93,4 @@ export async function generateBlogs(niche="", keywords=[]){
 
     console.log("✅ Blog:",slug)
   }
-}
-
-if (process.argv[1].includes("generator-blog.js")) {
-  generateBlogs("general", ["seo","ai","tools"])
 }
