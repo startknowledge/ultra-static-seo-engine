@@ -47,14 +47,13 @@ jobs:
       run: node scripts/core-engine.js
 
     # ================= MULTI REPO =================
-    - name: 🌐 Multi Repo Engine
-      run: |
-        if [ -f scripts/multi-repo-engine.js ]; then
-          echo "🚀 Running Multi Repo Engine"
-          node scripts/multi-repo-engine.js
-        else
-          echo "⚠️ Skipped: multi-repo-engine.js not found"
-        fi
+    #- name: 🌐 Multi Repo Engine
+     # run: |
+      #  if [ -f scripts/multi-repo-engine.js ]; then
+       #  node scripts/multi-repo-engine.js
+       # else
+        #  echo "⚠️ Skipped: multi-repo-engine.js not found"
+        #fi
 
     # ================= SEO FILES =================
     - name: 📊 Generate SEO Files

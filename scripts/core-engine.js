@@ -3,7 +3,6 @@ import { getAllRepos } from "./get-all-repos.js"
 import { generateBlogs } from "./generator-blog.js"
 import { runLinkEngine } from "./link-engine.js"
 import clusters from "../data/keyword-cluster.json" with { type: "json" }
-
 const TOKEN = process.env.DETECT_REPO_TOKEN
 
 // ================= CONFIG =================

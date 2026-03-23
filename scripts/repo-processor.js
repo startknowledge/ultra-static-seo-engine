@@ -30,8 +30,13 @@ function cleanDir(dir){
 export async function processRepo(repo){
 
   const slug = repo.toLowerCase().replace(/[^a-z0-9]/g,"-")
+  //TEMP CLEAN
   const temp = `temp-${repo.replace("/","-")}`
 
+    // ✅ CLEAN BEFORE CLONE
+    if(fs.existsSync(temp)){
+      execSync(`rm -rf ${temp}`)
+    }
   // ❌ duplicate रोकना
   if(map[slug]){
     console.log("⏩ Skip existing:", slug)

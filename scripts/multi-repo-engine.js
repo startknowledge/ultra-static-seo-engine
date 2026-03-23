@@ -2,8 +2,8 @@ import { getAllRepos } from "./get-all-repos.js"
 import { processRepo } from "./repo-processor.js"
 
 const CONFIG = {
-  BATCH_SIZE: 5,
-  DELAY: 5000, // 5 sec gap (avoid API overload)
+  BATCH_SIZE: 2,     // 🔥 reduce load
+  DELAY: 8000,       // 8 sec gap
   RETRY: 2
 }
 
@@ -19,6 +19,7 @@ async function safeProcess(repo){
       return ok
     }catch(e){
       console.log("🔁 Retry:", repo)
+      await sleep(3000)
     }
   }
 
@@ -43,11 +44,17 @@ export async function runMultiRepo(){
 
     console.log(`⚡ Batch ${i / CONFIG.BATCH_SIZE + 1}`)
 
-    const results = await Promise.all(
-      batch.map(repo => safeProcess(repo))
-    )
+    // ✅ NO PARALLEL (IMPORTANT)
+    for(const repo of batch){
 
-    results.forEach(r => r ? success++ : failed++)
+      const ok = await safeProcess(repo)
+
+      if(ok) success++
+      else failed++
+
+      // 🔥 small delay between repos
+      await sleep(3000)
+    }
 
     console.log(`📊 Progress: ${success} success / ${failed} failed`)
 

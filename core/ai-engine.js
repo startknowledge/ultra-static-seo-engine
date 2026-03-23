@@ -1,5 +1,4 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
-import { retry } from "./retry.js"
 import { log } from "./logger.js"
 
 const keys = [
@@ -15,7 +14,12 @@ function getKey(){
   return keys[Math.floor(Math.random()*keys.length)]
 }
 
-// 🔥 CLEAN JSON PARSER
+// ✅ DELAY SYSTEM
+function sleep(ms){
+  return new Promise(r => setTimeout(r, ms))
+}
+
+// ✅ CLEAN JSON
 function safeJSON(text){
   try{
     return JSON.parse(text)
@@ -34,41 +38,19 @@ function safeJSON(text){
   }
 }
 
-// 🔥 KEYWORD EXPANSION
+// ✅ KEYWORD EXPANSION
 function expandKeywords(base=[]){
-  const extra = ["best","2026","guide","tools","free","advanced","strategy"]
+  const extra = ["best","2026","guide","tools","free"]
   return [...new Set([...base, ...extra])]
-}
-
-// 🔥 TIMEOUT WRAPPER
-function timeoutPromise(ms){
-  return new Promise((_, reject)=>
-    setTimeout(()=>reject(new Error("Timeout")), ms)
-  )
 }
 
 // ================= MAIN =================
 
 export async function generateAI(niche="", keywords=[], existingSlugs=[]){
 
-  return retry(async ()=>{
+  const finalKeywords = expandKeywords(keywords)
 
-    const key = getKey()
-
-    if(!key){
-      log("⚠️ No API key → fallback")
-      return fallback(niche, keywords)
-    }
-
-    const genAI = new GoogleGenerativeAI(key)
-
-    const model = genAI.getGenerativeModel({
-      model:"gemini-2.5-flash"
-    })
-
-    const finalKeywords = expandKeywords(keywords)
-
-    const prompt = `
+  const prompt = `
 Act as Ultra Advanced SEO AI Engine.
 
 Niche: ${niche}
@@ -94,59 +76,69 @@ STRICT JSON FORMAT:
 RULES:
 - Minimum 1200 words
 - Use <h2>, <h3>, <p>, <ul>, <strong>
-- Add internal links naturally
 - No markdown
 - Only JSON output
 `
 
-    const result = await Promise.race([
-      model.generateContent(prompt),
-      timeoutPromise(40000)
-    ])
+  // 🔥 RETRY LOOP WITH DELAY
+  for(let attempt=0; attempt<5; attempt++){
 
-    let text = result.response.text()
+    try{
 
-    const data = safeJSON(text)
+      const key = getKey()
 
-    if(!Array.isArray(data) || data.length === 0){
-      log("⚠️ Empty AI → fallback")
-      return fallback(niche, keywords)
+      if(!key){
+        log("⚠️ No API key → fallback")
+        return fallback(niche, keywords)
+      }
+
+      const genAI = new GoogleGenerativeAI(key)
+
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash"
+      })
+
+      // ✅ FIXED API CALL
+      const result = await model.generateContent({
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt }]
+          }
+        ]
+      })
+
+      const text = result.response.text()
+
+      const data = safeJSON(text)
+
+      if(Array.isArray(data) && data.length > 0){
+        return data
+      }
+
+      log("⚠️ Empty AI response")
+
+    }catch(err){
+
+      log(`⚠️ Rate limit retry... ${attempt+1}`)
+
+      // ✅ EXPONENTIAL DELAY
+      await sleep(2000 * (attempt + 1))
     }
+  }
 
-    return data
-
-  },5)
+  return fallback(niche, keywords)
 }
 
 // ================= FALLBACK =================
 
 function fallback(niche, keywords){
-
   return [
     {
       title: `${keywords[0] || "SEO"} Guide 2026`,
-      description: "Advanced SEO Guide",
+      description: "SEO Guide fallback",
       keywords: keywords,
-      content: `
-<p>Intro about ${niche}</p>
-
-<h2>Main Strategy</h2>
-<p>Detailed content...</p>
-
-<h3>Steps</h3>
-<ul>
-<li>Step 1</li>
-<li>Step 2</li>
-</ul>
-
-<h2>FAQs</h2>
-<ul>
-<li><strong>What is SEO?</strong> Answer</li>
-</ul>
-
-<h2>Conclusion</h2>
-<p>Done</p>
-`
+      content: `<p>Fallback content for ${niche}</p>`
     }
   ]
 }
