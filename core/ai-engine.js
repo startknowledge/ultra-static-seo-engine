@@ -1,54 +1,25 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
-import { log } from "./logger.js"
 
-const keys = [
-  process.env.GEMINI_API_KEY1,
-  process.env.GEMINI_API_KEY2,
-  process.env.GEMINI_API_KEY3,
-  process.env.GEMINI_API_KEY4,
-  process.env.GEMINI_API_KEY5,
-  process.env.GEMINI_API_KEY6
-].filter(Boolean)
+// ================= CONFIG =================
+const MODELS = [
+  "gemini-2.0-flash",
+  "gemini-1.5-flash"
+]
 
-function getKey(){
-  return keys[Math.floor(Math.random() * keys.length)]
+function getModel(){
+  return MODELS[Math.floor(Math.random() * MODELS.length)]
 }
 
-function sleep(ms){
-  return new Promise(r => setTimeout(r, ms))
-}
-
-function safeJSON(text){
-  try{
-    return JSON.parse(text)
-  }catch{
-    try{
-      const cleaned = text
-        .replace(/```json/g,"")
-        .replace(/```/g,"")
-        .trim()
-      return JSON.parse(cleaned)
-    }catch{
-      log("❌ JSON Parse Failed")
-      return []
-    }
-  }
-}
-
-function expandKeywords(base=[]){
-  const extra = ["best","2026","guide","tools","free"]
-  return [...new Set([...base, ...extra])]
-}
-
+// ================= MAIN =================
 export async function generateAI(niche="", keywords=[], existingSlugs=[]){
-
-  const finalKeywords = expandKeywords(keywords)
 
   const prompt = `
 Act as Ultra Advanced SEO AI Engine.
 
 Niche: ${niche}
-Keywords: ${finalKeywords.join(",")}
+
+Keywords:
+${keywords.join(",")}
 
 Avoid duplicate topics:
 ${existingSlugs.join(",")}
@@ -75,48 +46,40 @@ RULES:
   for(let attempt = 0; attempt < 5; attempt++){
     try{
 
-      const key = getKey()
-      if(!key) return fallback(niche, keywords)
+      const key = process.env.GEMINI_API_KEY1
+
+      if(!key){
+        console.log("⚠️ No API key")
+        return []
+      }
 
       const genAI = new GoogleGenerativeAI(key)
 
       const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash"
+        model: getModel()   // ✅ AUTO SWITCH MODEL
       })
 
       const result = await model.generateContent(prompt)
 
       const text = result.response.text()
 
-      const data = safeJSON(text)
+      // 🔥 SAFE JSON PARSE
+      const clean = text
+        .replace(/```json/g,"")
+        .replace(/```/g,"")
+        .trim()
 
-      if(Array.isArray(data) && data.length){
+      const data = JSON.parse(clean)
+
+      if(Array.isArray(data)){
         return data
       }
 
-      log("⚠️ Empty AI response")
-
     }catch(err){
-      log(`⚠️ Retry ${attempt + 1}: ${err.message}`)
-      await sleep(2000 * (attempt + 1))
+      console.log(`⚠️ Retry ${attempt + 1}:`, err.message)
+      await new Promise(r => setTimeout(r, 2000 * (attempt+1)))
     }
   }
 
-  return fallback(niche, keywords)
-}
-
-function fallback(niche, keywords){
-  return [
-    {
-      title: `${keywords[0] || "SEO"} Guide 2026`,
-      description: "Auto fallback content",
-      keywords,
-      content: `<p>Complete guide about ${niche}. This is fallback content with SEO structure.</p>
-      <h2>Introduction</h2>
-      <p>This article covers ${keywords.join(", ")}</p>
-      <h2>Details</h2>
-      <ul><li>Point 1</li><li>Point 2</li></ul>
-      <p>More content...</p>`
-    }
-  ]
+  return []
 }
