@@ -32,8 +32,7 @@ export async function processRepo(repo){
   }
 
   if(map[slug]){
-    console.log("⏩ Skip:", slug)
-    return false
+    console.log("♻️ Reprocessing:", slug)
   }
 
   const rootDir = process.cwd()
