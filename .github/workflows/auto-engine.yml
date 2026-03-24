@@ -11,7 +11,10 @@ permissions:
 concurrency:
   group: ultra-seo-engine
   cancel-in-progress: false
-
+  
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,16 +29,17 @@ jobs:
       DETECT_REPO_TOKEN: ${{ secrets.DETECT_REPO_TOKEN }}
 
     steps:
-
     # ================= CHECKOUT =================
     - name: 📥 Checkout Repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth:  0
 
     # ================= NODE =================
     - name: ⚙️ Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: 18
+        node-version: 20
         cache: npm
 
     # ================= INSTALL =================
