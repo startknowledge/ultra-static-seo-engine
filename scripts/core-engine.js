@@ -34,6 +34,29 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+// ================= FALLBACK =================
+function generateFallback(keyword) {
+  return {
+    title: `${keyword} - Complete Guide`,
+    description: `Learn ${keyword} with this complete SEO guide.`,
+    content: `
+      <h1>${keyword}</h1>
+      <p>This is auto-generated fallback SEO content.</p>
+      <h2>Introduction</h2>
+      <p>${keyword} is important for online growth.</p>
+      <h2>Tips</h2>
+      <ul>
+        <li>Use proper keywords</li>
+        <li>Create helpful content</li>
+        <li>Optimize SEO</li>
+      </ul>
+      <h2>Conclusion</h2>
+      <p>Follow these tips to improve ${keyword}.</p>
+    `,
+    keywords: [keyword]
+  }
+}
+
 // ================= SAFE RUN =================
 async function safeRun(name, fn) {
   try {
@@ -71,11 +94,6 @@ function savePosts(posts) {
 
 // ================= UNIFIED AI ENGINE =================
 async function runUnifiedAI(keyword) {
-  if (API_KEYS.length === 0) {
-    console.error("❌ No API Keys")
-    return null
-  }
-
   const prompt = `
 You are an advanced SEO AI.
 
@@ -95,6 +113,11 @@ Return JSON:
 }
 `
 
+  if (API_KEYS.length === 0) {
+    console.log("⚠️ No API Keys → Using fallback")
+    return generateFallback(keyword)
+  }
+
   for (let i = 0; i < 5; i++) {
     try {
       const key = getRandom(API_KEYS)
@@ -109,7 +132,6 @@ Return JSON:
       const text = result.response.text()
 
       const clean = text.replace(/```json|```/g, "").trim()
-
       const data = JSON.parse(clean)
 
       if (data?.content) {
@@ -119,12 +141,12 @@ Return JSON:
 
     } catch (err) {
       console.log(`⚠️ Retry ${i + 1}:`, err.message)
-      await sleep(5000)
+      await sleep(8000) // delay increase
     }
   }
 
-  console.log("❌ Unified AI Failed")
-  return null
+  console.log("❌ AI Failed → Using fallback")
+  return generateFallback(keyword)
 }
 
 // ================= PHASE 8 =================
@@ -198,11 +220,11 @@ async function runPhase7() {
 
         const aiData = await runUnifiedAI(kw)
 
+        // ✅ ALWAYS SAVE (even fallback)
         if (aiData) {
           savePosts([aiData])
         }
 
-        // RATE LIMIT SAFE
         await sleep(5000)
       }
     }
