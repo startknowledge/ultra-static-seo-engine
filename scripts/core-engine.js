@@ -190,7 +190,10 @@ async function runPhase7() {
       const result = await processKeyword(kw)
       console.log("📊 Decision:", result)
 
-      if (result?.decision === "PUBLISH") {
+      if (
+        result?.decision === "PUBLISH" ||
+        result?.estimatedTraffic >= 20
+      ) {
         console.log(`🚀 Generating content: ${kw}`)
 
         const aiData = await runUnifiedAI(kw)
