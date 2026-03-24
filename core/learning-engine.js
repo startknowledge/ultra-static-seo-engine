@@ -1,7 +1,7 @@
 import { calculateAuthority } from "./authority-engine.js"
 import { AUTHORITY_THRESHOLD } from "../config.js"
 
-export function analyzePages(pages = []) {
+export function runLearningEngine(pages = []) {
   const rewriteQueue = []
   const expandQueue = []
 

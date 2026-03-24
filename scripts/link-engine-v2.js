@@ -4,7 +4,7 @@ const topicalMap = JSON.parse(
   fs.readFileSync(new URL("../data/topical-map.json", import.meta.url))
 )
 
-export function smartLinking(filePath) {
+export function runLinkEngineV2(filePath) {
   let content = fs.readFileSync(filePath, "utf-8")
 
   for (const topic in topicalMap) {
