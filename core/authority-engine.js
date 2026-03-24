@@ -18,3 +18,13 @@ export function calculateAuthority(pagePath) {
     level: score > 80 ? "high" : score > 50 ? "medium" : "low"
   }
 }
+export async function runAuthorityEngine(){
+  console.log("🏆 Authority Engine Running...")
+
+  try {
+    // future: build topical authority, pillar pages, etc.
+
+  } catch (e) {
+    console.log("❌ Authority Engine failed:", e.message)
+  }
+}
