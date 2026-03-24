@@ -1,5 +1,8 @@
 import fs from "fs"
-import topicalMap from "../data/topical-map.json" assert { type: "json" }
+
+const topicalMap = JSON.parse(
+  fs.readFileSync(new URL("../data/topical-map.json", import.meta.url))
+)
 
 export function smartLinking(filePath) {
   let content = fs.readFileSync(filePath, "utf-8")
