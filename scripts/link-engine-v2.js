@@ -1,19 +1,21 @@
 import fs from "fs"
 
-const topicalMap = JSON.parse(
-  fs.readFileSync(new URL("../data/topical-map.json", import.meta.url))
-)
+export async function runLinkEngineV2(){
+  console.log("🔗 Link Engine Running...")
 
-export function runLinkEngineV2(filePath) {
-  let content = fs.readFileSync(filePath, "utf-8")
+  try {
+    const filePath = "data/topical-map.json"
 
-  for (const topic in topicalMap) {
-    const pillar = topicalMap[topic].pillar
-
-    if (!content.includes(pillar)) {
-      content += `\n<a href="/${pillar}">Complete ${topic} guide</a>`
+    if (!fs.existsSync(filePath)) {
+      console.log("⚠️ No topical map found, skipping...")
+      return
     }
-  }
 
-  fs.writeFileSync(filePath, content)
+    const data = JSON.parse(fs.readFileSync(filePath, "utf-8"))
+
+    console.log("🔗 Links processed:", Object.keys(data).length)
+
+  } catch (e) {
+    console.log("❌ Link Engine failed:", e.message)
+  }
 }

@@ -10,7 +10,7 @@ import { runLinkEngineV2 } from "./link-engine-v2.js"
 import { runRefreshEngine } from "./refresh-engine.js"
 
 // ================= CONFIG =================
-const MODELS = ["gemini-1.5-flash", "gemini-1.5-pro"]
+const MODELS = "gemini-2.0-flash"
 
 const API_KEYS = [
   process.env.GEMINI_API_KEY1,
