@@ -9,8 +9,14 @@ import { runAuthorityEngine } from "../core/authority-engine.js"
 import { runLinkEngineV2 } from "./link-engine-v2.js"
 import { runRefreshEngine } from "./refresh-engine.js"
 
+import { simulateRanking } from "../core/ranking-simulator.js"
+import { predictTraffic } from "../core/traffic-predictor.js"
+import { analyzeCompetition } from "../core/competition-analyzer.js"
+import { analyzeSERP } from "../core/serp-analyzer.js"
+import { decide } from "../core/decision-engine.js"
+
 // ================= CONFIG =================
-const MODELS = "gemini-2.0-flash"
+const MODELS = ["gemini-2.0-flash"]
 
 const API_KEYS = [
   process.env.GEMINI_API_KEY1,
@@ -27,7 +33,18 @@ function getRandom(arr) {
 }
 
 function sleep(ms) {
-  return new Promise(r => setTimeout(r, ms))
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+// SAFE ENGINE RUNNER (NO CRASH SYSTEM)
+async function safeRun(name, fn) {
+  try {
+    console.log(`⚡ Running ${name}`)
+    await fn()
+    console.log(`✅ ${name} Completed`)
+  } catch (err) {
+    console.error(`❌ ${name} Failed:`, err.message)
+  }
 }
 
 // ================= AI GENERATOR =================
@@ -90,33 +107,78 @@ Rules:
   return []
 }
 
+// ================= PHASE 8 PROCESSOR =================
+export async function processKeyword(keyword) {
+  try {
+    const competition = analyzeCompetition(keyword)
+    const serp = analyzeSERP(keyword)
+
+    const ranking = simulateRanking({
+      keyword,
+      contentLength: 1200,
+      domainAuthority: 20,
+      backlinks: 5,
+      seoScore: 80
+    })
+
+    const traffic = predictTraffic({
+      searchVolume: 5000,
+      position: ranking.estimatedPosition
+    })
+
+    const decision = decide({
+      difficulty: competition.difficulty,
+      estimatedTraffic: traffic.estimatedTraffic,
+      position: ranking.estimatedPosition
+    })
+
+    return {
+      keyword,
+      ...competition,
+      ...ranking,
+      ...traffic,
+      serp,
+      decision
+    }
+
+  } catch (err) {
+    console.error("❌ processKeyword Error:", err.message)
+    return null
+  }
+}
+
 // ================= PHASE 7 ENGINE =================
 async function runPhase7() {
   console.log("\n🚀 PHASE 7: AI SELF LEARNING STARTED\n")
 
   try {
-
-    // PARALLEL EXECUTION (FAST)
+    // FAST PARALLEL TASKS
     await Promise.all([
-      runRewriteEngine(),
-      runCTREngine(),
-      runKeywordEvolution()
+      safeRun("Rewrite Engine", runRewriteEngine),
+      safeRun("CTR Engine", runCTREngine),
+      safeRun("Keyword Evolution", runKeywordEvolution)
     ])
 
-    // SEQUENTIAL (DEPENDENT SYSTEMS)
-    await runLearningEngine()
-    await runAuthorityEngine()
+    // SEQUENTIAL (IMPORTANT ORDER)
+    await safeRun("Learning Engine", runLearningEngine)
+    await safeRun("Authority Engine", runAuthorityEngine)
 
     // FINAL OPTIMIZATION
-    await runLinkEngineV2()
-    await runRefreshEngine()
+    await safeRun("Link Engine V2", runLinkEngineV2)
+    await safeRun("Refresh Engine", runRefreshEngine)
 
     console.log("\n✅ PHASE 7 COMPLETED SUCCESSFULLY\n")
 
   } catch (err) {
-    console.error("❌ PHASE 7 ERROR:", err)
+    console.error("❌ PHASE 7 CRITICAL ERROR:", err)
   }
 }
 
 // ================= START =================
-runPhase7()
+(async () => {
+  try {
+    await runPhase7()
+  } catch (err) {
+    console.error("❌ CORE ENGINE FAILED:", err.message)
+  }
+})()
