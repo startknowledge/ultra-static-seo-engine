@@ -23,7 +23,7 @@ export async function optimizeCTR(title) {
   try {
     const genAI = new GoogleGenerativeAI(getRandomKey())
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash"
+      model: "gemini-2.0-flash"
     })
 
     const prompt = `
@@ -52,7 +52,7 @@ export async function runCTREngine(){
   try {
     const genAI = new GoogleGenerativeAI(getRandomKey())
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash"
+      model: "gemini-2.0-flash"
     })
 
     const prompt = `

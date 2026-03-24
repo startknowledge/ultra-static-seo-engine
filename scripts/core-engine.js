@@ -1,3 +1,5 @@
+import fs from "fs"
+
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
 // ================= IMPORTS =================
@@ -47,8 +49,33 @@ async function safeRun(name, fn) {
   }
 }
 
+// ================= SAVE POSTS =================
+function savePosts(posts) {
+  const file = "data/posts.json"
+
+  if (!fs.existsSync("data")) {
+    fs.mkdirSync("data")
+  }
+
+  let existing = []
+  if (fs.existsSync(file)) {
+    existing = JSON.parse(fs.readFileSync(file, "utf-8"))
+  }
+
+  const updated = [...existing, ...posts]
+
+  fs.writeFileSync(file, JSON.stringify(updated, null, 2))
+
+  console.log(`💾 Saved ${posts.length} posts`)
+}
+
 // ================= AI GENERATOR =================
 export async function generateAI(niche = "", keywords = [], existingSlugs = []) {
+  if (API_KEYS.length === 0) {
+    console.error("❌ No API Keys Found")
+    return []
+  }
+
   const prompt = `
 Generate 3 SEO blog posts in JSON.
 
@@ -90,7 +117,13 @@ Rules:
         .replace(/```/g, "")
         .trim()
 
-      const data = JSON.parse(clean)
+      let data
+      try {
+        data = JSON.parse(clean)
+      } catch {
+        console.log("⚠️ Invalid JSON from AI")
+        continue
+      }
 
       if (Array.isArray(data)) {
         console.log("✅ AI Content Generated")
@@ -178,6 +211,25 @@ async function runPhase7() {
 (async () => {
   try {
     await runPhase7()
+
+    // ================= PHASE 8 EXECUTION =================
+    const keywords = ["seo tips", "blogging 2026"]
+
+    for (const kw of keywords) {
+      const result = await processKeyword(kw)
+      console.log("📊 Decision:", result)
+
+      if (result?.decision === "PUBLISH") {
+        console.log(`🚀 Generating content for: ${kw}`)
+
+        const posts = await generateAI("seo", [kw])
+
+        if (posts.length > 0) {
+          savePosts(posts)
+        }
+      }
+    }
+
   } catch (err) {
     console.error("❌ CORE ENGINE FAILED:", err.message)
   }
