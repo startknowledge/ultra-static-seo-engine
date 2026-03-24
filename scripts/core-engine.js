@@ -1,15 +1,11 @@
 import fs from "fs"
-
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
 // ================= IMPORTS =================
-import { runRewriteEngine } from "./rewrite-engine.js"
-import { runCTREngine } from "../core/ctr-engine.js"
 import { runKeywordEvolution } from "../core/keyword-evolution.js"
 import { runLearningEngine } from "../core/learning-engine.js"
 import { runAuthorityEngine } from "../core/authority-engine.js"
 import { runLinkEngineV2 } from "./link-engine-v2.js"
-import { runRefreshEngine } from "./refresh-engine.js"
 
 import { simulateRanking } from "../core/ranking-simulator.js"
 import { predictTraffic } from "../core/traffic-predictor.js"
@@ -38,11 +34,16 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-// SAFE ENGINE RUNNER (NO CRASH SYSTEM)
+// ================= SAFE RUN =================
 async function safeRun(name, fn) {
   try {
     console.log(`⚡ Running ${name}`)
-    await fn()
+    const result = await fn()
+
+    if (result === null || result === false) {
+      throw new Error("Empty result")
+    }
+
     console.log(`✅ ${name} Completed`)
   } catch (err) {
     console.error(`❌ ${name} Failed:`, err.message)
@@ -63,40 +64,35 @@ function savePosts(posts) {
   }
 
   const updated = [...existing, ...posts]
-
   fs.writeFileSync(file, JSON.stringify(updated, null, 2))
 
   console.log(`💾 Saved ${posts.length} posts`)
 }
 
-// ================= AI GENERATOR =================
-export async function generateAI(niche = "", keywords = [], existingSlugs = []) {
+// ================= UNIFIED AI ENGINE =================
+async function runUnifiedAI(keyword) {
   if (API_KEYS.length === 0) {
-    console.error("❌ No API Keys Found")
-    return []
+    console.error("❌ No API Keys")
+    return null
   }
 
   const prompt = `
-Generate 3 SEO blog posts in JSON.
+You are an advanced SEO AI.
 
-Niche: ${niche}
-Keywords: ${keywords.join(",")}
-Avoid: ${existingSlugs.join(",")}
+Keyword: ${keyword}
 
-Format:
-[
+Do all tasks:
+1. Generate SEO blog post (1200+ words HTML)
+2. Create high CTR title
+3. Suggest keywords
+
+Return JSON:
 {
-"title":"",
-"description":"",
-"content":"<p>...</p>",
-"keywords":[]
+  "title": "",
+  "description": "",
+  "content": "<p>...</p>",
+  "keywords": []
 }
-]
-
-Rules:
-- 1200+ words
-- HTML only
-- No markdown
 `
 
   for (let i = 0; i < 5; i++) {
@@ -104,7 +100,7 @@ Rules:
       const key = getRandom(API_KEYS)
       const modelName = getRandom(MODELS)
 
-      console.log(`🤖 AI Try ${i + 1} | Model: ${modelName}`)
+      console.log(`🤖 AI Try ${i + 1}`)
 
       const genAI = new GoogleGenerativeAI(key)
       const model = genAI.getGenerativeModel({ model: modelName })
@@ -112,36 +108,27 @@ Rules:
       const result = await model.generateContent(prompt)
       const text = result.response.text()
 
-      const clean = text
-        .replace(/```json/g, "")
-        .replace(/```/g, "")
-        .trim()
+      const clean = text.replace(/```json|```/g, "").trim()
 
-      let data
-      try {
-        data = JSON.parse(clean)
-      } catch {
-        console.log("⚠️ Invalid JSON from AI")
-        continue
-      }
+      const data = JSON.parse(clean)
 
-      if (Array.isArray(data)) {
-        console.log("✅ AI Content Generated")
+      if (data?.content) {
+        console.log("✅ Unified AI Success")
         return data
       }
 
-    } catch (e) {
-      console.log(`⚠️ Retry ${i + 1}:`, e.message)
-      await sleep(2000)
+    } catch (err) {
+      console.log(`⚠️ Retry ${i + 1}:`, err.message)
+      await sleep(5000)
     }
   }
 
-  console.log("❌ AI Failed")
-  return []
+  console.log("❌ Unified AI Failed")
+  return null
 }
 
-// ================= PHASE 8 PROCESSOR =================
-export async function processKeyword(keyword) {
+// ================= PHASE 8 =================
+async function processKeyword(keyword) {
   try {
     const competition = analyzeCompetition(keyword)
     const serp = analyzeSERP(keyword)
@@ -180,31 +167,16 @@ export async function processKeyword(keyword) {
   }
 }
 
-// ================= PHASE 7 ENGINE =================
+// ================= PHASE 7 =================
 async function runPhase7() {
-  console.log("\n🚀 PHASE 7: AI SELF LEARNING STARTED\n")
+  console.log("\n🚀 PHASE 7 STARTED\n")
 
-  try {
-    // FAST PARALLEL TASKS
-    await Promise.all([
-      safeRun("Rewrite Engine", runRewriteEngine),
-      safeRun("CTR Engine", runCTREngine),
-      safeRun("Keyword Evolution", runKeywordEvolution)
-    ])
+  await safeRun("Keyword Evolution", runKeywordEvolution)
+  await safeRun("Learning Engine", runLearningEngine)
+  await safeRun("Authority Engine", runAuthorityEngine)
+  await safeRun("Link Engine V2", runLinkEngineV2)
 
-    // SEQUENTIAL (IMPORTANT ORDER)
-    await safeRun("Learning Engine", runLearningEngine)
-    await safeRun("Authority Engine", runAuthorityEngine)
-
-    // FINAL OPTIMIZATION
-    await safeRun("Link Engine V2", runLinkEngineV2)
-    await safeRun("Refresh Engine", runRefreshEngine)
-
-    console.log("\n✅ PHASE 7 COMPLETED SUCCESSFULLY\n")
-
-  } catch (err) {
-    console.error("❌ PHASE 7 CRITICAL ERROR:", err)
-  }
+  console.log("\n✅ PHASE 7 COMPLETED\n")
 }
 
 // ================= START =================
@@ -212,7 +184,6 @@ async function runPhase7() {
   try {
     await runPhase7()
 
-    // ================= PHASE 8 EXECUTION =================
     const keywords = ["seo tips", "blogging 2026"]
 
     for (const kw of keywords) {
@@ -220,13 +191,16 @@ async function runPhase7() {
       console.log("📊 Decision:", result)
 
       if (result?.decision === "PUBLISH") {
-        console.log(`🚀 Generating content for: ${kw}`)
+        console.log(`🚀 Generating content: ${kw}`)
 
-        const posts = await generateAI("seo", [kw])
+        const aiData = await runUnifiedAI(kw)
 
-        if (posts.length > 0) {
-          savePosts(posts)
+        if (aiData) {
+          savePosts([aiData])
         }
+
+        // RATE LIMIT SAFE
+        await sleep(5000)
       }
     }
 
