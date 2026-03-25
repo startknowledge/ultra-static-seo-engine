@@ -22,10 +22,10 @@ jobs:
     env:
       GEMINI_API_KEY1: ${{ secrets.GEMINI_API_KEY1 }}
       GEMINI_API_KEY2: ${{ secrets.GEMINI_API_KEY2 }}
-      GEMINI_API_KEY3: ${{ secrets.GEMINI_API_KEY3 }}
-      GEMINI_API_KEY4: ${{ secrets.GEMINI_API_KEY4 }}
-      GEMINI_API_KEY5: ${{ secrets.GEMINI_API_KEY5 }}
-      GEMINI_API_KEY6: ${{ secrets.GEMINI_API_KEY6 }}
+      #GEMINI_API_KEY3: ${{ secrets.GEMINI_API_KEY3 }}
+      #GEMINI_API_KEY4: ${{ secrets.GEMINI_API_KEY4 }}
+      #GEMINI_API_KEY5: ${{ secrets.GEMINI_API_KEY5 }}
+      #GEMINI_API_KEY6: ${{ secrets.GEMINI_API_KEY6 }}
       DETECT_REPO_TOKEN: ${{ secrets.DETECT_REPO_TOKEN }}
 
     steps:
