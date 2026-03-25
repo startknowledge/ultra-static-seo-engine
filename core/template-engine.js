@@ -1,45 +1,33 @@
-import fs from "fs"
-import path from "path"
+export function generateFallback(keyword) {
 
-const GLOBALS = {
-  SITE_LANG: process.env.SITE_LANG || "en",
-  SITE_URL: process.env.SITE_URL || "",
-  SITE_NAME: "StartKnowledge",
-  year: new Date().getFullYear()
-}
+  const title = `${keyword} - Complete Guide 2026`
 
-function safeRead(file){
-  const full = path.resolve(file)
-  if(!fs.existsSync(full)){
-    console.log("❌ Missing:", file)
-    return ""
+  const content = `
+  <h1>${keyword}</h1>
+
+  <p>${keyword} is one of the most important topics in SEO today.</p>
+
+  <h2>What is ${keyword}?</h2>
+  <p>This guide explains everything about ${keyword} in simple terms.</p>
+
+  <h2>Why ${keyword} matters</h2>
+  <p>It helps improve rankings, traffic, and authority.</p>
+
+  <h2>Best Practices</h2>
+  <ul>
+    <li>Use proper keywords</li>
+    <li>Create quality content</li>
+    <li>Optimize structure</li>
+  </ul>
+
+  <h2>Conclusion</h2>
+  <p>${keyword} is essential for long-term SEO success.</p>
+  `
+
+  return {
+    title,
+    description: `Learn ${keyword} with this complete guide.`,
+    content,
+    keywords: [keyword]
   }
-  return fs.readFileSync(full,"utf8")
-}
-
-function inject(template,data){
-  return template.replace(/{{(.*?)}}/g,(_,key)=>{
-    return data[key.trim()] ?? ""
-  })
-}
-
-export function render(templatePath, data={}){
-
-  let template = safeRead(templatePath)
-  if(!template) return ""
-
-  const finalData = {
-    ...GLOBALS,
-    ...data
-  }
-
-  // layout support
-  if(template.includes("{{layout}}")){
-    let layout = safeRead("templates/layout.html")
-    template = template.replace("{{layout}}","")
-    layout = layout.replace("{{content}}", template)
-    template = layout
-  }
-
-  return inject(template, finalData)
 }

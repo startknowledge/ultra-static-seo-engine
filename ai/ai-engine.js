@@ -1,64 +1,25 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { CONFIG } from "../config.js"
+import { generateFallback } from "../core/template-engine.js"
 
-const model = genAI.getGenerativeModel({
-  model: "gemini-2.0-flash"
-})
+export async function runUnifiedAI(keywordData) {
+  const { keyword } = keywordData
 
-const result = await model.generateContent(prompt)
-const text = result.response.text()
-
-export async function generateAI(niche="", keywords=[], existingSlugs=[]){
-
-  const prompt = `
-Generate 3 SEO blog posts in JSON.
-
-Niche: ${niche}
-Keywords: ${keywords.join(",")}
-Avoid: ${existingSlugs.join(",")}
-
-Format:
-[
-{
-"title":"",
-"description":"",
-"content":"<p>...</p>",
-"keywords":[]
-}
-]
-
-Rules:
-- 1200+ words
-- HTML only
-- No markdown
-`
-
-  for(let i=0;i<5;i++){
-    try{
-
-      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY1)
-
-      const model = genAI.getGenerativeModel({
-        model: getModel()
-      })
-
-      const result = await model.generateContent(prompt)
-
-      const text = result.response.text()
-
-      const clean = text
-        .replace(/```json/g,"")
-        .replace(/```/g,"")
-        .trim()
-
-      const data = JSON.parse(clean)
-
-      if(Array.isArray(data)) return data
-
-    }catch(e){
-      console.log("⚠️ Retry:", i+1, e.message)
-      await new Promise(r=>setTimeout(r,2000))
-    }
+  // 🟢 AI OFF MODE
+  if (!CONFIG.USE_AI) {
+    console.log("⚡ AI OFF → using fallback")
+    return generateFallback(keyword)
   }
 
-  return []
+  // 🔴 FUTURE AI MODE
+  try {
+    return await runGemini(keyword)
+  } catch (e) {
+    console.log("❌ AI failed → fallback")
+    return generateFallback(keyword)
+  }
+}
+
+// 🔌 future plugin
+async function runGemini(keyword) {
+  throw new Error("AI not enabled yet")
 }

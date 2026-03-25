@@ -1,14 +1,5 @@
-# temp repos
-temp-*
-
-# node
-node_modules
-
-# logs
-*.log
-
-# system
-.DS_Store
-
-# env
+node_modules/
 .env
+.DS_Store
+npm-debug.log
+yarn-error.log

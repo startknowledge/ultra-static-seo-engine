@@ -1,8 +1,8 @@
 {
-  "name": "ultra-static-seo-engine",
+  "name": "seo-engine",
   "version": "1.0.0",
   "type": "module",
-  "dependencies": {
-    "@google/generative-ai": "^0.21.0"
+  "scripts": {
+    "start": "node scripts/core-engine.js"
   }
 }
