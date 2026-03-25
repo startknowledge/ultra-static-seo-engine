@@ -1,5 +1,5 @@
 export const CONFIG = {
-  USE_AI: false, // 🔥 switch
+  USE_AI: true, // 🔥 switch
   MIN_TRAFFIC: 20,
   LOGS: true
 }
