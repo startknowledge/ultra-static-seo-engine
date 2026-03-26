@@ -1,4 +1,3 @@
-import fs from "fs"
 import { generateBlog } from "./generator-blog.js"
 import { fetchTrends } from "./trend-engine.js"
 
@@ -14,9 +13,9 @@ function detectNiche() {
   return "blogging"
 }
 
-// 🔥 modifiers (base keywords)
+// 🔥 modifiers
 const modifiers = [
-   "how to","best","top","free","latest","guide","2026",
+ "how to","best","top","free","latest","guide","2026",
 "fast","easy","complete","advanced","strategy","tips",
 "tutorial","tools","software","platform","course",
 
@@ -37,7 +36,7 @@ const modifiers = [
 "best practices","mistakes","errors","fix","troubleshooting"
 ]
 
-// 🔥 base keyword generator
+// 🔥 keyword generator
 function generateKeywords(niche) {
   return modifiers.map(m => ({
     keyword: `${m} ${niche}`,
@@ -45,65 +44,25 @@ function generateKeywords(niche) {
   }))
 }
 
-// 🔥 delay (for API safety)
-function sleep(ms){
-  return new Promise(r => setTimeout(r, ms))
-}
-
-// 🚀 MAIN SYSTEM (AUTO SCALE)
+// 🚀 MAIN RUN
 async function run() {
 
-  console.log("🚀 AUTO BLOG SYSTEM STARTED")
-
-  // ✅ Step 1: fetch trends
+  // ✅ fetch trends FIRST
   await fetchTrends()
 
   const niche = detectNiche()
   console.log("🎯 Niche:", niche)
 
-  // ✅ Step 2: generate base keywords
-  let keywords = generateKeywords(niche)
-
-  // ✅ Step 3: override with trends (REAL POWER 🔥)
-  if (fs.existsSync("data/trends.json")) {
-
-    const trends = JSON.parse(fs.readFileSync("data/trends.json", "utf-8"))
-
-    if (trends[niche]) {
-
-      console.log("🔥 Using TREND keywords")
-
-      keywords = trends[niche].map(k => ({
-        keyword: k,
-        traffic: 90
-      }))
-    }
-  }
-
-  // 🔥 STEP 4: SCALE LOOP (50 BLOGS/DAY)
-  let count = 0
-  const MAX_BLOGS = 50
+  const keywords = generateKeywords(niche)
 
   for (const k of keywords) {
 
-    if (count >= MAX_BLOGS) break
-
     if (k.traffic < 20) continue
 
-    console.log(`🚀 [${count+1}] Generating:`, k.keyword)
+    console.log("🚀 Generating:", k.keyword)
 
-    try {
-      await generateBlog(k)
-      count++
-    } catch (e) {
-      console.log("❌ Failed:", k.keyword)
-    }
-
-    // 🔥 API SAFE DELAY
-    await sleep(2000)
+    await generateBlog(k)
   }
-
-  console.log(`🎯 DONE: ${count} blogs generated`)
 }
 
 run()
