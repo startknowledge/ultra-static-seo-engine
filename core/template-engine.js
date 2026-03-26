@@ -1,3 +1,18 @@
+import fs from "fs"
+
+// ✅ RENDER ENGINE
+export function render(templatePath, data) {
+
+  let html = fs.readFileSync(templatePath, "utf8")
+
+  for (const key in data) {
+    html = html.replaceAll(`{{${key}}}`, data[key])
+  }
+
+  return html
+}
+
+// ✅ FALLBACK (already existing)
 export function generateFallback(keyword) {
 
   const title = `${keyword} - Complete Guide 2026`
