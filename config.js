@@ -4,7 +4,7 @@ export const CONFIG = {
   LOGS: true,
 
   // 🔥 NEW
-  MAX_AI_CALLS: 2
+  MAX_AI_CALLS: 1
 }
 
 // 🔴 GLOBAL STOP SWITCH

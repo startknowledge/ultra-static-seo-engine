@@ -83,7 +83,7 @@ const content = generateContent(page)
 
 const html = render("templates/page-template.html",{
 title: title,
-description: `${title} page`,
+description: `${title} - Learn everything about ${title} with complete guide`,
 content: content,
 slug: page,
 keywords: `${page}, website ${page}`
