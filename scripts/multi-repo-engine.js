@@ -2,9 +2,9 @@ import { getAllRepos } from "./get-all-repos.js"
 import { processRepo } from "./repo-processor.js"
 
 const CONFIG = {
-  BATCH_SIZE: 1,
-  DELAY: 10000,
-  RETRY: 1
+  BATCH_SIZE: 3,
+  DELAY: 5000,
+  RETRY: 2
 }
 
 function sleep(ms){

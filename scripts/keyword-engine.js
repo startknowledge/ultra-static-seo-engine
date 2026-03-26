@@ -1,11 +1,24 @@
+import fs from "fs"
+
 export function generateKeywords(niche){
 
-  const base = {
-    seo: ["seo tips","on page seo","technical seo","seo tools"],
-    tools: ["best tools","free tools","online tools"],
-    "artificial intelligence": ["ai tools","ai automation","ai seo"],
-    "web development": ["html css","javascript guide","web design"]
+  const trendsFile = "data/trends.json"
+
+  if(fs.existsSync(trendsFile)){
+    const trends = JSON.parse(fs.readFileSync(trendsFile,"utf-8"))
+
+    if(trends[niche]){
+      console.log("🔥 Using TREND keywords")
+      return trends[niche]
+    }
   }
 
-  return base[niche] || ["seo","ai","tools"]
+  // fallback
+  return [
+    `${niche} 2026`,
+    `best ${niche}`,
+    `${niche} tools`,
+    `how to ${niche}`,
+    `${niche} guide`
+  ]
 }

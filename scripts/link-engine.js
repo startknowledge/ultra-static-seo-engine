@@ -8,7 +8,7 @@ function addInternalLinks(html, slugs){
 
   return html.replace(/<p>(.*?)<\/p>/g, (match, content)=>{
 
-    if(added >= 3) return match
+    if(added >= 5) return match
 
     const randomSlug = slugs[Math.floor(Math.random()*slugs.length)]
 
@@ -16,7 +16,9 @@ function addInternalLinks(html, slugs){
 
     added++
 
-    return `<p>${content} <a href="/blog/${randomSlug}.html">Read more</a></p>`
+    return `<p>${content} 
+    <a href="/blog/${randomSlug}.html">${randomSlug.replace(/-/g," ")}</a>
+    </p>`
   })
 }
 
