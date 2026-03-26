@@ -68,6 +68,12 @@
 </url>
 
 <url>
+<loc>undefined/blog/2026-seo.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
 <loc>undefined/blog/affiliate-marketing-2026.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
@@ -104,6 +110,12 @@
 </url>
 
 <url>
+<loc>undefined/blog/best-seo.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
 <loc>undefined/blog/demystifying-googles-core-web-vitals-a-guide-to-page-experience.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
@@ -116,7 +128,25 @@
 </url>
 
 <url>
+<loc>undefined/blog/guide-seo.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
+<loc>undefined/blog/how-to-seo.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
 <loc>undefined/blog/how-to-write-seo-friendly-blog-posts-that-rank-and-engage.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
+<loc>undefined/blog/latest-seo.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
 </url>
@@ -171,6 +201,12 @@
 
 <url>
 <loc>undefined/blog/the-powerful-synergy-of-content-marketing-and-seo.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
+<loc>undefined/blog/top-seo.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
 </url>
