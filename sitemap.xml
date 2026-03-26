@@ -134,6 +134,12 @@
 </url>
 
 <url>
+<loc>undefined/blog/benefits-seo.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
 <loc>undefined/blog/best-practices-seo.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
@@ -165,6 +171,12 @@
 
 <url>
 <loc>undefined/blog/case-study-seo.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
+<loc>undefined/blog/certification-seo.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
 </url>
@@ -237,6 +249,12 @@
 
 <url>
 <loc>undefined/blog/easy-seo.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
+<loc>undefined/blog/errors-seo.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
 </url>
@@ -464,6 +482,12 @@
 </url>
 
 <url>
+<loc>undefined/blog/review-seo.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
 <loc>undefined/blog/scaling-seo.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
@@ -531,6 +555,12 @@
 
 <url>
 <loc>undefined/blog/strategy-seo.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
+<loc>undefined/blog/systems-seo.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
 </url>
@@ -621,6 +651,12 @@
 
 <url>
 <loc>undefined/blog/voice-search-optimization-preparing-your-seo-for-conversational-queries.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
+<loc>undefined/blog/vs-seo.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
 </url>
