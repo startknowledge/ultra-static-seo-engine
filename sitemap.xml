@@ -188,6 +188,12 @@
 </url>
 
 <url>
+<loc>undefined/blog/checklist-seo.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
 <loc>undefined/blog/comparison-seo.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
@@ -410,6 +416,12 @@
 </url>
 
 <url>
+<loc>undefined/blog/methods-seo.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
 <loc>undefined/blog/mistakes-seo.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
@@ -453,6 +465,12 @@
 
 <url>
 <loc>undefined/blog/platform-seo.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
+<loc>undefined/blog/premium-seo.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
 </url>
@@ -597,6 +615,12 @@
 
 <url>
 <loc>undefined/blog/tips-seo.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
+<loc>undefined/blog/tools-list-seo.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
 </url>
