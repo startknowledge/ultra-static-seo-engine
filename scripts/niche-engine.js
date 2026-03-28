@@ -1,13 +1,15 @@
-import fs from "fs"
+export function detectNiche(repoName = "", content = "") {
 
-export function detectNiche(repoName, content){
+  const repo = repoName.toLowerCase()
 
-let niche = "technology"
+  // 🔥 auto extract words from repo name
+  let words = repo.split("/").pop().replace(/-/g, " ").split(" ")
 
-if(repoName.includes("seo")) niche = "seo"
-else if(repoName.includes("tool")) niche = "tools"
-else if(repoName.includes("ai")) niche = "artificial intelligence"
-else if(content.includes("html")) niche = "web development"
+  // remove useless words
+  const stopWords = ["repo","project","site","app","engine","tool"]
 
-return niche
+  words = words.filter(w => !stopWords.includes(w))
+
+  // 🔥 return dynamic niche
+  return words.slice(0, 2).join(" ") || "general"
 }
