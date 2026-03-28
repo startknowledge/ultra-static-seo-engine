@@ -2,12 +2,16 @@ import fs from "fs"
 
 // ✅ RENDER ENGINE
 export function render(templatePath, data) {
-
+const GLOBALS = {
+  SITE_URL: "https://ultrastaticseoengine.startknowledge.in",
+  SITE_NAME: "StartKnowledge",
+  SITE_LANG: "en",
+  year:new Date().getFullYear()
+}
+const finalData = { ...GLOBALS, ...data }
   let html = fs.readFileSync(templatePath, "utf8")
 
-  for (const key in data) {
-    html = html.replaceAll(`{{${key}}}`, data[key])
-  }
+  html = html.replace(/{{(.*?)}}/g, (_, key) => finalData[key.trim()] || "")
 
   return html
 }

@@ -2,7 +2,7 @@ import fs from "fs"
 
 export function generateSitemap(){
 
-const base = process.env.SITE_URL
+const base = process.env.SITE_URL || "https://ultrastaticseoengine.startknowledge.in"
 
 const folders = ["","pages","blog","tools","comparison","glossary"]
 

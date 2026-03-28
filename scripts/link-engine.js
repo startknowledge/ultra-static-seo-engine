@@ -28,9 +28,7 @@ export function runLinkEngine(){
     console.log("❌ Blog folder missing")
     return
   }
-  /* if(article.includes(keyword)){
-  content += `<a href="/blog/${slug}.html">${keyword}</a>`
-} */
+ 
   const files = fs.readdirSync(BLOG_DIR)
   .filter(f => f.endsWith(".html") && !f.includes(".gitkeep"))
 

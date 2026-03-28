@@ -34,7 +34,7 @@ export async function generateBlog(keywordData) {
     .replace(/\s+/g, "-")
     .replace(/[^\w-]/g, "") // 🔥 clean slug
 
-  const image = `https://source.unsplash.com/800x400/?${encodeURIComponent(keywordData.keyword)}`
+  const image = `https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80&auto=format&fit=crop`
 
   // 🔥 inject ads
   let content = injectAds(aiData.content)
@@ -48,7 +48,8 @@ export async function generateBlog(keywordData) {
     content,
     image,
     keywords: keywordData.keyword,
-    path: `blog/${slug}.html`
+    path: `blog/${slug}.html`,
+    SITE_URL
   })
 
   if (!fs.existsSync("blog")) {
@@ -58,6 +59,24 @@ export async function generateBlog(keywordData) {
   fs.writeFileSync(`blog/${slug}.html`, html)
 
   console.log("✅ Blog:", slug)
+// 🔥 SAVE POST DATA
+const post = {
+  title: aiData.title,
+  slug,
+  date: new Date().toISOString()
+}
+
+const dataFile = "data/posts.json"
+
+let posts = []
+
+if (fs.existsSync(dataFile)) {
+  posts = JSON.parse(fs.readFileSync(dataFile))
+}
+
+posts.push(post)
+
+fs.writeFileSync(dataFile, JSON.stringify(posts, null, 2))
 
   return { slug }
 }

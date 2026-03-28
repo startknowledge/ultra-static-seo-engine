@@ -2,7 +2,7 @@ export async function runPingEngine() {
 
   console.log("📡 Pinging Search Engines...")
 
-  const sitemap = "https://yourdomain.com/sitemap.xml"
+  const sitemap = "https://ultrastaticseoengine.startknowledge.in/sitemap.xml"
 
   const urls = [
     `https://www.google.com/ping?sitemap=${sitemap}`,
