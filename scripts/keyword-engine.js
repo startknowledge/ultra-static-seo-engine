@@ -1,6 +1,6 @@
-export function generateKeywords(niche, trends) {
+export function generateKeywords(niche) {
 
-  const intents = [
+  const modifiers = [
   "how to", "best", "top", "guide", "review", "tools",
   "software", "tips", "strategy", "tutorial",
 
@@ -40,19 +40,79 @@ export function generateKeywords(niche, trends) {
   "optimize", "reduce", "avoid", "mistakes",
   "issues"
 ]
-  let keywords = new Set()
+   const keywords = []
 
-  // 🔥 direct trends
-  trends.forEach(t => {
-    if (t.length < 3) return
-    keywords.add(t)
+  for (const m of modifiers) {
+    keywords.push(`${m} ${niche}`)
+  }
 
-    intents.forEach(i => {
-      keywords.add(`${i} ${t}`)
-    })
-  })
+  const longTail = [
+  `${niche} for beginners`,
+  `${niche} step by step`,
+  `${niche} complete guide`,
+  `${niche} tools list`,
+  `${niche} mistakes`,
+  `${niche} case study`,
+  `${niche} checklist`,
+  `${niche} strategies 2026`,
 
-  return Array.from(keywords)
-    .filter(k => !k.includes("404")) // 🔥 FIX
-    .slice(0, 50)
+  // 🔥 learning focused
+  `${niche} explained`,
+  `${niche} basics`,
+  `${niche} full tutorial`,
+  `${niche} course free`,
+  `${niche} training guide`,
+  `${niche} how it works`,
+
+  // 🚀 growth / action
+  `how to start ${niche}`,
+  `how to learn ${niche}`,
+  `how to master ${niche}`,
+  `how to improve ${niche}`,
+  `how to grow with ${niche}`,
+  `${niche} tips for success`,
+
+  // 💰 monetization
+  `how to make money with ${niche}`,
+  `${niche} income ideas`,
+  `${niche} business model`,
+  `${niche} side hustle ideas`,
+  `${niche} earning methods`,
+
+  // ⚡ tools specific
+  `best ${niche} tools 2026`,
+  `free ${niche} tools list`,
+  `${niche} software list`,
+  `${niche} apps for beginners`,
+  `${niche} platforms comparison`,
+
+  // 📈 comparison / decision
+  `${niche} vs alternatives`,
+  `best ${niche} vs competitors`,
+  `${niche} comparison guide`,
+  `which ${niche} is best`,
+  `top ${niche} options`,
+
+  // 📅 trending / freshness
+  `latest trends in ${niche}`,
+  `${niche} updates 2026`,
+  `future of ${niche}`,
+  `${niche} new strategies`,
+  `${niche} trending topics`,
+
+  // 🎯 problem solving
+  `common ${niche} mistakes`,
+  `how to fix ${niche} issues`,
+  `${niche} problems and solutions`,
+  `avoid mistakes in ${niche}`,
+  `${niche} optimization tips`,
+
+  // 🧠 authority content
+  `${niche} expert guide`,
+  `${niche} advanced strategies`,
+  `${niche} pro tips`,
+  `${niche} secrets revealed`,
+  `${niche} best practices`
+]
+return [...keywords, ...longTail]
 }

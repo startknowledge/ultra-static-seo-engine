@@ -16,15 +16,16 @@ export async function fetchTrends(niche) {
 
     trends = matches
       .map(m => m[1].toLowerCase())
-      .filter(t => t !== "google trends" && !t.includes("404")) // 🔥 FIX
+      .filter(t => t !== "google trends" && !t.includes("404"))
 
   } catch (e) {
     console.log("⚠️ RSS failed")
   }
 
-  // 🔥 NO niche filtering (important)
-  if (trends.length === 0) {
-    const trends = [
+   // ✅ FIXED FALLBACK (NO const)
+  if (!trends || trends.length === 0) {
+
+    trends = [
   `${niche} tools`,
   `${niche} trends`,
   `${niche} strategy`,
@@ -93,6 +94,7 @@ export async function fetchTrends(niche) {
   `${niche} blueprint`,
   `${niche} roadmap`
 ]
+ console.log("⚡ Using fallback trends")
   }
 
   if (!fs.existsSync("data")) fs.mkdirSync("data")
