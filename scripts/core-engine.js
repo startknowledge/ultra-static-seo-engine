@@ -115,7 +115,7 @@ console.log("🎯 Niche:", niche)
 
     await generateBlog(keywordData)
     // 🔥 RATE LIMIT PROTECTION (VERY IMPORTANT)
-await new Promise(r => setTimeout(r, 3000))
+await new Promise(r => setTimeout(r, 5000))
   }
 // after blog generation
 runClusterEngine()

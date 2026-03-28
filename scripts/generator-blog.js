@@ -8,41 +8,65 @@ let usage = 0
 let currentKey = 0
 
 function switchKey() {
-  console.log("🔁 Switching API Key (mock)")
+  currentKey++
+  console.log("🔁 Switching API Key:", currentKey)
 }
+
 export async function generateBlog(keywordData) {
 
   let aiData
+  let success = false
+  let attempts = 0
+  const MAX_RETRY = 3
 
-  try {
+  // 🔥 AI RETRY SYSTEM
+  while (!success && attempts < MAX_RETRY) {
+    try {
 
-    // 🔥 KEY LIMIT FIX
-    if (usage >= 5) {
+      if (usage >= 5) {
+        switchKey()
+        usage = 0
+      }
+
+      console.log(`🤖 AI generating: ${keywordData.keyword} (Try ${attempts + 1})`)
+
+      aiData = await runUnifiedAI(keywordData)
+
+      usage++
+      success = true
+
+    } catch (e) {
+      console.log("⚠️ Retry with next key...")
       switchKey()
-      usage = 0
-      console.log("🔁 Switching API KEY:", currentKey + 1)
+      attempts++
     }
+  }
 
-    aiData = await runUnifiedAI(keywordData)
+  // 🔥 FINAL FALLBACK
+  if (!success) {
+    console.log("❌ AI failed completely → fallback")
+    aiData = generateFallback(keywordData.keyword)
+  }
 
-} catch (e) {
-  console.log("⚠️ AI Failed → Fallback")
-  aiData = generateFallback(keywordData.keyword)
-}
-
+  // 🔥 SLUG
   const slug = keywordData.keyword
     .toLowerCase()
     .replace(/\s+/g, "-")
-    .replace(/[^\w-]/g, "") // 🔥 clean slug
+    .replace(/[^\w-]/g, "")
 
+  // 🔥 IMAGE
   const image = `https://source.unsplash.com/featured/800x400?${encodeURIComponent(keywordData.keyword)}`
 
-  // 🔥 inject ads
+  // 🔥 ADS + CONTENT
   let content = injectAds(aiData.content)
 
-  // 🔥 basic internal linking (inline)
-  content = content.replace(/<p>/, `<p><a href="/blog/${slug}.html">${keywordData.keyword}</a> `)
+  // 🔥 INTERNAL LINK
+  content = content.replace(
+    /<p>/,
+    `<p><a href="/blog/${slug}.html">${keywordData.keyword}</a> `
+  )
 
+  // 🔥 HTML RENDER
   const html = render("templates/blog-template.html", {
     title: aiData.title,
     description: aiData.description,
@@ -50,34 +74,36 @@ export async function generateBlog(keywordData) {
     image,
     keywords: keywordData.keyword,
     path: `blog/${slug}.html`,
-    SITE_URL:SITE_CONFIG.SITE_URL
+    SITE_URL: SITE_CONFIG.SITE_URL
   })
 
+  // 🔥 CREATE BLOG FOLDER
   if (!fs.existsSync("blog")) {
     fs.mkdirSync("blog")
   }
 
+  // 🔥 SAVE BLOG
   fs.writeFileSync(`blog/${slug}.html`, html)
 
   console.log("✅ Blog:", slug)
-// 🔥 SAVE POST DATA
-const post = {
-  title: aiData.title,
-  slug,
-  date: new Date().toISOString()
-}
 
-const dataFile = "data/posts.json"
+  // 🔥 SAVE POST DATA
+  const post = {
+    title: aiData.title,
+    slug,
+    date: new Date().toISOString()
+  }
 
-let posts = []
+  const dataFile = "data/posts.json"
+  let posts = []
 
-if (fs.existsSync(dataFile)) {
-  posts = JSON.parse(fs.readFileSync(dataFile))
-}
+  if (fs.existsSync(dataFile)) {
+    posts = JSON.parse(fs.readFileSync(dataFile))
+  }
 
-posts.push(post)
+  posts.push(post)
 
-fs.writeFileSync(dataFile, JSON.stringify(posts, null, 2))
+  fs.writeFileSync(dataFile, JSON.stringify(posts, null, 2))
 
   return { slug }
 }
