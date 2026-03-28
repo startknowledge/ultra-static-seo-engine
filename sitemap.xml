@@ -452,6 +452,36 @@
 </url>
 
 <url>
+<loc>undefined/blog/passive-income-automation.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
+<loc>undefined/blog/passive-income-growth.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
+<loc>undefined/blog/passive-income-strategy.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
+<loc>undefined/blog/passive-income-tools.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
+<loc>undefined/blog/passive-income-trends.html</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+
+<url>
 <loc>undefined/blog/performance-seo.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
@@ -542,12 +572,6 @@
 </url>
 
 <url>
-<loc>undefined/blog/seo-automation.html</loc>
-<changefreq>weekly</changefreq>
-<priority>0.8</priority>
-</url>
-
-<url>
 <loc>undefined/blog/seo-blueprint.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
@@ -584,12 +608,6 @@
 </url>
 
 <url>
-<loc>undefined/blog/seo-examples.html</loc>
-<changefreq>weekly</changefreq>
-<priority>0.8</priority>
-</url>
-
-<url>
 <loc>undefined/blog/seo-fix.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
@@ -609,12 +627,6 @@
 
 <url>
 <loc>undefined/blog/seo-guide-2026.html</loc>
-<changefreq>weekly</changefreq>
-<priority>0.8</priority>
-</url>
-
-<url>
-<loc>undefined/blog/seo-guide.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
 </url>
@@ -644,18 +656,6 @@
 </url>
 
 <url>
-<loc>undefined/blog/seo-platforms.html</loc>
-<changefreq>weekly</changefreq>
-<priority>0.8</priority>
-</url>
-
-<url>
-<loc>undefined/blog/seo-problems.html</loc>
-<changefreq>weekly</changefreq>
-<priority>0.8</priority>
-</url>
-
-<url>
 <loc>undefined/blog/seo-profit.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
@@ -675,18 +675,6 @@
 
 <url>
 <loc>undefined/blog/seo-side-hustle.html</loc>
-<changefreq>weekly</changefreq>
-<priority>0.8</priority>
-</url>
-
-<url>
-<loc>undefined/blog/seo-software.html</loc>
-<changefreq>weekly</changefreq>
-<priority>0.8</priority>
-</url>
-
-<url>
-<loc>undefined/blog/seo-tips.html</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
 </url>
