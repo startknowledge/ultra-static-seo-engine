@@ -3,16 +3,31 @@ import { runUnifiedAI } from "../ai/ai-engine.js"
 import { render, generateFallback } from "../core/template-engine.js"
 import { injectAds } from "./monetization-engine.js"
 
+let usage = 0
+let currentKey = 0
+
+function switchKey() {
+  console.log("🔁 Switching API Key (mock)")
+}
 export async function generateBlog(keywordData) {
 
   let aiData
 
   try {
+
+    // 🔥 KEY LIMIT FIX
+    if (usage >= 5) {
+      switchKey()
+      usage = 0
+      console.log("🔁 Switching API KEY:", currentKey + 1)
+    }
+
     aiData = await runUnifiedAI(keywordData)
-  } catch (e) {
-    console.log("⚠️ AI Failed → Fallback")
-    aiData = generateFallback(keywordData.keyword)
-  }
+
+} catch (e) {
+  console.log("⚠️ AI Failed → Fallback")
+  aiData = generateFallback(keywordData.keyword)
+}
 
   const slug = keywordData.keyword
     .toLowerCase()

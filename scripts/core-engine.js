@@ -5,6 +5,12 @@ import { detectNiche } from "./niche-engine.js"
 import { generateKeywords } from "./keyword-engine.js"
 import { cleanBadBlogs } from "./cleanup-engine.js"
 import { runLinkEngine } from "./link-engine.js"
+import { runPingEngine } from "./ping-engine.js"
+import { runBacklinkEngine } from "./backlink-engine.js"
+import { runMonetization } from "./monetization-engine.js"
+import { runClusterEngine } from "./cluster-engine.js"
+import { runRefreshEngine } from "./refresh-engine.js"
+
 
 async function run() {
 
@@ -92,7 +98,7 @@ console.log("🎯 Niche:", niche)
   console.log("🔥 Keywords:", keywords.length)
 
   let count = 0
-  const MAX_DAILY = 50
+  const MAX_DAILY = 5
 
   for (const k of keywords) {
 
@@ -108,7 +114,15 @@ console.log("🎯 Niche:", niche)
     console.log(`🚀 [${++count}]`, k)
 
     await generateBlog(keywordData)
+    // 🔥 RATE LIMIT PROTECTION (VERY IMPORTANT)
+await new Promise(r => setTimeout(r, 3000))
   }
+// after blog generation
+runClusterEngine()
+runMonetization()
+runBacklinkEngine()
+runPingEngine()
+runRefreshEngine()
 
   // 🔗 FINAL LINKING
   runLinkEngine()

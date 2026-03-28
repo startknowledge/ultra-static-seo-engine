@@ -1,6 +1,6 @@
 import fs from "fs"
 
-export function createBacklinks(){
+export function runBacklinkEngine() {
 
 if(!fs.existsSync("blog")) return
 

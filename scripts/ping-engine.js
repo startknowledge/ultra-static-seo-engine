@@ -1,12 +1,18 @@
-export function pingSearchEngines(){
+export async function runPingEngine() {
 
-const urls = [
-"https://www.google.com/ping?sitemap=",
-"https://www.bing.com/ping?sitemap="
-]
+  console.log("📡 Pinging Search Engines...")
 
-urls.forEach(url=>{
-console.log("📡 Ping:",url)
-})
+  const sitemap = "https://yourdomain.com/sitemap.xml"
 
+  const urls = [
+    `https://www.google.com/ping?sitemap=${sitemap}`,
+    `https://www.bing.com/ping?sitemap=${sitemap}`
+  ]
+
+  for (const url of urls) {
+    console.log("📡 Ping:", url)
+    await new Promise(r => setTimeout(r, 1000))
+  }
+
+  console.log("✅ Ping Done")
 }

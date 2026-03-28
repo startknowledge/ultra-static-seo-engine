@@ -32,3 +32,6 @@ export function injectAds(content) {
 
   return parts.join("</p>")
 }
+export function runMonetization() {
+  console.log("💰 Monetization Engine Active")
+}
