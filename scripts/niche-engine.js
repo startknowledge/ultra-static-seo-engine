@@ -5,14 +5,10 @@ export function detectNiche(repoName = "") {
   // 🔥 clean repo name
   const cleaned = repoName
     .replace(/[-_]/g, " ")
-    .replace(/engine|tool|repo|project/g, "")
+    .replace(/engine|tool|repo|project|app|script|code|system|bot|api|service|platform|software|solution|module|package|lib|test|demo|example|sample|temp|dev|prod|build|version|v1|v2|v3|latest|new|old|my|your|free|best/g, "")
     .trim()
 
   // 🔥 smart detection
-  if (cleaned.includes("seo")) return "seo"
-if (cleaned.includes("search engine")) return "seo"
-if (cleaned.includes("ranking")) return "seo"
-
 if (cleaned.includes("ai")) return "artificial intelligence"
 if (cleaned.includes("artificial intelligence")) return "artificial intelligence"
 if (cleaned.includes("machine learning")) return "artificial intelligence"
@@ -51,6 +47,10 @@ if (cleaned.includes("trading")) return "finance"
 if (cleaned.includes("education")) return "education"
 if (cleaned.includes("course")) return "education"
 if (cleaned.includes("learn")) return "education"
+
+if (cleaned.includes("seo")) return "seo"
+if (cleaned.includes("search engine")) return "seo"
+if (cleaned.includes("ranking")) return "seo"
 
 if (cleaned.includes("business")) return "business"
 if (cleaned.includes("startup")) return "business"
