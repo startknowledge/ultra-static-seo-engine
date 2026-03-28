@@ -2,6 +2,7 @@ import fs from "fs"
 import { runUnifiedAI } from "../ai/ai-engine.js"
 import { render, generateFallback } from "../core/template-engine.js"
 import { injectAds } from "./monetization-engine.js"
+import { SITE_CONFIG } from "../config/site-config.js"
 
 let usage = 0
 let currentKey = 0
@@ -49,7 +50,7 @@ export async function generateBlog(keywordData) {
     image,
     keywords: keywordData.keyword,
     path: `blog/${slug}.html`,
-    SITE_URL
+    SITE_URL:SITE_CONFIG.SITE_URL
   })
 
   if (!fs.existsSync("blog")) {

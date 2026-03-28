@@ -1,12 +1,11 @@
 import fs from "fs"
+import { SITE_CONFIG } from "../config/site-config.js"
 
 // ✅ RENDER ENGINE (FINAL)
 export function render(templatePath, data) {
 
   const GLOBALS = {
-    SITE_URL: process.env.SITE_URL || "https://ultrastaticseoengine.startknowledge.in",
-    SITE_NAME: "StartKnowledge",
-    SITE_LANG: "en",
+    ...SITE_CONFIG,
     year: new Date().getFullYear()
   }
 
