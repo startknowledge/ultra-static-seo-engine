@@ -15,8 +15,56 @@ async function run() {
 
   const repo = process.env.GITHUB_REPOSITORY || "seo-engine"
 
-  const niche = detectNiche(repo)
-  console.log("🎯 Niche:", niche)
+  const niches = [ 
+    // 🔥 tech / trending
+  "technology", "software development",
+  "web development", "mobile apps",
+  "saas", "cloud computing", "cybersecurity",
+  "data science", "machine learning",
+  "automation",
+
+  // 💰 business / money
+  "online business", "startup", "entrepreneurship",
+  "ecommerce", "dropshipping", "investing",
+  "stock market", "passive income",
+  "side hustle", "personal finance",
+
+  // 📈 marketing
+  "content marketing", "social media marketing",
+  "email marketing", "branding", "growth hacking",
+  "sales funnel", "lead generation",
+  "copywriting",
+
+  // 🎥 creator economy
+  "content creation", "video editing",
+  "instagram growth", "tiktok marketing",
+  "youtube automation", "podcasting",
+  "influencer marketing",
+
+  // 🧠 education / skills
+  "online learning", "self improvement",
+  "productivity", "time management",
+  "career growth", "skills development",
+
+  // 🏥 lifestyle / health
+  "health", "fitness", "weight loss", "mental health",
+  "nutrition", "yoga", "meditation",
+
+  // 🌍 misc high demand
+  "travel", "food", "gaming", "photography",
+  "real estate", "parenting",
+  "relationships", "fashion", "beauty",
+
+  "ai", "make money online",
+  "affiliate marketing", "blogging",
+  "digital marketing", "crypto",
+  "finance", "youtube", "freelancing", "seo"  
+]
+
+// 🔥 random niche every run
+const niche = niches[Math.floor(Math.random() * niches.length)]
+
+console.log("🎯 Niche:", niche)
 
   // 🔥 STEP 2: FETCH TRENDS
   let trends = []
