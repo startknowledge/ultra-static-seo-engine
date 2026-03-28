@@ -1,51 +1,54 @@
+import fs from "fs"
 import { generateBlog } from "./generator-blog.js"
 import { fetchTrends } from "./trend-engine.js"
 import { detectNiche } from "./niche-engine.js"
 import { generateKeywords } from "./keyword-engine.js"
-
-// delay (API safe)
-function sleep(ms){
-  return new Promise(r => setTimeout(r, ms))
-}
+import { cleanBadBlogs } from "./cleanup-engine.js"
+import { runLinkEngine } from "./link-engine.js"
 
 async function run() {
 
   console.log("🚀 FULL AUTO SEO ENGINE STARTED")
 
-  const repo = process.env.GITHUB_REPOSITORY || "auto-blog-engine"
+  // 🔥 STEP 1: CLEAN OLD GARBAGE
+  cleanBadBlogs()
 
-  // 🔥 auto niche
+  const repo = process.env.GITHUB_REPOSITORY || "seo-engine"
+
   const niche = detectNiche(repo)
   console.log("🎯 Niche:", niche)
 
-  // 🔥 real trends
+  // 🔥 STEP 2: FETCH REAL TRENDS
   const trends = await fetchTrends(niche)
 
-  // 🔥 smart keywords
+  // 🔥 STEP 3: GENERATE KEYWORDS
   const keywords = generateKeywords(niche, trends)
+
+  fs.writeFileSync("data/keywords.json", JSON.stringify(keywords, null, 2))
 
   console.log("🔥 Keywords:", keywords.length)
 
   let count = 0
+  const MAX_DAILY = 50 // 🔥 LIMIT CONTROL
 
   for (const k of keywords) {
 
-    if (count >= 50) break
+    if (count >= MAX_DAILY) break
 
-    console.log(`🚀 [${count+1}]`, k)
-
-    try {
-      await generateBlog({
-        keyword: k,
-        traffic: 80
-      })
-      count++
-    } catch (e) {
-      console.log("❌ Failed:", k)
+    const keywordData = {
+      keyword: k,
+      traffic: Math.floor(Math.random() * 100)
     }
 
-    await sleep(1500)
+    if (keywordData.traffic < 40) continue
+
+    console.log(`🚀 [${++count}]`, k)
+
+    await generateBlog(keywordData)
   }
+
+  // 🔗 STEP 4: ADD INTERNAL LINKS
+  runLinkEngine()
 
   console.log("🎯 DONE:", count)
 }

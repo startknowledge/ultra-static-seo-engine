@@ -1,8 +1,7 @@
 import fs from "fs"
 import { runUnifiedAI } from "../ai/ai-engine.js"
-import { render } from "../core/template-engine.js"
+import { render, generateFallback } from "../core/template-engine.js"
 import { injectAds } from "./monetization-engine.js"
-import { generateFallback } from "../core/template-engine.js"
 
 export async function generateBlog(keywordData) {
 
@@ -18,16 +17,21 @@ export async function generateBlog(keywordData) {
   const slug = keywordData.keyword
     .toLowerCase()
     .replace(/\s+/g, "-")
+    .replace(/[^\w-]/g, "") // 🔥 clean slug
 
   const image = `https://source.unsplash.com/800x400/?${encodeURIComponent(keywordData.keyword)}`
 
-  let contentWithAds = injectAds(aiData.content)
+  // 🔥 inject ads
+  let content = injectAds(aiData.content)
+
+  // 🔥 basic internal linking (inline)
+  content = content.replace(/<p>/, `<p><a href="/blog/${slug}.html">${keywordData.keyword}</a> `)
 
   const html = render("templates/blog-template.html", {
     title: aiData.title,
     description: aiData.description,
-    content: contentWithAds,
-    image: image,
+    content,
+    image,
     keywords: keywordData.keyword,
     path: `blog/${slug}.html`
   })

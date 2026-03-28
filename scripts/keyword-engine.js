@@ -43,14 +43,16 @@ export function generateKeywords(niche, trends) {
   let keywords = new Set()
 
   // 🔥 direct trends
-  trends.forEach(t => keywords.add(t))
+  trends.forEach(t => {
+    if (t.length < 3) return
+    keywords.add(t)
 
-  // 🔥 intent expansion
-  for (let t of trends) {
-    for (let i of intents) {
+    intents.forEach(i => {
       keywords.add(`${i} ${t}`)
-    }
-  }
+    })
+  })
 
-  return Array.from(keywords).slice(0, 50)
+  return Array.from(keywords)
+    .filter(k => !k.includes("404")) // 🔥 FIX
+    .slice(0, 50)
 }

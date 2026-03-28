@@ -2,57 +2,70 @@ import { CONFIG, STOP_AI } from "../config.js"
 import { generateFallback } from "../core/template-engine.js"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
-// 🔑 API KEYS (only 2 use karenge)
+// 🔑 API KEYS
 const API_KEYS = [
   process.env.GEMINI_API_KEY1,
   process.env.GEMINI_API_KEY2
 ].filter(Boolean)
 
-// 🔢 usage tracker
-let AI_CALL_COUNT = 0
+let keyIndex = 0
+let usagePerKey = Array(API_KEYS.length).fill(0)
 
-function getKey() {
-  return API_KEYS[AI_CALL_COUNT % API_KEYS.length]
+const LIMIT_PER_KEY = 5 // 🔥 SAFE LIMIT
+
+function getNextKey() {
+
+  // 🔁 rotate if limit hit
+  if (usagePerKey[keyIndex] >= LIMIT_PER_KEY) {
+    keyIndex = (keyIndex + 1) % API_KEYS.length
+  }
+
+  usagePerKey[keyIndex]++
+
+  console.log(`🔑 Using KEY ${keyIndex + 1} (${usagePerKey[keyIndex]}/${LIMIT_PER_KEY})`)
+
+  return API_KEYS[keyIndex]
 }
 
 // ================= MAIN =================
 export async function runUnifiedAI(keywordData) {
+
   const { keyword } = keywordData
 
-  // ❌ AI OFF
   if (!CONFIG.USE_AI || STOP_AI.value) {
     console.log("⚡ AI OFF → fallback")
     return generateFallback(keyword)
   }
 
-  // ❌ LIMIT REACHED
-  if (AI_CALL_COUNT >= CONFIG.MAX_AI_CALLS) {
-    console.log("🛑 AI LIMIT REACHED → fallback")
-    STOP_AI.value = true
-    return generateFallback(keyword)
-  }
-
   try {
+
+    const apiKey = getNextKey()
+
     console.log("🤖 AI generating:", keyword)
 
-    const result = await runGemini(keyword)
-
-    AI_CALL_COUNT++
-
-    console.log(`✅ AI USED: ${AI_CALL_COUNT}/${CONFIG.MAX_AI_CALLS}`)
+    const result = await runGemini(keyword, apiKey)
 
     return result
 
   } catch (e) {
-    console.log("❌ AI failed:", e.message)
-    return generateFallback(keyword)
+
+    console.log("⚠️ Retry with next key...")
+
+    try {
+      keyIndex = (keyIndex + 1) % API_KEYS.length
+      const retryKey = getNextKey()
+      return await runGemini(keyword, retryKey)
+    } catch (err) {
+      console.log("❌ AI failed completely")
+      return generateFallback(keyword)
+    }
   }
 }
 
 // ================= GEMINI =================
-async function runGemini(keyword) {
+async function runGemini(keyword, apiKey) {
 
-  const genAI = new GoogleGenerativeAI(getKey())
+  const genAI = new GoogleGenerativeAI(apiKey)
 
   const model = genAI.getGenerativeModel({
     model: "gemini-2.5-flash"
@@ -61,12 +74,10 @@ async function runGemini(keyword) {
   const prompt = `
 Write a high quality SEO blog on: ${keyword}
 
-Requirements:
-- 2000+ words
+- 1500+ words
 - HTML format
-- Use headings, lists
 - SEO optimized
-- Human tone
+- human tone
 `
 
   const result = await model.generateContent(prompt)
@@ -74,8 +85,8 @@ Requirements:
   const text = result.response.text()
 
   return {
-    title: `${keyword} - Complete Guide 2026`,
-    description: `Learn ${keyword} in detail`,
+    title: `${keyword} - Complete Guide`,
+    description: `Learn ${keyword}`,
     content: text,
     keywords: [keyword]
   }
