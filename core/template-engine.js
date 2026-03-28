@@ -1,22 +1,28 @@
 import fs from "fs"
 
-// ✅ RENDER ENGINE
+// ✅ RENDER ENGINE (FINAL)
 export function render(templatePath, data) {
-const GLOBALS = {
-  SITE_URL: "https://ultrastaticseoengine.startknowledge.in",
-  SITE_NAME: "StartKnowledge",
-  SITE_LANG: "en",
-  year:new Date().getFullYear()
-}
-const finalData = { ...GLOBALS, ...data }
+
+  const GLOBALS = {
+    SITE_URL: process.env.SITE_URL || "https://ultrastaticseoengine.startknowledge.in",
+    SITE_NAME: "StartKnowledge",
+    SITE_LANG: "en",
+    year: new Date().getFullYear()
+  }
+
+  const finalData = { ...GLOBALS, ...data }
+
   let html = fs.readFileSync(templatePath, "utf8")
 
-  html = html.replace(/{{(.*?)}}/g, (_, key) => finalData[key.trim()] || "")
+  // 🔥 safe replace (no undefined issue)
+  html = html.replace(/{{(.*?)}}/g, (_, key) => {
+    return finalData[key.trim()] ?? ""
+  })
 
   return html
 }
 
-// ✅ FALLBACK (already existing)
+// ✅ FALLBACK
 export function generateFallback(keyword) {
 
   const title = `${keyword} - Ultimate Guide 2026`

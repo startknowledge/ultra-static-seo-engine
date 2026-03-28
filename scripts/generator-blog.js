@@ -34,7 +34,7 @@ export async function generateBlog(keywordData) {
     .replace(/\s+/g, "-")
     .replace(/[^\w-]/g, "") // 🔥 clean slug
 
-  const image = `https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80&auto=format&fit=crop`
+  const image = `https://source.unsplash.com/featured/800x400?${encodeURIComponent(keywordData.keyword)}`
 
   // 🔥 inject ads
   let content = injectAds(aiData.content)
