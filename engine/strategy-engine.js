@@ -1,17 +1,29 @@
 import fs from "fs"
 
 export async function runStrategy() {
-  const niches = ["seo", "ai tools", "make money online", "blogging"]
+  console.log("📊 Fetching Trends...")
 
-  const niche = niches[Math.floor(Math.random() * niches.length)]
-
-  const cluster = [
-    `best ${niche}`,
-    `${niche} for beginners`,
-    `${niche} tools`,
-    `${niche} tips`,
-    `${niche} guide`
+  // 🔥 Replace later with real API (Google Trends / SerpAPI)
+  const trending = [
+    "ai tools 2026",
+    "chatgpt alternatives",
+    "best seo tools",
+    "make money online 2026"
   ]
 
-  return { niche, cluster }
+  const niche = trending[Math.floor(Math.random() * trending.length)]
+
+  const cluster = [
+    niche,
+    `${niche} for beginners`,
+    `${niche} tools`,
+    `${niche} guide`,
+    `${niche} tips`
+  ]
+
+  return {
+    niche,
+    cluster,
+    createdAt: new Date().toISOString()
+  }
 }

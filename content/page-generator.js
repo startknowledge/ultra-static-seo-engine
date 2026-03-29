@@ -1,12 +1,28 @@
 import fs from "fs"
+import { SETTINGS } from "../config/settings.js"
 
 export async function generatePages(strategy) {
   const pages = ["about", "contact", "privacy"]
 
-  pages.forEach(page => {
-    const html = `<h1>${page} - ${strategy.niche}</h1>`
+  return pages.map(page => {
+    const html = `
+<html>
+<head>
+<title>${page} | ${SETTINGS.siteName}</title>
+<meta name="description" content="${page} page of ${SETTINGS.siteName}">
+<link rel="canonical" href="${SETTINGS.domain}/${page}.html">
+</head>
+<body>
+<h1>${page}</h1>
+</body>
+</html>
+`
     fs.writeFileSync(`./dist/${page}.html`, html)
-  })
 
-  return pages
+    return {
+      slug: page,
+      url: `${SETTINGS.domain}/${page}.html`,
+      date: new Date().toISOString()
+    }
+  })
 }
