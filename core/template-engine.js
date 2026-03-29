@@ -29,29 +29,28 @@ export function render(templatePath, data) {
   return html
 }
 
-// ✅ FALLBACK
 export function generateFallback(keyword) {
 
-  const title = `${keyword} - Ultimate Guide 2026`
+  const title = `${keyword} - Latest Update ${new Date().getFullYear()}`
 
   const content = `
-<h1>${keyword}</h1>
+  <h1>${keyword}</h1>
 
-<p>${keyword} is trending right now.</p>
+  <p>${keyword} is currently trending and gaining massive attention.</p>
 
-<h2>Latest insights on ${keyword}</h2>
-<p>People are searching for ${keyword} due to current trends.</p>
+  <h2>What is happening in ${keyword}?</h2>
+  <p>Latest developments around ${keyword} are driving search traffic.</p>
 
-<h2>Why ${keyword} is popular</h2>
-<p>This topic is gaining attention globally.</p>
+  <h2>Why people are searching ${keyword}</h2>
+  <p>This topic is trending due to recent updates and public interest.</p>
 
-<h2>Conclusion</h2>
-<p>${keyword} is worth exploring.</p>`
+  <h2>Conclusion</h2>
+  <p>${keyword} is one of the most searched topics right now.</p>
+  `
 
   return {
     title,
-    description: `Complete guide about ${keyword}`,
-    content,
-    keywords: [keyword]
+    description: `Latest news and updates about ${keyword}`,
+    content
   }
 }
