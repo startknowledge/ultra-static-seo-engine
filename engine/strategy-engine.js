@@ -1,29 +1,46 @@
-import fs from "fs"
+import axios from "axios"
 
 export async function runStrategy() {
-  console.log("📊 Fetching Trends...")
+  console.log("📊 Fetching REAL Trends...")
 
-  // 🔥 Replace later with real API (Google Trends / SerpAPI)
-  const trending = [
-    "ai tools 2026",
-    "chatgpt alternatives",
-    "best seo tools",
-    "make money online 2026"
-  ]
+  try {
+    const res = await axios.get("https://serpapi.com/search.json", {
+      params: {
+        engine: "google_trends",
+        api_key: process.env.SERP_API_KEY,
+        geo: "IN"
+      }
+    })
 
-  const niche = trending[Math.floor(Math.random() * trending.length)]
+    const trends = res.data.trending_searches_days?.[0]?.trending_searches || []
 
-  const cluster = [
-    niche,
-    `${niche} for beginners`,
-    `${niche} tools`,
-    `${niche} guide`,
-    `${niche} tips`
-  ]
+    if (!trends.length) throw new Error("No trends")
 
-  return {
-    niche,
-    cluster,
-    createdAt: new Date().toISOString()
+    const random = trends[Math.floor(Math.random() * trends.length)]
+
+    const keyword = random.title.query
+
+    const cluster = [
+      keyword,
+      `${keyword} guide`,
+      `${keyword} tips`,
+      `${keyword} tools`,
+      `${keyword} for beginners`
+    ]
+
+    return {
+      niche: keyword,
+      cluster,
+      source: "google_trends",
+      createdAt: new Date().toISOString()
+    }
+
+  } catch (err) {
+    console.log("⚠️ Trend API failed, fallback...")
+
+    return {
+      niche: "latest trending topic",
+      cluster: ["trending topic guide"]
+    }
   }
 }

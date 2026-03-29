@@ -1,4 +1,5 @@
 import fs from "fs"
+import { generateAIContent } from "../ai/ai-engine.js"
 import { SETTINGS } from "../config/settings.js"
 
 export async function generateBlogs(strategy) {
@@ -6,37 +7,27 @@ export async function generateBlogs(strategy) {
 
   if (!fs.existsSync("./dist")) fs.mkdirSync("./dist")
 
-  strategy.cluster.forEach(keyword => {
+  for (const keyword of strategy.cluster) {
+
+    const content = await generateAIContent(`
+Write a detailed SEO optimized blog on "${keyword}"
+Include headings, FAQs, and tips.
+    `)
+
     const slug = keyword.replace(/\s+/g, "-")
 
     const html = `
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <title>${keyword} | ${SETTINGS.siteName}</title>
-
-<meta name="description" content="Complete guide on ${keyword}">
-<meta name="keywords" content="${keyword}, guide, tips">
-<meta name="author" content="${SETTINGS.siteName}">
-<meta name="robots" content="index, follow">
-
+<meta name="description" content="${keyword} guide">
 <link rel="canonical" href="${SETTINGS.domain}/${slug}.html">
-
-<!-- Open Graph -->
-<meta property="og:title" content="${keyword}">
-<meta property="og:description" content="Learn ${keyword}">
-<meta property="og:type" content="article">
-<meta property="og:url" content="${SETTINGS.domain}/${slug}.html">
-
-<!-- Twitter -->
-<meta name="twitter:card" content="summary_large_image">
-
 </head>
 
 <body>
 <h1>${keyword}</h1>
-<p>AI-generated content for ${keyword}</p>
-
+${content}
 </body>
 </html>
 `
@@ -49,7 +40,7 @@ export async function generateBlogs(strategy) {
       url: `${SETTINGS.domain}/${slug}.html`,
       date: new Date().toISOString()
     })
-  })
+  }
 
   return blogs
 }

@@ -1,3 +1,7 @@
 export async function runInternalLinking(blogs) {
-  console.log("🔗 Linking blogs:", blogs.length)
+  blogs.forEach((b, i) => {
+    if (blogs[i + 1]) {
+      b.link = blogs[i + 1].slug
+    }
+  })
 }

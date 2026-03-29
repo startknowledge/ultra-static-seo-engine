@@ -1,5 +1,6 @@
 import fs from "fs"
 import { SETTINGS } from "../config/settings.js"
+import { v4 as uuidv4 } from "uuid"
 
 export async function generateSitemap(blogs, pages) {
   const urls = [...blogs, ...pages]
@@ -11,6 +12,9 @@ xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${urls.map(u => `
 <url>
   <loc>${u.url}</loc>
+  <image:image>
+  <image:loc>${generateImageUrl(u.keyword || "seo")}</image:loc>
+</image:image>
   <lastmod>${u.date}</lastmod>
   <changefreq>daily</changefreq>
   <priority>0.8</priority>
@@ -45,4 +49,8 @@ User-agent: *
 Allow: /
 Sitemap: ${SETTINGS.domain}/sitemap.xml
 `)
+}
+
+function generateImageUrl(keyword) {
+  return `https://source.unsplash.com/800x600/?${keyword}`
 }
