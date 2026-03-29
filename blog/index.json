@@ -1,5 +1,9 @@
 [
   {
+    "slug": "10-trending",
+    "title": "10 trending"
+  },
+  {
     "slug": "2026-seo",
     "title": "2026 seo"
   },
@@ -62,6 +66,10 @@
   {
     "slug": "best-seo",
     "title": "best seo"
+  },
+  {
+    "slug": "bgis-trending",
+    "title": "bgis trending"
   },
   {
     "slug": "budget-seo",
@@ -340,6 +348,10 @@
     "title": "pros and cons seo"
   },
   {
+    "slug": "rajat-dalal-trending",
+    "title": "rajat dalal trending"
+  },
+  {
     "slug": "resources-seo",
     "title": "resources seo"
   },
@@ -568,6 +580,10 @@
     "title": "the powerful synergy of content marketing and seo"
   },
   {
+    "slug": "time-trending",
+    "title": "time trending"
+  },
+  {
     "slug": "tips-seo",
     "title": "tips seo"
   },
@@ -606,6 +622,10 @@
   {
     "slug": "tvk-trending",
     "title": "tvk trending"
+  },
+  {
+    "slug": "update-trending",
+    "title": "update trending"
   },
   {
     "slug": "updates-seo",
