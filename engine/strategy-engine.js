@@ -1,9 +1,6 @@
 import fs from "fs"
 import axios from "axios"
 
-// ================= CONFIG =================
-const CACHE_PATH = "./data/trends-cache.json"
-const USAGE_PATH = "./data/serp-usage.json"
 const KEYWORD_DB_PATH = "./data/keyword-db.json"
 
 // ================= KEYS =================
@@ -14,176 +11,122 @@ const GEMINI_KEYS = [
   process.env.GEMINI_API_KEY2
 ].filter(Boolean)
 
-const SERP_KEYS = [
-  process.env.SERP_API_KEY1
-].filter(Boolean)
+const SERP_KEY = process.env.SERP_API_KEY1
 
-// ================= ROTATION =================
 let gIndex = 0
-let sIndex = 0
-
 const getGeminiKey = () => GEMINI_KEYS[gIndex++ % GEMINI_KEYS.length]
-const getSerpKey = () => SERP_KEYS[sIndex++ % SERP_KEYS.length]
 
-// ================= FILE UTILS =================
-const ensureDataDir = () => {
-  if (!fs.existsSync("./data")) fs.mkdirSync("./data")
-}
-
-const readJSON = (path, fallback) => {
+// ================= DB =================
+const loadDB = () => {
   try {
-    if (!fs.existsSync(path)) return fallback
-    return JSON.parse(fs.readFileSync(path))
+    return JSON.parse(fs.readFileSync(KEYWORD_DB_PATH))
   } catch {
-    return fallback
+    return []
   }
 }
 
-const writeJSON = (path, data) => {
-  ensureDataDir()
-  fs.writeFileSync(path, JSON.stringify(data, null, 2))
+const saveDB = (data) => {
+  fs.writeFileSync(KEYWORD_DB_PATH, JSON.stringify(data, null, 2))
 }
 
-// ================= LOCAL DB =================
-const loadKeywordDB = () => readJSON(KEYWORD_DB_PATH, [])
-
-const saveKeywordDB = (db) => writeJSON(KEYWORD_DB_PATH, db)
-
-const getLocalKeyword = () => {
-  const db = loadKeywordDB()
-  return db.length
-    ? db[Math.floor(Math.random() * db.length)]
-    : "seo tips"
-}
-
-// ================= CACHE =================
-const loadCache = () => readJSON(CACHE_PATH, null)
-
-const saveCache = (data) => writeJSON(CACHE_PATH, data)
-
-const isExpired = (cache) =>
-  Date.now() - new Date(cache.createdAt) > 12 * 60 * 60 * 1000
-
-// ================= USAGE =================
-const getUsage = () => {
-  const data = readJSON(USAGE_PATH, null)
-  const month = new Date().getMonth()
-
-  if (!data || data.month !== month) {
-    return { count: 0, month }
-  }
-
-  return data
-}
-
-const saveUsage = (data) => writeJSON(USAGE_PATH, data)
-
-// ================= GEMINI =================
-async function getGeminiTrend() {
-  if (!GEMINI_KEYS.length) return getLocalKeyword()
-
-  try {
-    const res = await axios.post(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${getGeminiKey()}`,
-      {
-        contents: [{ parts: [{ text: "Give 1 trending SEO keyword for 2026" }] }]
-      }
-    )
-
-    return res.data?.candidates?.[0]?.content?.parts?.[0]?.text?.split("\n")[0]
-      || getLocalKeyword()
-  } catch {
-    return getLocalKeyword()
-  }
-}
-
-// ================= SERP =================
+// ================= SERP TREND =================
 async function getSerpTrend() {
-  if (!SERP_KEYS.length) return getLocalKeyword()
+  if (!SERP_KEY) return null
 
   try {
     const res = await axios.get("https://serpapi.com/search.json", {
       params: {
         engine: "google_trends",
         geo: "IN",
-        api_key: getSerpKey()
+        api_key: SERP_KEY
       }
     })
 
     const trends = res.data?.trending_searches_days?.[0]?.trending_searches || []
 
-    if (!trends.length) throw new Error()
+    if (!trends.length) return null
 
     const random = trends[Math.floor(Math.random() * trends.length)]
-    return random?.title?.query || getLocalKeyword()
+
+    return random?.title?.query || null
   } catch {
-    return getLocalKeyword()
+    return null
   }
 }
 
-// ================= EXPAND =================
-async function expandKeywords(seed) {
-  if (!GEMINI_KEYS.length) return
+// ================= AI CLUSTER =================
+async function generateCluster(seed) {
+  if (!GEMINI_KEYS.length) return []
 
   try {
     const res = await axios.post(
       `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${getGeminiKey()}`,
       {
-        contents: [{ parts: [{ text: `Generate 5 SEO keywords for ${seed}` }] }]
+        contents: [{
+          parts: [{
+            text: `
+Generate 10 HIGH intent SEO keywords for "${seed}"
+
+Include:
+best, buy, review, tools, pricing, comparison
+
+Return plain list
+`
+          }]
+        }]
       }
     )
 
     const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || ""
 
-    const newKeywords = text
+    return text
       .split("\n")
       .map(k => k.replace(/^\d+\. /, "").trim())
       .filter(Boolean)
 
-    const updated = [...new Set([...loadKeywordDB(), ...newKeywords])]
-    saveKeywordDB(updated)
-
   } catch {
-    console.log("❌ Expand failed")
+    return []
   }
 }
 
 // ================= MAIN =================
 export async function runStrategy() {
-  console.log("🧠 Strategy Engine Start")
+  console.log("🧠 HYBRID STRATEGY ENGINE")
 
-  const cache = loadCache()
-  if (cache && !isExpired(cache)) {
-    console.log("⚡ CACHE USED")
-    return cache
-  }
+  const db = loadDB()
 
-  const usage = getUsage()
+  // 🔥 PRIORITY FLOW
+  let seed = await getSerpTrend()
 
-  let keyword
-
-  if (usage.count < 30) {
-    console.log("🌐 SERP MODE")
-    keyword = await getSerpTrend()
-    usage.count++
-    saveUsage(usage)
-  } else if (usage.count < 90) {
-    console.log("🤖 AI MODE")
-    keyword = await getGeminiTrend()
+  if (seed) {
+    console.log("🌐 SERP TREND:", seed)
   } else {
-    console.log("📦 LOCAL MODE")
-    keyword = getLocalKeyword()
+    seed = db.length
+      ? db[Math.floor(Math.random() * db.length)]
+      : "make money online"
+
+    console.log("📦 LOCAL/DB:", seed)
   }
 
-  await expandKeywords(keyword)
+  let cluster = await generateCluster(seed)
 
-  const data = {
-    niche: keyword,
-    cluster: [keyword],
+  if (!cluster.length) {
+    cluster = [
+      seed,
+      "best " + seed,
+      "top " + seed,
+      seed + " tools",
+      seed + " review"
+    ]
+  }
+
+  // 🔥 SAVE GROWTH
+  const updated = [...new Set([...db, ...cluster])]
+  saveDB(updated)
+
+  return {
+    niche: seed,
+    cluster,
     createdAt: new Date().toISOString()
   }
-
-  saveCache(data)
-
-  return data
 }

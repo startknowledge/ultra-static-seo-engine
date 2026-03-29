@@ -9,6 +9,9 @@ import { generateSitemap } from "../seo/sitemap-engine.js"
 import { generateSchema } from "../seo/schema-engine.js"
 import { deploy } from "../system/deploy-engine.js"
 
+// 🔥 ADD THIS
+import { injectAds } from "./monetization-engine.js"
+
 export async function runUltraCore() {
   console.log("🚀 GOD-LEVEL SYSTEM STARTED")
 
@@ -18,6 +21,9 @@ export async function runUltraCore() {
   const pages = await generatePages(strategy)
 
   await runInternalLinking(blogs, pages)
+
+  // 🔥 MONETIZATION (CRITICAL)
+  await injectAds()
 
   await updateLearning(strategy, blogs)
 

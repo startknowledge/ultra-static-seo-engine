@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: ultra-seo-engine
+  group: GOD-LEVEL
   cancel-in-progress: false
   
 env:
@@ -53,21 +53,11 @@ jobs:
       run: node engine/main-engine.js
 
     # ================= SEO FILES =================
-    - name: 📊 Generate SEO Files
+    - name: 📊 SEO Files
       run: |
-        SEO_FILES=(
-          "sitemap-engine.js"
-         
-        )
-
-        for file in "${SEO_FILES[@]}"; do
-          if [ -f "seo/$file" ]; then
-            echo "▶ Running $file"
-            node "seo/$file"
-          else
-            echo "⚠️ Skipping $file"
+          if [ -f "seo/sitemap-engine.js" ]; then
+            node seo/sitemap-engine.js
           fi
-        done
 
     # ================= COMMIT =================
     - name: 💾 Commit & Push Changes
