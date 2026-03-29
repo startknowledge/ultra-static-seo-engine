@@ -1,14 +1,27 @@
-import OpenAI from "openai"
+import axios from "axios"
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-})
+const KEYS = [
+  process.env.GEMINI_API_KEY1,
+  process.env.GEMINI_API_KEY2
+]
+
+function getKey() {
+  return KEYS[Math.floor(Math.random() * KEYS.length)]
+}
 
 export async function generateAIContent(prompt) {
-  const response = await client.chat.completions.create({
-    model: "gpt-4.1-mini",
-    messages: [{ role: "user", content: prompt }]
-  })
+  const apiKey = getKey()
 
-  return response.choices[0].message.content
+  const res = await axios.post(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+    {
+      contents: [
+        {
+          parts: [{ text: prompt }]
+        }
+      ]
+    }
+  )
+
+  return res.data.candidates?.[0]?.content?.parts?.[0]?.text || ""
 }

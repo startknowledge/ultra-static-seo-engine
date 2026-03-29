@@ -1,6 +1,9 @@
 import fs from "fs"
 import { SETTINGS } from "../config/settings.js"
-import { v4 as uuidv4 } from "uuid"
+
+function generateImageUrl(keyword) {
+  return `https://source.unsplash.com/800x600/?${encodeURIComponent(keyword)}`
+}
 
 export async function generateSitemap(blogs, pages) {
   const urls = [...blogs, ...pages]
@@ -13,8 +16,8 @@ ${urls.map(u => `
 <url>
   <loc>${u.url}</loc>
   <image:image>
-  <image:loc>${generateImageUrl(u.keyword || "seo")}</image:loc>
-</image:image>
+    <image:loc>${generateImageUrl(u.keyword || u.slug)}</image:loc>
+  </image:image>
   <lastmod>${u.date}</lastmod>
   <changefreq>daily</changefreq>
   <priority>0.8</priority>
@@ -24,7 +27,7 @@ ${urls.map(u => `
 
   fs.writeFileSync("./dist/sitemap.xml", xml)
 
-  // 🧾 RSS
+  // RSS
   const rss = `<?xml version="1.0"?>
 <rss version="2.0">
 <channel>
@@ -43,14 +46,10 @@ ${blogs.map(b => `
 
   fs.writeFileSync("./dist/rss.xml", rss)
 
-  // 🤖 robots
+  // robots
   fs.writeFileSync("./dist/robots.txt", `
 User-agent: *
 Allow: /
 Sitemap: ${SETTINGS.domain}/sitemap.xml
 `)
-}
-
-function generateImageUrl(keyword) {
-  return `https://source.unsplash.com/800x600/?${keyword}`
 }

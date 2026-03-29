@@ -22,10 +22,8 @@ jobs:
     env:
       GEMINI_API_KEY1: ${{ secrets.GEMINI_API_KEY1 }}
       GEMINI_API_KEY2: ${{ secrets.GEMINI_API_KEY2 }}
-      #GEMINI_API_KEY3: ${{ secrets.GEMINI_API_KEY3 }}
-      #GEMINI_API_KEY4: ${{ secrets.GEMINI_API_KEY4 }}
-      #GEMINI_API_KEY5: ${{ secrets.GEMINI_API_KEY5 }}
-      #GEMINI_API_KEY6: ${{ secrets.GEMINI_API_KEY6 }}
+      SERP_API_KEY1: ${{ secrets.SERP_API_KEY1 }}
+      SERP_API_KEY2: ${{ secrets.SERP_API_KEY2 }}
       DETECT_REPO_TOKEN: ${{ secrets.DETECT_REPO_TOKEN }}
 
     steps:
@@ -47,24 +45,16 @@ jobs:
       run: npm ci --prefer-offline --no-audit
 
     # ================= CORE ENGINE =================
-    - name: 🧠 Run Core Engine (Main System)
-      run: node scripts/core-engine.js
-
-    # ================= MULTI REPO =================
-    #- name: 🌐 Multi Repo Engine
-     # run: |
-      #  if [ -f scripts/multi-repo-engine.js ]; then
-       #  node scripts/multi-repo-engine.js
-       # else
-        #  echo "⚠️ Skipped: multi-repo-engine.js not found"
-        #fi
+    # ✅ FIXED
+    - name: 🧠 Run Ultra Core Engine (Main System)
+      run: node scripts/main-engine.js
 
     # ================= SEO FILES =================
     - name: 📊 Generate SEO Files
       run: |
         SEO_FILES=(
-          "generate-sitemap.js"
-          "generate-rss.js"
+          "sitemap-engine.js"
+         
         )
 
         for file in "${SEO_FILES[@]}"; do
@@ -87,6 +77,6 @@ jobs:
         if git diff --cached --quiet; then
           echo "🟢 No changes to commit"
         else
-          git commit -m "🚀 ultra seo update"
+          git commit -m "🚀 auto update"
           git push
         fi
