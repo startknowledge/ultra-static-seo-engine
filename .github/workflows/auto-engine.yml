@@ -61,9 +61,9 @@ jobs:
         )
 
         for file in "${SEO_FILES[@]}"; do
-          if [ -f "scripts/$file" ]; then
+          if [ -f "seo/$file" ]; then
             echo "▶ Running $file"
-            node "scripts/$file"
+            node "seo/$file"
           else
             echo "⚠️ Skipping $file"
           fi
