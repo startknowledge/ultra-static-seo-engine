@@ -10,7 +10,7 @@ import { runClusterEngine } from "./cluster-engine.js"
 import { runRefreshEngine } from "./refresh-engine.js"
 import { submitToGoogle } from "./indexing-engine.js"
 import { SITE_CONFIG } from "../config/site-config.js"
-
+import './generate-blog-index.js';
 async function run() {
 
   console.log("🚀 FULL AUTO SEO ENGINE STARTED")

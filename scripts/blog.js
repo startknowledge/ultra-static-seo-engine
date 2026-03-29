@@ -1,21 +1,28 @@
 // scripts/blog.js
+async function loadBlogs() {
+  try {
+    const res = await fetch('/blog/index.json'); // Cloudflare deploy me path
+    const blogs = await res.json();
+    const container = document.getElementById('blog-list');
 
-fetch('/data/posts.json')
-  .then(res => res.json())
-  .then(posts => {
+    if (!blogs || !blogs.length) {
+      container.innerHTML = "<p>No blogs found</p>";
+      return;
+    }
 
-    let html = "<h3>Latest Blogs</h3><ul>"
+    // Latest 10 blogs
+    const latest = blogs.reverse().slice(0, 50);
 
-    posts.slice(-5).reverse().forEach(p => {
-      html += `<li><a href="/blog/${p.slug}.html">${p.title}</a></li>`
-    })
+    container.innerHTML = `
+      <h3>Latest Blogs</h3>
+      <ul>
+        ${latest.map(b => `<li><a href="/blog/${b.slug}.html">${b.title}</a></li>`).join('')}
+      </ul>
+    `;
+  } catch (err) {
+    console.error("Error loading blogs:", err);
+    document.getElementById("blog-list").innerHTML = "<p>No blogs found</p>";
+  }
+}
 
-    html += "</ul>"
-
-    document.getElementById("blog-list").innerHTML = html
-
-  })
-  .catch(() => {
-    document.getElementById("blog-list").innerHTML =
-      "<p>No blogs found</p>"
-  })
+loadBlogs();
