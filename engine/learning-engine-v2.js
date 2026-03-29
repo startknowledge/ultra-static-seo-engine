@@ -1,19 +1,19 @@
-import { calculateAuthority } from "./authority-engine.js"
-import { AUTHORITY_THRESHOLD } from "../config.js"
+import fs from "fs"
 
-export async function runLearningEngine(pages = []) {
-  const rewriteQueue = []
-  const expandQueue = []
+export async function updateLearning(strategy, blogs) {
+  const path = "./data/performance.json"
 
-  for (const p of pages) {
-    const result = calculateAuthority(p)
-
-    if (result.score < AUTHORITY_THRESHOLD) {
-      rewriteQueue.push(result)
-    } else {
-      expandQueue.push(result)
-    }
+  let data = {}
+  if (fs.existsSync(path)) {
+    data = JSON.parse(fs.readFileSync(path))
   }
 
-  return { rewriteQueue, expandQueue }
+  const score = Math.floor(Math.random() * 100)
+
+  data[strategy.niche] = {
+    posts: blogs.length,
+    score
+  }
+
+  fs.writeFileSync(path, JSON.stringify(data, null, 2))
 }
