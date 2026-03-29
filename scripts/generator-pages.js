@@ -35,13 +35,7 @@ case "contact":
 return `<p>Contact us via email for any support or queries.</p>`
 
 case "faq":
-return `
-<h2>FAQs</h2>
-<ul>
-<li><strong>What is this site?</strong> AI SEO automation platform</li>
-<li><strong>Is it free?</strong> Yes</li>
-</ul>
-`
+return `<h2>FAQs</h2><p>Common questions answered.</p>`
 
 case "disclaimer":
 return `<p>All content is generated automatically for informational purposes.</p>`
@@ -72,24 +66,28 @@ if(!fs.existsSync(PAGES_DIR)){
 fs.mkdirSync(PAGES_DIR)
 }
 
-const template = fs.readFileSync("templates/page-template.html","utf8")
+//const template = fs.readFileSync("templates/page-template.html","utf8")
 
 for(const page of pages){
 
 const title = page.replace(/-/g," ")
-const slug = `pages/${page}.html`
-
-const content = generateContent(page)
+const filePath = `pages/${page}.html`
 
 const html = render("templates/page-template.html",{
-title: title,
-description: `${title} - Learn everything about ${title} with complete guide`,
-content: content,
-slug: page,
-keywords: `${page}, website ${page}`
+  title,
+  description: `${title} page`,
+  content: generateContent(page),
+  slug: `pages/${page}.html`,
+  keywords: `${title}, ${title} guide`,
+
+  // 🔥 FIX RELATED
+  related1: "latest trends",
+  related2: "top topics",
+  related3: "new updates",
+  related4: "best guides"
 })
 
-fs.writeFileSync(slug, html)
+fs.writeFileSync(filePath, html)
 
 console.log("✅ Page:",page)
 

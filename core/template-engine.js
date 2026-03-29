@@ -1,7 +1,6 @@
 import fs from "fs"
 import { SITE_CONFIG } from "../config/site-config.js"
 
-// ✅ RENDER ENGINE (FINAL)
 export function render(templatePath, data) {
 
   const GLOBALS = {
@@ -13,10 +12,19 @@ export function render(templatePath, data) {
 
   let html = fs.readFileSync(templatePath, "utf8")
 
-  // 🔥 safe replace (no undefined issue)
-  html = html.replace(/{{(.*?)}}/g, (_, key) => {
-    return finalData[key.trim()] ?? ""
-  })
+  // 🔥 layout inject
+  if (html.includes("{{layout}}")) {
+    const layout = fs.readFileSync("templates/layout.html", "utf8")
+    html = html.replace("{{layout}}", layout)
+  }
+
+  // 🔥 REPLACE ALL KEYS (IMPORTANT FIX)
+  for (const key in finalData) {
+    html = html.replaceAll(`{{${key}}}`, finalData[key])
+  }
+
+  // 🔥 remove leftover variables
+  html = html.replace(/{{(.*?)}}/g, "")
 
   return html
 }
@@ -27,26 +35,18 @@ export function generateFallback(keyword) {
   const title = `${keyword} - Ultimate Guide 2026`
 
   const content = `
-  <h1>${keyword}</h1>
+<h1>${keyword}</h1>
 
-  <p>${keyword} is trending topic in 2026.</p>
+<p>${keyword} is trending right now.</p>
 
-  <h2>What is ${keyword}?</h2>
-  <p>${keyword} explained in simple terms.</p>
+<h2>Latest insights on ${keyword}</h2>
+<p>People are searching for ${keyword} due to current trends.</p>
 
-  <h2>Benefits of ${keyword}</h2>
-  <ul>
-    <li>Increase traffic</li>
-    <li>Improve SEO ranking</li>
-    <li>Better monetization</li>
-  </ul>
+<h2>Why ${keyword} is popular</h2>
+<p>This topic is gaining attention globally.</p>
 
-  <h2>FAQs</h2>
-  <p><b>Is ${keyword} important?</b> Yes.</p>
-
-  <h2>Conclusion</h2>
-  <p>${keyword} is powerful strategy.</p>
-  `
+<h2>Conclusion</h2>
+<p>${keyword} is worth exploring.</p>`
 
   return {
     title,
