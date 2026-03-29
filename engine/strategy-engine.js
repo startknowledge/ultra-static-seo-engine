@@ -4,117 +4,94 @@ import axios from "axios"
 // ================= CONFIG =================
 const CACHE_PATH = "./data/trends-cache.json"
 const USAGE_PATH = "./data/serp-usage.json"
+const KEYWORD_DB_PATH = "./data/keyword-db.json"
 
-// 🔑 KEYS (sequence maintained)
+// ================= KEYS =================
 const GEMINI_KEYS = [
   process.env.GEMINI_API_KEY3,
   process.env.GEMINI_API_KEY4,
   process.env.GEMINI_API_KEY1,
   process.env.GEMINI_API_KEY2
-]
+].filter(Boolean)
 
 const SERP_KEYS = [
   process.env.SERP_API_KEY1
-]
+].filter(Boolean)
 
-// 🔁 rotation
+// ================= ROTATION =================
 let gIndex = 0
 let sIndex = 0
 
-function getGeminiKey() {
-  const key = GEMINI_KEYS[gIndex % GEMINI_KEYS.length]
-  gIndex++
-  return key
+const getGeminiKey = () => GEMINI_KEYS[gIndex++ % GEMINI_KEYS.length]
+const getSerpKey = () => SERP_KEYS[sIndex++ % SERP_KEYS.length]
+
+// ================= FILE UTILS =================
+const ensureDataDir = () => {
+  if (!fs.existsSync("./data")) fs.mkdirSync("./data")
 }
 
-function getSerpKey() {
-  const key = SERP_KEYS[sIndex % SERP_KEYS.length]
-  sIndex++
-  return key
+const readJSON = (path, fallback) => {
+  try {
+    if (!fs.existsSync(path)) return fallback
+    return JSON.parse(fs.readFileSync(path))
+  } catch {
+    return fallback
+  }
+}
+
+const writeJSON = (path, data) => {
+  ensureDataDir()
+  fs.writeFileSync(path, JSON.stringify(data, null, 2))
 }
 
 // ================= LOCAL DB =================
-const KEYWORD_DB = [
-  "seo tips",
-  "make money online",
-  "ai tools",
-  "blogging 2026",
-  "affiliate marketing",
-  "youtube growth",
-  "freelancing"
-]
+const loadKeywordDB = () => readJSON(KEYWORD_DB_PATH, [])
 
-function getLocalKeyword() {
-  return KEYWORD_DB[Math.floor(Math.random() * KEYWORD_DB.length)]
+const saveKeywordDB = (db) => writeJSON(KEYWORD_DB_PATH, db)
+
+const getLocalKeyword = () => {
+  const db = loadKeywordDB()
+  return db.length
+    ? db[Math.floor(Math.random() * db.length)]
+    : "seo tips"
 }
 
 // ================= CACHE =================
-function loadCache() {
-  try {
-    if (!fs.existsSync(CACHE_PATH)) return null
-    return JSON.parse(fs.readFileSync(CACHE_PATH))
-  } catch {
-    return null
-  }
-}
+const loadCache = () => readJSON(CACHE_PATH, null)
 
-function saveCache(data) {
-  if (!fs.existsSync("./data")) fs.mkdirSync("./data")
-  fs.writeFileSync(CACHE_PATH, JSON.stringify(data, null, 2))
-}
+const saveCache = (data) => writeJSON(CACHE_PATH, data)
 
-function isExpired(cache) {
-  return (Date.now() - new Date(cache.createdAt)) > (12 * 60 * 60 * 1000)
-}
+const isExpired = (cache) =>
+  Date.now() - new Date(cache.createdAt) > 12 * 60 * 60 * 1000
 
 // ================= USAGE =================
-function getUsage() {
-  try {
-    if (!fs.existsSync(USAGE_PATH)) {
-      return { count: 0, month: new Date().getMonth() }
-    }
+const getUsage = () => {
+  const data = readJSON(USAGE_PATH, null)
+  const month = new Date().getMonth()
 
-    const data = JSON.parse(fs.readFileSync(USAGE_PATH))
-
-    if (data.month !== new Date().getMonth()) {
-      return { count: 0, month: new Date().getMonth() }
-    }
-
-    return data
-  } catch {
-    return { count: 0, month: new Date().getMonth() }
+  if (!data || data.month !== month) {
+    return { count: 0, month }
   }
+
+  return data
 }
 
-function saveUsage(data) {
-  if (!fs.existsSync("./data")) fs.mkdirSync("./data")
-  fs.writeFileSync(USAGE_PATH, JSON.stringify(data, null, 2))
-}
+const saveUsage = (data) => writeJSON(USAGE_PATH, data)
 
-// ================= GEMINI AI =================
+// ================= GEMINI =================
 async function getGeminiTrend() {
-  try {
-    const apiKey = getGeminiKey()
+  if (!GEMINI_KEYS.length) return getLocalKeyword()
 
+  try {
     const res = await axios.post(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${getGeminiKey()}`,
       {
-        contents: [
-          {
-            parts: [
-              {
-                text: "Give 1 trending SEO keyword for 2026 (short keyword only)"
-              }
-            ]
-          }
-        ]
+        contents: [{ parts: [{ text: "Give 1 trending SEO keyword for 2026" }] }]
       }
     )
 
-    const text =
-      res.data?.candidates?.[0]?.content?.parts?.[0]?.text || ""
-
-    return text.split("\n")[0] || getLocalKeyword()
+    return res.data?.candidates?.[0]?.content?.parts?.[0]?.text?.split("\n")[0]
+      || getLocalKeyword()
   } catch {
     return getLocalKeyword()
   }
@@ -122,19 +99,18 @@ async function getGeminiTrend() {
 
 // ================= SERP =================
 async function getSerpTrend() {
-  try {
-    const apiKey = getSerpKey()
+  if (!SERP_KEYS.length) return getLocalKeyword()
 
+  try {
     const res = await axios.get("https://serpapi.com/search.json", {
       params: {
         engine: "google_trends",
         geo: "IN",
-        api_key: apiKey
+        api_key: getSerpKey()
       }
     })
 
-    const trends =
-      res.data?.trending_searches_days?.[0]?.trending_searches || []
+    const trends = res.data?.trending_searches_days?.[0]?.trending_searches || []
 
     if (!trends.length) throw new Error()
 
@@ -145,11 +121,37 @@ async function getSerpTrend() {
   }
 }
 
+// ================= EXPAND =================
+async function expandKeywords(seed) {
+  if (!GEMINI_KEYS.length) return
+
+  try {
+    const res = await axios.post(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${getGeminiKey()}`,
+      {
+        contents: [{ parts: [{ text: `Generate 5 SEO keywords for ${seed}` }] }]
+      }
+    )
+
+    const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || ""
+
+    const newKeywords = text
+      .split("\n")
+      .map(k => k.replace(/^\d+\. /, "").trim())
+      .filter(Boolean)
+
+    const updated = [...new Set([...loadKeywordDB(), ...newKeywords])]
+    saveKeywordDB(updated)
+
+  } catch {
+    console.log("❌ Expand failed")
+  }
+}
+
 // ================= MAIN =================
 export async function runStrategy() {
   console.log("🧠 Strategy Engine Start")
 
-  // 1. CACHE
   const cache = loadCache()
   if (cache && !isExpired(cache)) {
     console.log("⚡ CACHE USED")
@@ -160,19 +162,20 @@ export async function runStrategy() {
 
   let keyword
 
-  // 2. HYBRID STRATEGY
   if (usage.count < 30) {
-    console.log("🌐 Using SERP (real trends)")
+    console.log("🌐 SERP MODE")
     keyword = await getSerpTrend()
     usage.count++
     saveUsage(usage)
   } else if (usage.count < 90) {
-    console.log("🤖 Using GEMINI (AI trends)")
+    console.log("🤖 AI MODE")
     keyword = await getGeminiTrend()
   } else {
-    console.log("📦 ZERO API MODE (local DB)")
+    console.log("📦 LOCAL MODE")
     keyword = getLocalKeyword()
   }
+
+  await expandKeywords(keyword)
 
   const data = {
     niche: keyword,
