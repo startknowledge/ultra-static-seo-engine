@@ -1,18 +1,16 @@
-import fetch from "node-fetch"
-
-export async function fetchTrends(niche) {
+export async function fetchTrends(niche = "") {
 
   console.log("📈 Fetching REAL Trends...")
 
   try {
 
-    // 🔥 GOOGLE TRENDS RSS (INDIA)
+    // 🔥 INDIA TRENDS
     const indiaRes = await fetch(
       "https://trends.google.com/trending/rss?geo=IN"
     )
     const indiaXML = await indiaRes.text()
 
-    // 🔥 GLOBAL
+    // 🔥 GLOBAL TRENDS
     const globalRes = await fetch(
       "https://trends.google.com/trending/rss?geo=US"
     )
@@ -30,10 +28,12 @@ export async function fetchTrends(niche) {
       ...parse(globalXML)
     ]
 
-    // 🔥 niche mix (IMPORTANT)
-    trends = trends.map(t => `${t} ${niche}`)
+    // 🔥 OPTIONAL NICHE MIX
+    if (niche) {
+      trends = trends.map(t => `${t} ${niche}`)
+    }
 
-    // remove duplicates
+    // 🔥 REMOVE DUPLICATES
     trends = [...new Set(trends)]
 
     console.log("✅ Trends:", trends.length)
@@ -42,6 +42,14 @@ export async function fetchTrends(niche) {
 
   } catch (e) {
     console.log("⚠️ Using fallback trends")
-    return []
+
+    // 🔥 SMART FALLBACK
+    return [
+      "latest news",
+      "trending topics",
+      "breaking news",
+      "technology updates",
+      "online business tips"
+    ]
   }
 }
