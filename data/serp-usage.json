@@ -1,0 +1,22 @@
+const USAGE_PATH = "./data/serp-usage.json"
+
+function getUsage() {
+  try {
+    if (!fs.existsSync(USAGE_PATH)) return { count: 0, month: new Date().getMonth() }
+    const data = JSON.parse(fs.readFileSync(USAGE_PATH))
+
+    // reset every month
+    if (data.month !== new Date().getMonth()) {
+      return { count: 0, month: new Date().getMonth() }
+    }
+
+    return data
+  } catch {
+    return { count: 0, month: new Date().getMonth() }
+  }
+}
+
+function saveUsage(data) {
+  if (!fs.existsSync("./data")) fs.mkdirSync("./data")
+  fs.writeFileSync(USAGE_PATH, JSON.stringify(data, null, 2))
+}
