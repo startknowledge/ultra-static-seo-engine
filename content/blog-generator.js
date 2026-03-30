@@ -16,6 +16,10 @@ export async function generateBlogs(strategy) {
 Create a detailed, informative, and engaging article about "${keyword}".
 Make it helpful for users searching this topic.
 `)
+if (!content) {
+  console.log("⚠️ Empty AI content → skipping blog")
+  continue
+}
 
     const slug = keyword.replace(/\s+/g, "-").toLowerCase()
 

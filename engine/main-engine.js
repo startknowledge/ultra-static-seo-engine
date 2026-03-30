@@ -16,7 +16,11 @@ export async function runUltraCore() {
   const isNewRepo = detectNewRepo()
 
   const strategy = await runStrategy()
-
+try {
+  await runStrategy()
+} catch (err) {
+  console.log("❌ ENGINE ERROR:", err.message)
+}
   // 🔥 NO STATIC BOOST — only dynamic
   if (isNewRepo) {
     console.log("🆕 New Repo Detected → Using Pure Trend Mode")

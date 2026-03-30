@@ -110,13 +110,15 @@ export async function runStrategy() {
 
   console.log("🌐 TREND:", seed)
 
-  // 🔥 AI CLUSTER
-  let cluster = await generateCluster(seed)
+  // CHANGE ONLY THIS PART
 
-  // 🔥 IF AI FAIL → ONLY USE SEED
-  if (!cluster.length) {
-    cluster = [seed]
-  }
+let cluster = await generateCluster(seed)
+
+// ❗ SAFE MODE
+if (!cluster || cluster.length === 0) {
+  console.log("⚠️ AI cluster failed → using seed only")
+  cluster = [seed]
+}
 
   // 🔥 CLEAN
   cluster = [...new Set(cluster.map(k => k.toLowerCase()))]
