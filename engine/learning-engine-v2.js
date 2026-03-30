@@ -1,16 +1,30 @@
 import fs from "fs"
 
-export async function updateLearning(strategy, blogs) {
-  const path = "./data/performance.json"
+const FILE = "./data/learning.json"
 
-  let data = fs.existsSync(path)
-    ? JSON.parse(fs.readFileSync(path))
-    : {}
+export function updateLearning(data) {
+  let db = []
 
-  data[strategy.niche] = {
-    posts: blogs.length,
-    lastUpdated: new Date().toISOString()
+  try {
+    if (fs.existsSync(FILE)) {
+      const raw = fs.readFileSync(FILE, "utf-8")
+
+      // 🔥 EMPTY FILE FIX
+      if (raw && raw.trim().length > 0) {
+        db = JSON.parse(raw)
+      }
+    }
+  } catch (err) {
+    console.log("⚠️ Learning DB corrupted → resetting")
+    db = []
   }
 
-  fs.writeFileSync(path, JSON.stringify(data, null, 2))
+  db.push({
+    ...data,
+    time: new Date().toISOString()
+  })
+
+  if (!fs.existsSync("./data")) fs.mkdirSync("./data")
+
+  fs.writeFileSync(FILE, JSON.stringify(db, null, 2))
 }

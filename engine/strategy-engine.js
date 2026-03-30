@@ -1,87 +1,84 @@
 import fs from "fs"
 import axios from "axios"
 
-const KEYWORD_DB_PATH = "./data/keyword-db.json"
+const DB = "./data/keyword-db.json"
 
-// ================= KEYS =================
-const GEMINI_KEYS = [
+// 🔑 KEYS
+const KEYS = [
   process.env.GEMINI_API_KEY3,
   process.env.GEMINI_API_KEY4,
   process.env.GEMINI_API_KEY1,
   process.env.GEMINI_API_KEY2
 ].filter(Boolean)
 
-let gIndex = 0
-const getGeminiKey = () => {
-  if (!GEMINI_KEYS.length) return null
-  return GEMINI_KEYS[gIndex++ % GEMINI_KEYS.length]
-}
+let i = 0
+const getKey = () => KEYS[i++ % KEYS.length]
 
-// ================= DB =================
-const loadDB = () => {
+// 📦 DB
+function loadDB() {
   try {
-    return JSON.parse(fs.readFileSync(KEYWORD_DB_PATH))
+    return JSON.parse(fs.readFileSync(DB))
   } catch {
     return []
   }
 }
 
-const saveDB = (data) => {
+function saveDB(data) {
   if (!fs.existsSync("./data")) fs.mkdirSync("./data")
-  fs.writeFileSync(KEYWORD_DB_PATH, JSON.stringify(data, null, 2))
+  fs.writeFileSync(DB, JSON.stringify(data, null, 2))
 }
 
-// ================= GOOGLE TRENDS =================
-async function getRealGoogleTrend() {
+// 🌐 GOOGLE TREND
+async function getTrend() {
   try {
-    const res = await axios.get(
-      "https://trends.google.com/trending/rss?geo=IN"
-    )
-
+    const res = await axios.get("https://trends.google.com/trending/rss?geo=IN")
     const xml = res.data
 
-    const matches = [
-      ...xml.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
-    ]
+    const matches = [...xml.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)]
 
-    const keywords = matches
+    const list = matches
       .map(m => m[1])
       .filter(k => k && k !== "Daily Search Trends")
 
-    if (!keywords.length) return null
-
-    return keywords[Math.floor(Math.random() * keywords.length)]
-
+    return list[Math.floor(Math.random() * list.length)]
   } catch {
-    console.log("⚠️ Trend fetch failed")
     return null
   }
 }
 
-// ================= GEMINI =================
+// 📂 REPO CONTENT → KEYWORD
+function detectFromRepo(repoName) {
+  const files = fs.readdirSync("./", { recursive: true })
+
+  const joined = files.join(" ").toLowerCase()
+
+  if (joined.includes("calculator")) return "online calculator"
+  if (joined.includes("seo")) return "seo optimization"
+  if (joined.includes("ai")) return "ai tools"
+  if (joined.includes("design")) return "design tools"
+  if (joined.includes("ration")) return "ration calculation"
+
+  return repoName.replace(/-/g, " ")
+}
+
+// 🤖 GEMINI
 async function generateCluster(seed) {
-  const key = getGeminiKey()
+  const key = getKey()
   if (!key) return []
 
   try {
     const res = await axios.post(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${key}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`,
       {
         contents: [{
-          parts: [{
-            text: `Generate related search queries for "${seed}"`
-          }]
+          parts: [{ text: `Generate search queries for "${seed}"` }]
         }]
       }
     )
 
-    const text =
-      res.data?.candidates?.[0]?.content?.parts?.[0]?.text || ""
+    const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || ""
 
-    return text
-      .split("\n")
-      .map(k => k.trim())
-      .filter(Boolean)
+    return text.split("\n").map(x => x.trim()).filter(Boolean)
 
   } catch {
     console.log("⚠️ Gemini failed")
@@ -89,47 +86,41 @@ async function generateCluster(seed) {
   }
 }
 
-// ================= MAIN =================
-export async function runStrategy() {
-  console.log("🧠 PURE AI STRATEGY ENGINE")
+// 🚀 MAIN
+export async function runStrategy(repoName = "") {
+  console.log("🧠 AI STRATEGY")
 
   const db = loadDB()
 
-  // 🔥 ONLY REAL TREND
-  let seed = await getRealGoogleTrend()
+  let seed = await getTrend()
+
+  if (!seed) {
+    seed = detectFromRepo(repoName)
+    console.log("📂 Repo-based seed:", seed)
+  }
 
   if (!seed && db.length) {
     seed = db[Math.floor(Math.random() * db.length)]
-    console.log("📦 DB fallback:", seed)
   }
 
   if (!seed) {
-    console.log("❌ No seed found → skipping run")
     return { niche: null, cluster: [] }
   }
 
-  console.log("🌐 TREND:", seed)
+  console.log("🌐 SEED:", seed)
 
-  // CHANGE ONLY THIS PART
+  let cluster = await generateCluster(seed)
 
-let cluster = await generateCluster(seed)
+  if (!cluster.length) {
+    cluster = [seed]
+  }
 
-// ❗ SAFE MODE
-if (!cluster || cluster.length === 0) {
-  console.log("⚠️ AI cluster failed → using seed only")
-  cluster = [seed]
-}
+  cluster = [...new Set(cluster.map(x => x.toLowerCase()))]
 
-  // 🔥 CLEAN
-  cluster = [...new Set(cluster.map(k => k.toLowerCase()))]
-
-  // 🔥 SAVE LEARNING
-  const updatedDB = [...new Set([...db, ...cluster])]
-  saveDB(updatedDB)
+  saveDB([...new Set([...db, ...cluster])])
 
   return {
     niche: seed,
-    cluster,
-    createdAt: new Date().toISOString()
+    cluster
   }
 }
