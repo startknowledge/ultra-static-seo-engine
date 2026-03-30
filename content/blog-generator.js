@@ -1,8 +1,6 @@
 import fs from "fs"
 import { generateAIContent } from "../ai/ai-engine.js"
 import { SETTINGS } from "../config/settings.js"
-
-// 🔥 IMPORT ADS ENGINE
 import { injectAds } from "../engine/monetization-engine.js"
 
 export async function generateBlogs(strategy) {
@@ -13,70 +11,46 @@ export async function generateBlogs(strategy) {
 
   for (const keyword of strategy.cluster) {
 
-    // 🔥 AI CONTENT
+    // 🔥 PURE DYNAMIC AI CONTENT (NO TEMPLATE)
     let content = await generateAIContent(`
-Write a HIGH CONVERTING SEO blog on "${keyword}"
-
-Include:
-- Introduction
-- Best tools/products
-- Pros & Cons
-- Pricing
-- FAQ
-- Conclusion with CTA
-
-Use persuasive tone
+Create a detailed, informative, and engaging article about "${keyword}".
+Make it helpful for users searching this topic.
 `)
 
-    // 🔥 SLUG
     const slug = keyword.replace(/\s+/g, "-").toLowerCase()
 
-    // 🔥 BASE HTML (NO ADS HERE)
     let html = `
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-
 <title>${keyword} | ${SETTINGS.siteName}</title>
-
-<meta name="description" content="Latest guide on ${keyword}">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
+<meta name="description" content="Latest insights on ${keyword}">
 <link rel="canonical" href="${SETTINGS.domain}/${slug}.html">
 
 <style>
-body { font-family: Arial; margin: 20px; line-height: 1.6; }
-h1 { color: #111; }
+body { font-family: Arial; margin: 20px; }
 .cta { background:#000;color:#fff;padding:20px;text-align:center;margin:30px 0 }
-.box { background:#f4f4f4;padding:15px;margin:20px 0 }
 </style>
-
 </head>
 
 <body>
 
-<!-- 🔥 UNIQUE BUILD -->
 <!-- build-id: ${unique} -->
+<!-- build-id: ${Date.now()} -->
 
 <h1>${keyword}</h1>
 
-<div class="box">
-<b>🔥 Best Deal:</b><br>
-
 <a href="https://example.com?ref=seo-engine" target="_blank">
-👉 Buy Best ${keyword}
+🔥 Explore ${keyword}
 </a>
-</div>
 
 ${content}
 
-<!-- 🔥 CTA -->
 <div class="cta">
-<h2>🚀 Start Now</h2>
-
+<h2>🚀 Take Action Now</h2>
 <a href="https://example.com?ref=seo-engine" target="_blank" style="color:#fff;">
-Click Here to Get Best ${keyword}
+Get Started
 </a>
 </div>
 
@@ -84,10 +58,9 @@ Click Here to Get Best ${keyword}
 </html>
 `
 
-    // 🔥 APPLY ADS ENGINE (MAIN MAGIC)
+    // 🔥 ADS INJECTION ONLY HERE
     html = injectAds(html)
 
-    // 🔥 SAVE FILE
     fs.writeFileSync(`./dist/${slug}.html`, html)
 
     console.log("✅ Blog Created:", slug)
@@ -95,8 +68,7 @@ Click Here to Get Best ${keyword}
     blogs.push({
       slug,
       keyword,
-      url: `${SETTINGS.domain}/${slug}.html`,
-      date: new Date().toISOString()
+      url: `${SETTINGS.domain}/${slug}.html`
     })
   }
 

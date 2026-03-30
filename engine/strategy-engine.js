@@ -31,7 +31,7 @@ const saveDB = (data) => {
   fs.writeFileSync(KEYWORD_DB_PATH, JSON.stringify(data, null, 2))
 }
 
-// ================= REAL GOOGLE TRENDS =================
+// ================= GOOGLE TRENDS =================
 async function getRealGoogleTrend() {
   try {
     const res = await axios.get(
@@ -50,16 +50,15 @@ async function getRealGoogleTrend() {
 
     if (!keywords.length) return null
 
-    const random = keywords[Math.floor(Math.random() * keywords.length)]
+    return keywords[Math.floor(Math.random() * keywords.length)]
 
-    return random
-  } catch (err) {
+  } catch {
     console.log("⚠️ Trend fetch failed")
     return null
   }
 }
 
-// ================= GEMINI CLUSTER =================
+// ================= GEMINI =================
 async function generateCluster(seed) {
   const key = getGeminiKey()
   if (!key) return []
@@ -70,14 +69,7 @@ async function generateCluster(seed) {
       {
         contents: [{
           parts: [{
-            text: `
-Generate 15 HIGH intent SEO keywords for "${seed}"
-
-Include:
-best, buy, review, tools, pricing, comparison, near me
-
-Return only keywords list (no explanation)
-`
+            text: `Generate related search queries for "${seed}"`
           }]
         }]
       }
@@ -88,10 +80,10 @@ Return only keywords list (no explanation)
 
     return text
       .split("\n")
-      .map(k => k.replace(/^\d+\. /, "").trim())
+      .map(k => k.trim())
       .filter(Boolean)
 
-  } catch (err) {
+  } catch {
     console.log("⚠️ Gemini failed")
     return []
   }
@@ -99,48 +91,39 @@ Return only keywords list (no explanation)
 
 // ================= MAIN =================
 export async function runStrategy() {
-  console.log("🧠 ADVANCED STRATEGY ENGINE START")
+  console.log("🧠 PURE AI STRATEGY ENGINE")
 
   const db = loadDB()
 
-  // 🔥 PRIORITY: REAL GOOGLE TREND
+  // 🔥 ONLY REAL TREND
   let seed = await getRealGoogleTrend()
 
-  if (seed) {
-    console.log("🌐 GOOGLE TREND:", seed)
-  } else if (db.length) {
+  if (!seed && db.length) {
     seed = db[Math.floor(Math.random() * db.length)]
-    console.log("📦 DB FALLBACK:", seed)
-  } else {
-    seed = "make money online"
-    console.log("⚠️ DEFAULT:", seed)
+    console.log("📦 DB fallback:", seed)
   }
+
+  if (!seed) {
+    console.log("❌ No seed found → skipping run")
+    return { niche: null, cluster: [] }
+  }
+
+  console.log("🌐 TREND:", seed)
 
   // 🔥 AI CLUSTER
   let cluster = await generateCluster(seed)
 
-  // 🔥 ZERO API MODE
+  // 🔥 IF AI FAIL → ONLY USE SEED
   if (!cluster.length) {
-    cluster = [
-      seed,
-      `best ${seed}`,
-      `top ${seed}`,
-      `${seed} tools`,
-      `${seed} review`,
-      `${seed} pricing`,
-      `${seed} guide`,
-      `${seed} near me`
-    ]
+    cluster = [seed]
   }
 
-  // 🔥 CLEAN + UNIQUE
+  // 🔥 CLEAN
   cluster = [...new Set(cluster.map(k => k.toLowerCase()))]
 
-  // 🔥 SELF LEARNING DB
+  // 🔥 SAVE LEARNING
   const updatedDB = [...new Set([...db, ...cluster])]
   saveDB(updatedDB)
-
-  console.log("✅ Keywords Generated:", cluster.length)
 
   return {
     niche: seed,

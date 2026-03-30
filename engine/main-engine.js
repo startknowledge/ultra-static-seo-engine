@@ -10,9 +10,6 @@ import { generateSchema } from "../seo/schema-engine.js"
 import { deploy } from "../system/deploy-engine.js"
 import { detectNewRepo } from "./repo-detector.js"
 
-// 🔥 ADD THIS
-import { injectAds } from "./monetization-engine.js"
-
 export async function runUltraCore() {
   console.log("🚀 GOD-LEVEL SYSTEM STARTED")
 
@@ -20,23 +17,15 @@ export async function runUltraCore() {
 
   const strategy = await runStrategy()
 
+  // 🔥 NO STATIC BOOST — only dynamic
+  if (isNewRepo) {
+    console.log("🆕 New Repo Detected → Using Pure Trend Mode")
+  }
+
   const blogs = await generateBlogs(strategy)
   const pages = await generatePages(strategy)
 
-  // 🔥 BOOST IF NEW REPO
-  if (isNewRepo) {
-    strategy.cluster.push(
-      "best tools 2026",
-      "top ai tools",
-      "make money fast",
-      "affiliate marketing guide"
-    )
-  }
-  
   await runInternalLinking(blogs, pages)
-
-  // 🔥 MONETIZATION (CRITICAL)
-  await injectAds()
 
   await updateLearning(strategy, blogs)
 
@@ -51,3 +40,6 @@ export async function runUltraCore() {
 
   console.log("🔥 SYSTEM COMPLETE")
 }
+
+// 🔥 MUST RUN
+runUltraCore()
