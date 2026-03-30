@@ -11,17 +11,18 @@ export async function generateBlogs(strategy, context) {
   for (const keyword of strategy.cluster) {
 
     let content = await generateAIContent(`
-Create a detailed and helpful article about "${keyword}".
+Write a detailed SEO optimized blog post about "${keyword}".
+Make it helpful and user-focused.
 `)
 
-    if (!content || content.length < 50) {
-      console.log("⚠️ Skipped:", keyword)
+    if (!content) {
+      console.log("⚠️ Empty content → skip")
       continue
     }
 
     const slug = keyword.replace(/\s+/g, "-").toLowerCase()
-    const url = `${context.domain}/${slug}.html`   // ✅ FIXED
-    
+    const url = `${context.domain}/${slug}.html`
+
     let html = `
 <!DOCTYPE html>
 <html>
@@ -30,29 +31,24 @@ Create a detailed and helpful article about "${keyword}".
 <title>${keyword}</title>
 <meta name="description" content="Latest insights on ${keyword}">
 <link rel="canonical" href="${url}">
-
-<style>
-body { font-family: Arial; margin: 20px; }
-.cta { background:#000;color:#fff;padding:20px;text-align:center;margin:30px 0 }
-</style>
 </head>
 
 <body>
 
 <!-- build-id: ${unique} -->
-<!-- build-id: ${Date.now()} -->
 
 <h1>${keyword}</h1>
 
-<a href="https://AmazonAffileted?ref=seo-engine" target="_blank">
-🔥Explore ${keyword}
+<!-- 🔥 Affiliate -->
+<a href="https://example.com?ref=seo-engine" target="_blank">
+🔥 Explore ${keyword}
 </a>
 
 ${content}
 
-<div class="cta">
-<h2>🚀 Take Action Now</h2>
-<a href="https://AmazonAffileted?ref=seo-engine" target="_blank" style="color:#fff;">
+<div style="margin-top:30px;padding:20px;background:#000;color:#fff;text-align:center;">
+<h2>🚀 Take Action</h2>
+<a href="https://example.com?ref=seo-engine" target="_blank" style="color:#fff;">
 Get Started
 </a>
 </div>
@@ -61,18 +57,18 @@ Get Started
 </html>
 `
 
-    // 🔥 ADS INJECTION ONLY HERE
+    // 🔥 ADS ENABLED
     html = injectAds(html)
 
     fs.writeFileSync(`./dist/${slug}.html`, html)
+
+    console.log("✅ Blog:", url)
 
     blogs.push({
       slug,
       keyword,
       url
     })
-
-    console.log("✅ Blog:", url)
   }
 
   return blogs

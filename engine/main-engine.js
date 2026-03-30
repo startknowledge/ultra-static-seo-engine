@@ -19,18 +19,19 @@ export async function runUltraCore() {
   if (!context) return
 
   console.log("🌐 DOMAIN:", context.domain)
+  console.log("📂 CONTEXT:", context.niche)
 
   let strategy
 
   try {
-    strategy = await runStrategy(context.repo)
+    strategy = await runStrategy(context)
   } catch (err) {
-    console.log("❌ Strategy failed:", err.message)
+    console.log("❌ STRATEGY ERROR:", err.message)
     return
   }
 
   if (isNewRepo) {
-    console.log("🆕 New Repo → Pure Trend Mode")
+    console.log("🆕 New Repo → Trend Priority")
   }
 
   const blogs = await generateBlogs(strategy, context)
@@ -38,14 +39,12 @@ export async function runUltraCore() {
 
   await runInternalLinking(blogs, pages)
 
-  if (blogs.length > 0) {
-    updateLearning({ repo: context.repo, blogs })
-  }
+  await updateLearning({ repo: context.repo, blogs })
 
   await runCleaner()
 
-  await generateSitemap(blogs, pages, context)
-  await generateSchema(blogs, pages, context)
+  await generateSitemap(blogs, pages)
+  await generateSchema(blogs, pages)
 
   await runGrowth(strategy)
 
@@ -54,5 +53,4 @@ export async function runUltraCore() {
   console.log("🔥 SYSTEM COMPLETE")
 }
 
-// 🚀 run
 runUltraCore()

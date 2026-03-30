@@ -40,25 +40,13 @@ async function getTrend() {
       .map(m => m[1])
       .filter(k => k && k !== "Daily Search Trends")
 
+    if (!list.length) return null
+
     return list[Math.floor(Math.random() * list.length)]
   } catch {
+    console.log("⚠️ Trend fetch failed")
     return null
   }
-}
-
-// 📂 REPO CONTENT → KEYWORD
-function detectFromRepo(repoName) {
-  const files = fs.readdirSync("./", { recursive: true })
-
-  const joined = files.join(" ").toLowerCase()
-
-  if (joined.includes("calculator")) return "online calculator"
-  if (joined.includes("seo")) return "seo optimization"
-  if (joined.includes("ai")) return "ai tools"
-  if (joined.includes("design")) return "design tools"
-  if (joined.includes("ration")) return "ration calculation"
-
-  return repoName.replace(/-/g, " ")
 }
 
 // 🤖 GEMINI
@@ -70,15 +58,25 @@ async function generateCluster(seed) {
     const res = await axios.post(
       `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`,
       {
-        contents: [{
-          parts: [{ text: `Generate search queries for "${seed}"` }]
-        }]
+        contents: [
+          {
+            parts: [
+              {
+                text: `Generate SEO search queries for "${seed}" in list format`
+              }
+            ]
+          }
+        ]
       }
     )
 
-    const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || ""
+    const text =
+      res.data?.candidates?.[0]?.content?.parts?.[0]?.text || ""
 
-    return text.split("\n").map(x => x.trim()).filter(Boolean)
+    return text
+      .split("\n")
+      .map(k => k.trim())
+      .filter(Boolean)
 
   } catch {
     console.log("⚠️ Gemini failed")
@@ -87,40 +85,40 @@ async function generateCluster(seed) {
 }
 
 // 🚀 MAIN
-export async function runStrategy(repoName = "") {
+export async function runStrategy(context) {
   console.log("🧠 AI STRATEGY")
 
   const db = loadDB()
 
+  // 🔥 1. try Google trend
   let seed = await getTrend()
 
+  // 🔥 2. fallback → repo context (NO HARDCODE)
   if (!seed) {
-    seed = detectFromRepo(repoName)
-    console.log("📂 Repo-based seed:", seed)
-  }
-
-  if (!seed && db.length) {
-    seed = db[Math.floor(Math.random() * db.length)]
-  }
-
-  if (!seed) {
-    return { niche: null, cluster: [] }
+    seed = context.niche
+    console.log("📂 Repo fallback:", seed)
   }
 
   console.log("🌐 SEED:", seed)
 
+  // 🔥 3. generate cluster
   let cluster = await generateCluster(seed)
 
-  if (!cluster.length) {
+  if (!cluster || cluster.length === 0) {
+    console.log("⚠️ AI failed → using seed")
     cluster = [seed]
   }
 
-  cluster = [...new Set(cluster.map(x => x.toLowerCase()))]
+  // 🔥 clean
+  cluster = [...new Set(cluster.map(k => k.toLowerCase()))]
 
-  saveDB([...new Set([...db, ...cluster])])
+  // 🔥 save learning
+  const updatedDB = [...new Set([...db, ...cluster])]
+  saveDB(updatedDB)
 
   return {
     niche: seed,
-    cluster
+    cluster,
+    createdAt: new Date().toISOString()
   }
 }
