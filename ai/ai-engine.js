@@ -1,84 +1,61 @@
-import axios from "axios"
+import fetch from "node-fetch"
 
-// 🔑 MULTI KEYS
-const KEYS = [
-  process.env.GEMINI_API_KEY3,
-  process.env.GEMINI_API_KEY4,
+const API_KEYS = [
   process.env.GEMINI_API_KEY1,
-  process.env.GEMINI_API_KEY2
-].filter(Boolean)
+  process.env.GEMINI_API_KEY2,
+  process.env.GEMINI_API_KEY3,
+  process.env.GEMINI_API_KEY4
+]
 
-let index = 0
+let keyIndex = 0
 
 function getKey() {
-  if (!KEYS.length) return null
-  return KEYS[index++ % KEYS.length]
+  const key = API_KEYS[keyIndex % API_KEYS.length]
+  keyIndex++
+  return key
 }
 
-// 🔁 RETRY SYSTEM
-async function callGemini(prompt, retries = 3) {
-  const key = getKey()
+export async function generateAIContent(prompt) {
+  const API_KEY = getKey()
 
-  if (!key) {
-    console.log("❌ No API Key")
-    return ""
-  }
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`
 
   try {
-    const res = await axios.post(
-  `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`,
-  {
-    contents: [
-      {
-        parts: [
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        contents: [
           {
-            text: prompt
+            parts: [{ text: prompt }]
           }
         ]
-      }
-    ]
-  }
-)
+      })
+    })
 
-    return res.data?.candidates?.[0]?.content?.parts?.[0]?.text || ""
+    const data = await res.json()
+
+    if (!res.ok) {
+      throw new Error(JSON.stringify(data))
+    }
+
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || null
 
   } catch (err) {
-    console.log("⚠️ Gemini Error:", err.response?.status || err.message)
-
-    if (retries > 0) {
-      console.log("🔁 Retrying...")
-      return await callGemini(prompt, retries - 1)
-    }
-
-    return ""
+    console.log("⚠️ Gemini Error:", err.message)
+    return null
   }
 }
+export async function generateWithRetry(prompt, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    const res = await generateAIContent(prompt)
 
-// 🚀 EXPORT
-export async function generateAIContent(prompt) {
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const key = getKey()
+    if (res) return res
 
-      const res = await axios.post(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`,
-        {
-          contents: [{ parts: [{ text: prompt }] }]
-        }
-      )
-
-      const text =
-        res.data?.candidates?.[0]?.content?.parts?.[0]?.text
-
-      if (text) return text
-
-    } catch (err) {
-      console.log("⚠️ Gemini Error:", err.response?.status)
-
-      if (attempt < 3) console.log("🔁 Retrying...")
-    }
+    console.log("🔁 Retrying...", i + 1)
   }
 
-  // 🔥 fallback content (VERY IMPORTANT)
-  return `<p>This article covers ${prompt}. Stay tuned for detailed insights.</p>`
+  return null
 }

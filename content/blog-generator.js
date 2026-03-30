@@ -1,6 +1,8 @@
 import fs from "fs"
-import { generateAIContent } from "../ai/ai-engine.js"
+import { generateWithRetry } from "../ai/ai-engine.js"
 import { injectAds } from "../engine/monetization-engine.js"
+import { injectAffiliateLinks, generateAffiliateLink } from "../engine/affiliate-engine.js"
+import { getBuyerKeywords } from "../engine/strategy-engine.js"
 
 export async function generateBlogs(strategy, context) {
   const blogs = []
@@ -10,9 +12,10 @@ export async function generateBlogs(strategy, context) {
 
   for (const keyword of strategy.cluster) {
 
-    let content = await generateAIContent(`
+    // 🤖 AI WITH RETRY
+    let content = await generateWithRetry(`
 Write a detailed SEO optimized blog post about "${keyword}".
-Make it helpful and user-focused.
+Make it helpful, actionable and include buying suggestions if relevant.
 `)
 
     if (!content) {
@@ -20,8 +23,17 @@ Make it helpful and user-focused.
       continue
     }
 
+    // 🧠 BUYER KEYWORDS AUTO
+    const buyerKeywords = getBuyerKeywords(strategy.cluster)
+
+    // 💰 AFFILIATE INJECTION
+    content = injectAffiliateLinks(content, buyerKeywords)
+
     const slug = keyword.replace(/\s+/g, "-").toLowerCase()
     const url = `${context.domain}/${slug}.html`
+
+    // 🔥 MAIN CTA LINK (DYNAMIC)
+    const mainAffiliate = generateAffiliateLink(keyword)
 
     let html = `
 <!DOCTYPE html>
@@ -39,8 +51,8 @@ Make it helpful and user-focused.
 
 <h1>${keyword}</h1>
 
-<!-- 🔥 Affiliate -->
-<a href="https://example.com?ref=seo-engine" target="_blank">
+<!-- 🔥 Dynamic Affiliate CTA -->
+<a href="${mainAffiliate}" target="_blank" rel="nofollow sponsored">
 🔥 Explore ${keyword}
 </a>
 
@@ -48,9 +60,11 @@ ${content}
 
 <div style="margin-top:30px;padding:20px;background:#000;color:#fff;text-align:center;">
 <h2>🚀 Take Action</h2>
-<a href="https://example.com?ref=seo-engine" target="_blank" style="color:#fff;">
-Get Started
+
+<a href="${mainAffiliate}" target="_blank" rel="nofollow sponsored" style="color:#fff;">
+Get Best Deal on ${keyword}
 </a>
+
 </div>
 
 </body>
