@@ -4,6 +4,7 @@ import { SETTINGS } from "../config/settings.js"
 
 export async function generateBlogs(strategy) {
   const blogs = []
+  const unique = Date.now()
 
   if (!fs.existsSync("./dist")) fs.mkdirSync("./dist")
 
@@ -36,20 +37,28 @@ Use persuasive tone
 
 <body>
 
+<!-- 🔥 UNIQUE BUILD -->
+<!-- build-id: ${unique} -->
+
 <h1>${keyword}</h1>
 
-<!-- 🔥 CTA TOP -->
 <div style="background:#f4f4f4;padding:15px;margin:20px 0">
-<b>🔥 Recommended:</b>
-<a href="#">Check Best ${keyword} Tools</a>
+<b>🔥 Recommended:</b><br>
+
+<a href="https://example.com?ref=seo-engine" target="_blank">
+🔥 Buy Best ${keyword}
+</a>
 </div>
 
 ${content}
 
-<!-- 🔥 CTA BOTTOM -->
+<!-- 🔥 CTA BLOCK -->
 <div style="background:#000;color:#fff;padding:20px;text-align:center">
-<h2>🚀 Want Results Fast?</h2>
-<a href="#" style="color:#0f0">Start Now</a>
+<h2>🚀 Start Now</h2>
+
+<a href="https://AmazonKaLinkAffiliated?ref=seo-engine" target="_blank" style="color:#fff;">
+Click Here to Get Best ${keyword}
+</a>
 </div>
 
 </body>

@@ -14,7 +14,10 @@ const GEMINI_KEYS = [
 const SERP_KEY = process.env.SERP_API_KEY1
 
 let gIndex = 0
-const getGeminiKey = () => GEMINI_KEYS[gIndex++ % GEMINI_KEYS.length]
+const getGeminiKey = () => {
+  if (!GEMINI_KEYS.length) return null
+  return GEMINI_KEYS[gIndex++ % GEMINI_KEYS.length]
+}
 
 // ================= DB =================
 const loadDB = () => {
@@ -26,6 +29,7 @@ const loadDB = () => {
 }
 
 const saveDB = (data) => {
+  if (!fs.existsSync("./data")) fs.mkdirSync("./data")
   fs.writeFileSync(KEYWORD_DB_PATH, JSON.stringify(data, null, 2))
 }
 
@@ -54,23 +58,30 @@ async function getSerpTrend() {
   }
 }
 
-// ================= AI CLUSTER =================
+// ================= GEMINI CLUSTER =================
 async function generateCluster(seed) {
-  if (!GEMINI_KEYS.length) return []
+  const key = getGeminiKey()
+  if (!key) return []
 
   try {
     const res = await axios.post(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${getGeminiKey()}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${key}`,
       {
         contents: [{
           parts: [{
             text: `
-Generate 10 HIGH intent SEO keywords for "${seed}"
+Generate 15 HIGH intent SEO keywords for "${seed}"
 
 Include:
-best, buy, review, tools, pricing, comparison
+- best
+- buy
+- review
+- tools
+- pricing
+- comparison
+- near me
 
-Return plain list
+Return only list
 `
           }]
         }]
@@ -91,38 +102,42 @@ Return plain list
 
 // ================= MAIN =================
 export async function runStrategy() {
-  console.log("🧠 HYBRID STRATEGY ENGINE")
+  console.log("🧠 ADVANCED STRATEGY ENGINE")
 
   const db = loadDB()
 
-  // 🔥 PRIORITY FLOW
+  // 🔥 PRIORITY: SERP → DB → DEFAULT
   let seed = await getSerpTrend()
 
   if (seed) {
-    console.log("🌐 SERP TREND:", seed)
+    console.log("🌐 TREND:", seed)
+  } else if (db.length) {
+    seed = db[Math.floor(Math.random() * db.length)]
+    console.log("📦 DB:", seed)
   } else {
-    seed = db.length
-      ? db[Math.floor(Math.random() * db.length)]
-      : "make money online"
-
-    console.log("📦 LOCAL/DB:", seed)
+    seed = "make money online"
+    console.log("⚠️ DEFAULT:", seed)
   }
 
+  // 🔥 AI CLUSTER
   let cluster = await generateCluster(seed)
 
+  // 🔥 FALLBACK (ZERO API MODE)
   if (!cluster.length) {
     cluster = [
       seed,
-      "best " + seed,
-      "top " + seed,
-      seed + " tools",
-      seed + " review"
+      `best ${seed}`,
+      `top ${seed}`,
+      `${seed} tools`,
+      `${seed} review`,
+      `${seed} pricing`,
+      `${seed} guide`
     ]
   }
 
-  // 🔥 SAVE GROWTH
-  const updated = [...new Set([...db, ...cluster])]
-  saveDB(updated)
+  // 🔥 SELF LEARNING DB
+  const updatedDB = [...new Set([...db, ...cluster])]
+  saveDB(updatedDB)
 
   return {
     niche: seed,

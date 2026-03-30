@@ -1,3 +1,8 @@
 export async function deploy() {
-  console.log("🚀 Deploying site...")
+  console.log("🚀 DEPLOY STARTED")
+
+  // simulate deploy trigger
+  const stamp = Date.now()
+
+  console.log("🌍 Deploy version:", stamp)
 }

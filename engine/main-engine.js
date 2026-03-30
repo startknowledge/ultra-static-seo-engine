@@ -8,6 +8,7 @@ import { runCleaner } from "../system/cleaner.js"
 import { generateSitemap } from "../seo/sitemap-engine.js"
 import { generateSchema } from "../seo/schema-engine.js"
 import { deploy } from "../system/deploy-engine.js"
+import { detectNewRepo } from "./repo-detector.js"
 
 // 🔥 ADD THIS
 import { injectAds } from "./monetization-engine.js"
@@ -15,11 +16,23 @@ import { injectAds } from "./monetization-engine.js"
 export async function runUltraCore() {
   console.log("🚀 GOD-LEVEL SYSTEM STARTED")
 
+  const isNewRepo = detectNewRepo()
+
   const strategy = await runStrategy()
 
   const blogs = await generateBlogs(strategy)
   const pages = await generatePages(strategy)
 
+  // 🔥 BOOST IF NEW REPO
+  if (isNewRepo) {
+    strategy.cluster.push(
+      "best tools 2026",
+      "top ai tools",
+      "make money fast",
+      "affiliate marketing guide"
+    )
+  }
+  
   await runInternalLinking(blogs, pages)
 
   // 🔥 MONETIZATION (CRITICAL)
