@@ -26,18 +26,19 @@ async function callGemini(prompt, retries = 3) {
 
   try {
     const res = await axios.post(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`,
+  `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`,
+  {
+    contents: [
       {
-        contents: [
+        parts: [
           {
-            parts: [{ text: prompt }]
+            text: prompt
           }
         ]
-      },
-      {
-        timeout: 15000 // ⏱️ FIX TIMEOUT
       }
-    )
+    ]
+  }
+)
 
     return res.data?.candidates?.[0]?.content?.parts?.[0]?.text || ""
 
@@ -55,5 +56,29 @@ async function callGemini(prompt, retries = 3) {
 
 // 🚀 EXPORT
 export async function generateAIContent(prompt) {
-  return await callGemini(prompt)
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const key = getKey()
+
+      const res = await axios.post(
+        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`,
+        {
+          contents: [{ parts: [{ text: prompt }] }]
+        }
+      )
+
+      const text =
+        res.data?.candidates?.[0]?.content?.parts?.[0]?.text
+
+      if (text) return text
+
+    } catch (err) {
+      console.log("⚠️ Gemini Error:", err.response?.status)
+
+      if (attempt < 3) console.log("🔁 Retrying...")
+    }
+  }
+
+  // 🔥 fallback content (VERY IMPORTANT)
+  return `<p>This article covers ${prompt}. Stay tuned for detailed insights.</p>`
 }
