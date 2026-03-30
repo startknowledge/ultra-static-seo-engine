@@ -1,4 +1,3 @@
-// ================= ADS CONFIG =================
 const AD_CLIENT = "ca-pub-2162324894765763"
 
 const AD_SLOTS = [
@@ -8,19 +7,23 @@ const AD_SLOTS = [
   "3958418735"
 ]
 
-// 🔁 random slot selector
+// 🔁 random slot
 function getRandomSlot() {
   return AD_SLOTS[Math.floor(Math.random() * AD_SLOTS.length)]
 }
 
-// 🎯 ad block generator
+// 🔥 LOAD SCRIPT ONLY ONCE
+function getAdScript() {
+  return `
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${AD_CLIENT}" crossorigin="anonymous"></script>
+`
+}
+
+// 🎯 ad block
 function generateAd() {
   const slot = getRandomSlot()
 
   return `
-<!-- ADS START -->
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${AD_CLIENT}" crossorigin="anonymous"></script>
-
 <ins class="adsbygoogle"
  style="display:block"
  data-ad-format="fluid"
@@ -30,25 +33,27 @@ function generateAd() {
 <script>
  (adsbygoogle = window.adsbygoogle || []).push({});
 </script>
-<!-- ADS END -->
 `
 }
 
-// ================= MAIN INJECT =================
+// ================= MAIN =================
 export function injectAds(content) {
   if (!content) return content
 
-  // 📍 position 1: first paragraph ke baad
+  // 🔥 add script once (head ke baad)
+  content = content.replace("</head>", `${getAdScript()}</head>`)
+
+  // 📍 first paragraph
   content = content.replace("</p>", `</p>${generateAd()}`)
 
-  // 📍 position 2: middle (approx)
-  const midIndex = Math.floor(content.length / 2)
+  // 📍 middle
+  const mid = Math.floor(content.length / 2)
   content =
-    content.slice(0, midIndex) +
+    content.slice(0, mid) +
     generateAd() +
-    content.slice(midIndex)
+    content.slice(mid)
 
-  // 📍 position 3: end se pehle
+  // 📍 end
   content = content.replace("</body>", `${generateAd()}</body>`)
 
   return content

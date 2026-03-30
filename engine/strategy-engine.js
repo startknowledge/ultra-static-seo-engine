@@ -11,8 +11,6 @@ const GEMINI_KEYS = [
   process.env.GEMINI_API_KEY2
 ].filter(Boolean)
 
-const SERP_KEY = process.env.SERP_API_KEY1
-
 let gIndex = 0
 const getGeminiKey = () => {
   if (!GEMINI_KEYS.length) return null
@@ -33,27 +31,30 @@ const saveDB = (data) => {
   fs.writeFileSync(KEYWORD_DB_PATH, JSON.stringify(data, null, 2))
 }
 
-// ================= SERP TREND =================
-async function getSerpTrend() {
-  if (!SERP_KEY) return null
-
+// ================= REAL GOOGLE TRENDS =================
+async function getRealGoogleTrend() {
   try {
-    const res = await axios.get("https://serpapi.com/search.json", {
-      params: {
-        engine: "google_trends",
-        geo: "IN",
-        api_key: SERP_KEY
-      }
-    })
+    const res = await axios.get(
+      "https://trends.google.com/trending/rss?geo=IN"
+    )
 
-    const trends = res.data?.trending_searches_days?.[0]?.trending_searches || []
+    const xml = res.data
 
-    if (!trends.length) return null
+    const matches = [
+      ...xml.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
+    ]
 
-    const random = trends[Math.floor(Math.random() * trends.length)]
+    const keywords = matches
+      .map(m => m[1])
+      .filter(k => k && k !== "Daily Search Trends")
 
-    return random?.title?.query || null
-  } catch {
+    if (!keywords.length) return null
+
+    const random = keywords[Math.floor(Math.random() * keywords.length)]
+
+    return random
+  } catch (err) {
+    console.log("⚠️ Trend fetch failed")
     return null
   }
 }
@@ -73,47 +74,43 @@ async function generateCluster(seed) {
 Generate 15 HIGH intent SEO keywords for "${seed}"
 
 Include:
-- best
-- buy
-- review
-- tools
-- pricing
-- comparison
-- near me
+best, buy, review, tools, pricing, comparison, near me
 
-Return only list
+Return only keywords list (no explanation)
 `
           }]
         }]
       }
     )
 
-    const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || ""
+    const text =
+      res.data?.candidates?.[0]?.content?.parts?.[0]?.text || ""
 
     return text
       .split("\n")
       .map(k => k.replace(/^\d+\. /, "").trim())
       .filter(Boolean)
 
-  } catch {
+  } catch (err) {
+    console.log("⚠️ Gemini failed")
     return []
   }
 }
 
 // ================= MAIN =================
 export async function runStrategy() {
-  console.log("🧠 ADVANCED STRATEGY ENGINE")
+  console.log("🧠 ADVANCED STRATEGY ENGINE START")
 
   const db = loadDB()
 
-  // 🔥 PRIORITY: SERP → DB → DEFAULT
-  let seed = await getSerpTrend()
+  // 🔥 PRIORITY: REAL GOOGLE TREND
+  let seed = await getRealGoogleTrend()
 
   if (seed) {
-    console.log("🌐 TREND:", seed)
+    console.log("🌐 GOOGLE TREND:", seed)
   } else if (db.length) {
     seed = db[Math.floor(Math.random() * db.length)]
-    console.log("📦 DB:", seed)
+    console.log("📦 DB FALLBACK:", seed)
   } else {
     seed = "make money online"
     console.log("⚠️ DEFAULT:", seed)
@@ -122,7 +119,7 @@ export async function runStrategy() {
   // 🔥 AI CLUSTER
   let cluster = await generateCluster(seed)
 
-  // 🔥 FALLBACK (ZERO API MODE)
+  // 🔥 ZERO API MODE
   if (!cluster.length) {
     cluster = [
       seed,
@@ -131,13 +128,19 @@ export async function runStrategy() {
       `${seed} tools`,
       `${seed} review`,
       `${seed} pricing`,
-      `${seed} guide`
+      `${seed} guide`,
+      `${seed} near me`
     ]
   }
+
+  // 🔥 CLEAN + UNIQUE
+  cluster = [...new Set(cluster.map(k => k.toLowerCase()))]
 
   // 🔥 SELF LEARNING DB
   const updatedDB = [...new Set([...db, ...cluster])]
   saveDB(updatedDB)
+
+  console.log("✅ Keywords Generated:", cluster.length)
 
   return {
     niche: seed,
