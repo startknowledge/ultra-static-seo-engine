@@ -1,22 +1,28 @@
-import fetch from "node-fetch"
-
 const API_KEYS = [
   process.env.GEMINI_API_KEY1,
   process.env.GEMINI_API_KEY2,
   process.env.GEMINI_API_KEY3,
   process.env.GEMINI_API_KEY4
-]
+].filter(Boolean)
 
 let keyIndex = 0
 
 function getKey() {
+  if (API_KEYS.length === 0) {
+    console.log("❌ No Gemini API keys found")
+    return null
+  }
+
   const key = API_KEYS[keyIndex % API_KEYS.length]
   keyIndex++
   return key
 }
 
+// 🔥 MAIN AI CALL
 export async function generateAIContent(prompt) {
   const API_KEY = getKey()
+
+  if (!API_KEY) return null
 
   const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`
 
@@ -29,33 +35,55 @@ export async function generateAIContent(prompt) {
       body: JSON.stringify({
         contents: [
           {
+            role: "user",
             parts: [{ text: prompt }]
           }
-        ]
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048
+        }
       })
     })
 
     const data = await res.json()
 
     if (!res.ok) {
-      throw new Error(JSON.stringify(data))
+      console.log("⚠️ Gemini API Error:", data)
+      return null
     }
 
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || null
+    const text =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      null
+
+    if (!text) {
+      console.log("⚠️ Empty AI response")
+      return null
+    }
+
+    return text.trim()
 
   } catch (err) {
-    console.log("⚠️ Gemini Error:", err.message)
+    console.log("⚠️ Gemini Fetch Error:", err.message)
     return null
   }
 }
+
+// 🔁 RETRY SYSTEM (SMART)
 export async function generateWithRetry(prompt, retries = 3) {
   for (let i = 0; i < retries; i++) {
-    const res = await generateAIContent(prompt)
+    const result = await generateAIContent(prompt)
 
-    if (res) return res
+    if (result && result.length > 100) {
+      return result
+    }
 
-    console.log("🔁 Retrying...", i + 1)
+    console.log(`🔁 Retry ${i + 1}/${retries}`)
   }
 
+  console.log("❌ AI failed after retries")
   return null
 }
