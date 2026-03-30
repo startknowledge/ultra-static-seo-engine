@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+
+<url>
+  <loc>https://ultrastaticseoengine.startknowledge.in/about.html</loc>
+  <image:image>
+    <image:loc>https://source.unsplash.com/800x600/?about</image:loc>
+  </image:image>
+  <lastmod>2026-03-30T10:00:50.020Z</lastmod>
+  <changefreq>daily</changefreq>
+  <priority>0.8</priority>
+</url>
+<url>
+  <loc>https://ultrastaticseoengine.startknowledge.in/contact.html</loc>
+  <image:image>
+    <image:loc>https://source.unsplash.com/800x600/?contact</image:loc>
+  </image:image>
+  <lastmod>2026-03-30T10:00:50.020Z</lastmod>
+  <changefreq>daily</changefreq>
+  <priority>0.8</priority>
+</url>
+<url>
+  <loc>https://ultrastaticseoengine.startknowledge.in/privacy.html</loc>
+  <image:image>
+    <image:loc>https://source.unsplash.com/800x600/?privacy</image:loc>
+  </image:image>
+  <lastmod>2026-03-30T10:00:50.020Z</lastmod>
+  <changefreq>daily</changefreq>
+  <priority>0.8</priority>
+</url>
+
+</urlset>
