@@ -12,7 +12,7 @@ function getRandomSlot() {
   return AD_SLOTS[Math.floor(Math.random() * AD_SLOTS.length)]
 }
 
-// 🔥 LOAD SCRIPT ONLY ONCE
+// 🔥 LOAD SCRIPT ONLY ONCEs
 function getAdScript() {
   return `
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${AD_CLIENT}" crossorigin="anonymous"></script>
