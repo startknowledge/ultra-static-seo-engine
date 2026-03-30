@@ -24,7 +24,14 @@ export async function generateAIContent(prompt) {
 
   if (!API_KEY) return null
 
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`
+  const models = [
+  "gemini-1.5-flash",
+  "gemini-1.5-pro"
+]
+
+const model = models[keyIndex % models.length]
+
+const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`
 
   try {
     const res = await fetch(url, {
