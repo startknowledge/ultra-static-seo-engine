@@ -34,7 +34,7 @@ export async function runUltraCore() {
   if (isNewRepo) {
     console.log("🆕 New Repo → Trend Priority")
   }
-  s
+  
   await generateIndex(blogs)
   const blogs = await generateBlogs(strategy, context)
   const pages = await generatePages(strategy, context)

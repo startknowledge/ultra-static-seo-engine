@@ -5,8 +5,10 @@ import { generateSmartContent } from "../ai/hybrid-engine.js"
 function safeSlug(text) {
   return text
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "") // ❌ remove invalid chars
+    .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "") // ✅ trim dashes
 }
 
 export async function generateBlogs(strategy, context) {
@@ -14,22 +16,26 @@ export async function generateBlogs(strategy, context) {
 
   if (!fs.existsSync("./docs")) fs.mkdirSync("./docs")
 
+  if (!strategy?.cluster?.length) {
+    console.log("❌ No keywords found")
+    return blogs
+  }
+
   for (const keyword of strategy.cluster) {
 
     let content = await generateSmartContent(
       `Write SEO blog about "${keyword}"`,
       keyword
-    )
+    ).catch(() => null)
 
     if (!content) continue
 
-    const slug = safeSlug(keyword)   // ✅ FIXED
+    const slug = safeSlug(keyword)
     const url = `${context.domain}/${slug}.html`
 
+    const unique = Date.now() // ✅ FIX
 
-    // 🌐 HTML TEMPLATE (NO AFFILIATE)
-    let html = `
-<!DOCTYPE html>
+    let html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -53,10 +59,8 @@ ${content}
 </div>
 
 </body>
-</html>
-`
+</html>`
 
-    // 💰 ADS INJECTION (AI BASED)
     html = injectAds(html)
 
     fs.writeFileSync(`./docs/${slug}.html`, html)
