@@ -25,7 +25,7 @@ ${urls.map(u => `
 
 </urlset>`
 
-  fs.writeFileSync("./dist/sitemap.xml", xml)
+  fs.writeFileSync("./docs/sitemap.xml", xml)
 
   // RSS
   const rss = `<?xml version="1.0"?>
@@ -44,10 +44,10 @@ ${blogs.map(b => `
 </channel>
 </rss>`
 
-  fs.writeFileSync("./dist/rss.xml", rss)
+  fs.writeFileSync("./docs/rss.xml", rss)
 
   // robots
-  fs.writeFileSync("./dist/robots.txt", `
+  fs.writeFileSync("./docs/robots.txt", `
 User-agent: *
 Allow: /
 Sitemap: ${SETTINGS.domain}/sitemap.xml

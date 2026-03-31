@@ -6,7 +6,7 @@ export async function generateBlogs(strategy, context) {
 const blogs = []
 const unique = Date.now()
 
-if (!fs.existsSync("./dist")) fs.mkdirSync("./dist")
+if (!fs.existsSync("./docs")) fs.mkdirSync("./docs")
 
 for (const keyword of strategy.cluster) {
 
@@ -60,7 +60,7 @@ ${content}
     html = injectAds(html)
 
     // 💾 SAVE FILE
-    fs.writeFileSync(`./dist/${slug}.html`, html)
+    fs.writeFileSync(`./docs/${slug}.html`, html)
 
     console.log("✅ Blog:", url)
 

@@ -17,7 +17,7 @@ export async function generatePages(strategy) {
 </body>
 </html>
 `
-    fs.writeFileSync(`./dist/${page}.html`, html)
+    fs.writeFileSync(`./docs/${page}.html`, html)
 
     return {
       slug: page,

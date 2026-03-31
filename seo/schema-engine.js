@@ -28,5 +28,5 @@ export async function generateSchema(blogs) {
     ]
   }
 
-  fs.writeFileSync("./dist/schema.json", JSON.stringify(schema, null, 2))
+  fs.writeFileSync("./docs/schema.json", JSON.stringify(schema, null, 2))
 }
