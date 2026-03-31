@@ -60,5 +60,16 @@
     "repo": "ultra-static-seo-engine",
     "blogs": [],
     "time": "2026-03-31T10:15:00.507Z"
+  },
+  {
+    "repo": "ultra-static-seo-engine",
+    "blogs": [
+      {
+        "slug": "ultra-static-seo-engine",
+        "keyword": "ultra static seo engine",
+        "url": "https://ultrastaticseoengine.startknowledge.in/ultra-static-seo-engine.html"
+      }
+    ],
+    "time": "2026-03-31T12:10:59.234Z"
   }
 ]

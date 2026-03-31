@@ -4,11 +4,20 @@ xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 
 
 <url>
+  <loc>https://ultrastaticseoengine.startknowledge.in/ultra-static-seo-engine.html</loc>
+  <image:image>
+    <image:loc>https://source.unsplash.com/800x600/?ultra%20static%20seo%20engine</image:loc>
+  </image:image>
+  <lastmod>undefined</lastmod>
+  <changefreq>daily</changefreq>
+  <priority>0.8</priority>
+</url>
+<url>
   <loc>https://ultrastaticseoengine.startknowledge.in/about.html</loc>
   <image:image>
     <image:loc>https://source.unsplash.com/800x600/?about</image:loc>
   </image:image>
-  <lastmod>2026-03-31T10:15:00.506Z</lastmod>
+  <lastmod>2026-03-31T12:10:59.234Z</lastmod>
   <changefreq>daily</changefreq>
   <priority>0.8</priority>
 </url>
@@ -17,7 +26,7 @@ xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <image:image>
     <image:loc>https://source.unsplash.com/800x600/?contact</image:loc>
   </image:image>
-  <lastmod>2026-03-31T10:15:00.506Z</lastmod>
+  <lastmod>2026-03-31T12:10:59.234Z</lastmod>
   <changefreq>daily</changefreq>
   <priority>0.8</priority>
 </url>
@@ -26,7 +35,7 @@ xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <image:image>
     <image:loc>https://source.unsplash.com/800x600/?privacy</image:loc>
   </image:image>
-  <lastmod>2026-03-31T10:15:00.506Z</lastmod>
+  <lastmod>2026-03-31T12:10:59.234Z</lastmod>
   <changefreq>daily</changefreq>
   <priority>0.8</priority>
 </url>
