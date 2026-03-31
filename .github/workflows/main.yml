@@ -1,10 +1,9 @@
 - name: Cache npm
   uses: actions/cache@v4
   with:
-    path: ~/.npm
-    key: ${{ runner.os }}-node-cache-v1
-    restore-keys: |
-      ${{ runner.os }}-node-cache-v1
-
+  path: ~/.npm
+  key: ${{ runner.os }}-node-cache-v1
+  restore-keys: |${{ runner.os }}-node-cache-v1
+  
 - name: Install deps
   run: npm ci
