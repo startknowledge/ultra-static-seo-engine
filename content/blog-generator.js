@@ -2,29 +2,29 @@ import fs from "fs"
 import { injectAds } from "../engine/monetization-engine.js"
 import { generateSmartContent } from "../ai/hybrid-engine.js"
 
-export async function generateBlogs(strategy, context) {
-const blogs = []
-const unique = Date.now()
-
-if (!fs.existsSync("./docs")) fs.mkdirSync("./docs")
-
-for (const keyword of strategy.cluster) {
-
-// 🔥 HYBRID AI (MAIN CHANGE)
-let content = await generateSmartContent(`
-
-Write a detailed, SEO optimized blog post about "${keyword}".
-Make it highly informative, engaging, and user-focused.
-Use headings, paragraphs, and proper structure.
-`, keyword)
-
-if (!content) {
-  console.log("⚠️ Empty content → skip:", keyword)
-  continue
+function safeSlug(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "") // ❌ remove invalid chars
+    .replace(/\s+/g, "-")
 }
 
-const slug = keyword.replace(/\s+/g, "-").toLowerCase()
-const url = `${context.domain}/${slug}.html`
+export async function generateBlogs(strategy, context) {
+  const blogs = []
+
+  if (!fs.existsSync("./docs")) fs.mkdirSync("./docs")
+
+  for (const keyword of strategy.cluster) {
+
+    let content = await generateSmartContent(
+      `Write SEO blog about "${keyword}"`,
+      keyword
+    )
+
+    if (!content) continue
+
+    const slug = safeSlug(keyword)   // ✅ FIXED
+    const url = `${context.domain}/${slug}.html`
 
 
     // 🌐 HTML TEMPLATE (NO AFFILIATE)
@@ -59,16 +59,16 @@ ${content}
     // 💰 ADS INJECTION (AI BASED)
     html = injectAds(html)
 
-    // 💾 SAVE FILE
     fs.writeFileSync(`./docs/${slug}.html`, html)
-
-    console.log("✅ Blog:", url)
 
     blogs.push({
       slug,
       keyword,
-      url
+      url,
+      date: new Date().toISOString()
     })
+
+    console.log("✅ Blog:", slug)
   }
 
   return blogs

@@ -52,8 +52,8 @@ jobs:
 
     # ================= CORE ENGINE =================
     # ✅ FIXED
-    - name: 🧠 Run Ultra Core Engine (Main System)
-      run: node engine/main-engine.js
+    - name: 🧠 Run Main Engine (Main System)
+      run: node start.js
 
     # ================= SEO FILES =================
     - name: 📊 SEO Files

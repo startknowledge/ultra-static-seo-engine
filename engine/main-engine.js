@@ -9,6 +9,7 @@ import { generateSitemap } from "../seo/sitemap-engine.js"
 import { generateSchema } from "../seo/schema-engine.js"
 import { deploy } from "../system/deploy-engine.js"
 import { detectNewRepo, detectRepoContext } from "./repo-detector.js"
+import { generateIndex } from "../content/index-generator.js"
 
 export async function runUltraCore() {
   console.log("🚀 GOD-LEVEL SYSTEM STARTED")
@@ -33,7 +34,8 @@ export async function runUltraCore() {
   if (isNewRepo) {
     console.log("🆕 New Repo → Trend Priority")
   }
-
+  s
+  await generateIndex(blogs)
   const blogs = await generateBlogs(strategy, context)
   const pages = await generatePages(strategy, context)
 
