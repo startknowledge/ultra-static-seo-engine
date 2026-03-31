@@ -1,8 +1,8 @@
 const API_KEYS = [
-  process.env.GEMINI_API_KEY1,
-  process.env.GEMINI_API_KEY2,
   process.env.GEMINI_API_KEY3,
-  process.env.GEMINI_API_KEY4
+  process.env.GEMINI_API_KEY4,
+  process.env.GEMINI_API_KEY1,
+  process.env.GEMINI_API_KEY2
 ].filter(Boolean)
 
 let keyIndex = 0
@@ -18,20 +18,20 @@ function getKey() {
   return key
 }
 
-// 🔥 MAIN AI CALL
+// 🔥 MAIN AI CALL (FIXED)
 export async function generateAIContent(prompt) {
   const API_KEY = getKey()
-
   if (!API_KEY) return null
 
-  const models = [
-  "gemini-1.5-flash",
-  "gemini-1.5-pro"
-]
+  // ✅ NEW WORKING MODEL
+  const model = "gemini-2.0-flash"
 
-const model = models[keyIndex % models.length]
+  // ✅ NEW ENDPOINT (IMPORTANT)
+  const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${API_KEY}`
 
-const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`
+  // 🔥 DEBUG LOGS (YAHI ADD KARNA THA)
+  console.log("🔑 Using Key:", API_KEY?.slice(0, 10))
+  console.log("🌐 URL:", url)
 
   try {
     const res = await fetch(url, {
@@ -42,16 +42,9 @@ const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:ge
       body: JSON.stringify({
         contents: [
           {
-            role: "user",
             parts: [{ text: prompt }]
           }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 2048
-        }
+        ]
       })
     })
 
@@ -79,7 +72,7 @@ const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:ge
   }
 }
 
-// 🔁 RETRY SYSTEM (SMART)
+// 🔁 RETRY SYSTEM
 export async function generateWithRetry(prompt, retries = 3) {
   for (let i = 0; i < retries; i++) {
     const result = await generateAIContent(prompt)
