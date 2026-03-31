@@ -24,6 +24,9 @@ jobs:
       GEMINI_API_KEY4: ${{ secrets.GEMINI_API_KEY4 }}
       GEMINI_API_KEY1: ${{ secrets.GEMINI_API_KEY1 }}
       GEMINI_API_KEY2: ${{ secrets.GEMINI_API_KEY2 }}
+      GROQ_API1: ${{ secrets.GROQ_API1 }}
+      OPENAI_OPENROUTER1: ${{ secrets.OPENAI_OPENROUTER1 }}
+      HUGGINGFACE_TOKEN1: ${{ secrets.HUGGINGFACE_TOKEN1 }}
       
       # ✅ SERP ROTATION
       SERP_API_KEY1: ${{ secrets.SERP_API_KEY1 }}
