@@ -1,9 +1,8 @@
-- name: Cache npm
-  uses: actions/cache@v4
+- name: Setup Node.js
+  uses: actions/setup-node@v4
   with:
-  path: ~/.npm
-  key: ${{ runner.os }}-node-cache-v1
-  restore-keys: |${{ runner.os }}-node-cache-v1
-  
+    node-version: "20"
+    cache: "npm"
+
 - name: Install deps
-  run: npm ci
+  run: npm ci --verbose
