@@ -1,68 +1,63 @@
-const API_KEYS = [
-process.env.GEMINI_API_KEY3,
-process.env.GEMINI_API_KEY4,
-process.env.GEMINI_API_KEY1,
-process.env.GEMINI_API_KEY2,
-process.env.OPENAI_OPENROUTER1,
-process.env.GROQ_API1,
-process.env.HUGGINGFACE_TOKEN1
-].filter(Boolean)
+const API_CONFIG = [
+{ key: process.env.GEMINI_API_KEY1, type: "gemini" },
+{ key: process.env.GEMINI_API_KEY2, type: "gemini" },
+{ key: process.env.GEMINI_API_KEY3, type: "gemini" },
+{ key: process.env.GEMINI_API_KEY4, type: "gemini" },
 
-let keyIndex = 0
+{ key: process.env.GROQ_API1, type: "groq" },
+{ key: process.env.OPENAI_OPENROUTER1, type: "openrouter" },
+{ key: process.env.HUGGINGFACE_TOKEN1, type: "huggingface" }
+].filter(x => x.key)
 
-function getKey() {
-if (API_KEYS.length === 0) {
+let index = 0
+
+function getNextAPI() {
+if (API_CONFIG.length === 0) {
 console.log("❌ No API keys found")
 return null
 }
 
-const key = API_KEYS[keyIndex % API_KEYS.length]
-keyIndex++
-return key
-}
-
-// 🔍 DETECT PROVIDER FROM KEY NAME (IMPORTANT)
-function detectProvider(key) {
-if (!key) return null
-
-if (key.startsWith("AIza")) return "gemini"
-if (key.startsWith("gsk_")) return "groq"
-if (key.startsWith("hf_")) return "huggingface"
-if (key.startsWith("sk-") || key.startsWith("or-")) return "openrouter"
-
-return null
+const api = API_CONFIG[index % API_CONFIG.length]
+index++
+return api
 }
 
 // 🔥 GEMINI
 async function callGemini(key, prompt) {
-const model = "gemini-2.0-flash"
-
-const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${key}`
-
-const res = await fetch(url, {
+try {
+const res = await fetch(
+`https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${key}`,
+{
 method: "POST",
 headers: { "Content-Type": "application/json" },
 body: JSON.stringify({
 contents: [{ parts: [{ text: prompt }] }]
 })
-})
+}
+)
 
 const data = await res.json()
 
 if (!res.ok) {
-console.log("⚠️ Gemini Error:", data?.error?.code)
-return null
+  console.log("⚠️ Gemini Error:", data?.error?.code)
+  return null
 }
 
 return data?.candidates?.[0]?.content?.parts?.[0]?.text || null
+
+} catch (e) {
+console.log("⚠️ Gemini Fetch Error")
+return null
+}
 }
 
 // 🔥 GROQ
 async function callGroq(key, prompt) {
+try {
 const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
 method: "POST",
 headers: {
-"Authorization": `Bearer ${key}`,
+Authorization: `Bearer ${key}`,
 "Content-Type": "application/json"
 },
 body: JSON.stringify({
@@ -73,14 +68,19 @@ messages: [{ role: "user", content: prompt }]
 
 const data = await res.json()
 return data?.choices?.[0]?.message?.content || null
+
+} catch {
+return null
+}
 }
 
 // 🔥 OPENROUTER
 async function callOpenRouter(key, prompt) {
+try {
 const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
 method: "POST",
 headers: {
-"Authorization": `Bearer ${key}`,
+Authorization: `Bearer ${key}`,
 "Content-Type": "application/json"
 },
 body: JSON.stringify({
@@ -91,10 +91,15 @@ messages: [{ role: "user", content: prompt }]
 
 const data = await res.json()
 return data?.choices?.[0]?.message?.content || null
+
+} catch {
+return null
+}
 }
 
 // 🔥 HUGGINGFACE
 async function callHF(key, prompt) {
+try {
 const res = await fetch(
 "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct",
 {
@@ -109,35 +114,33 @@ body: JSON.stringify({ inputs: prompt })
 
 const data = await res.json()
 return data?.[0]?.generated_text || null
+
+} catch {
+return null
+}
 }
 
-// 🚀 MAIN ENGINE (SMART ROTATION)
+// 🚀 MAIN ENGINE
 export async function generateAIContent(prompt) {
-console.log("🧠 Smart Multi-AI Started")
+console.log("🧠 Multi-AI Fixed Engine Started")
 
-for (let i = 0; i < API_KEYS.length; i++) {
-const key = getKey()
-const provider = detectProvider(key)
+for (let i = 0; i < API_CONFIG.length; i++) {
+const api = getNextAPI()
 
-console.log("🔑 Using:", provider)
+if (!api) continue
 
-if (!provider) continue
+console.log("🔑 Using:", api.type)
 
-try {
-  let result = null
+let result = null
 
-  if (provider === "gemini") result = await callGemini(key, prompt)
-  if (provider === "groq") result = await callGroq(key, prompt)
-  if (provider === "openrouter") result = await callOpenRouter(key, prompt)
-  if (provider === "huggingface") result = await callHF(key, prompt)
+if (api.type === "gemini") result = await callGemini(api.key, prompt)
+if (api.type === "groq") result = await callGroq(api.key, prompt)
+if (api.type === "openrouter") result = await callOpenRouter(api.key, prompt)
+if (api.type === "huggingface") result = await callHF(api.key, prompt)
 
-  if (result && result.length > 100) {
-    console.log("✅ Success:", provider)
-    return result.trim()
-  }
-
-} catch (err) {
-  console.log("⚠️ Error:", provider, err.message)
+if (result && result.length > 100) {
+  console.log("✅ Success:", api.type)
+  return result.trim()
 }
 
 }
@@ -146,20 +149,15 @@ console.log("❌ All APIs failed")
 return null
 }
 
-// 🔁 RETRY SYSTEM (UNCHANGED STYLE)
-export async function generateWithRetry(prompt, retries = 3) {
+// 🔁 RETRY
+export async function generateWithRetry(prompt, retries = 2) {
 for (let i = 0; i < retries; i++) {
-const result = await generateAIContent(prompt)
+const res = await generateAIContent(prompt)
 
-if (result && result.length > 100) {
-  return result
+if (res) return res
+
+console.log("🔁 Retry:", i + 1)
+await new Promise(r => setTimeout(r, 20000))
 }
-
-console.log(`🔁 Retry ${i + 1}/${retries}`)
-
-await new Promise(r => setTimeout(r, 30000))
-}
-
-console.log("❌ AI failed after retries")
 return null
 }
