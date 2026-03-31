@@ -1,0 +1,4 @@
+
+User-agent: *
+Allow: /
+Sitemap: https://ultrastaticseoengine.startknowledge.in/sitemap.xml
