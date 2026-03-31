@@ -8,7 +8,7 @@ xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <image:image>
     <image:loc>https://source.unsplash.com/800x600/?about</image:loc>
   </image:image>
-  <lastmod>2026-03-31T08:06:52.227Z</lastmod>
+  <lastmod>2026-03-31T09:38:26.154Z</lastmod>
   <changefreq>daily</changefreq>
   <priority>0.8</priority>
 </url>
@@ -17,7 +17,7 @@ xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <image:image>
     <image:loc>https://source.unsplash.com/800x600/?contact</image:loc>
   </image:image>
-  <lastmod>2026-03-31T08:06:52.227Z</lastmod>
+  <lastmod>2026-03-31T09:38:26.154Z</lastmod>
   <changefreq>daily</changefreq>
   <priority>0.8</priority>
 </url>
@@ -26,7 +26,7 @@ xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <image:image>
     <image:loc>https://source.unsplash.com/800x600/?privacy</image:loc>
   </image:image>
-  <lastmod>2026-03-31T08:06:52.227Z</lastmod>
+  <lastmod>2026-03-31T09:38:26.154Z</lastmod>
   <changefreq>daily</changefreq>
   <priority>0.8</priority>
 </url>
