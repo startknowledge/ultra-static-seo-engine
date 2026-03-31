@@ -1,30 +1,31 @@
 import fs from "fs"
-import { generateWithRetry } from "../ai/ai-engine.js"
 import { injectAds } from "../engine/monetization-engine.js"
+import { generateSmartContent } from "../ai/hybrid-engine.js"
 
 export async function generateBlogs(strategy, context) {
-  const blogs = []
-  const unique = Date.now()
+const blogs = []
+const unique = Date.now()
 
-  // 📁 ensure dist exists
-  if (!fs.existsSync("./dist")) fs.mkdirSync("./dist")
+if (!fs.existsSync("./dist")) fs.mkdirSync("./dist")
 
-  for (const keyword of strategy.cluster) {
+for (const keyword of strategy.cluster) {
 
-    // 🤖 AI CONTENT WITH RETRY
-    let content = await generateWithRetry(`
+// 🔥 HYBRID AI (MAIN CHANGE)
+let content = await generateSmartContent(`
+
 Write a detailed, SEO optimized blog post about "${keyword}".
 Make it highly informative, engaging, and user-focused.
-Use headings, paragraphs, and structure properly.
-`)
+Use headings, paragraphs, and proper structure.
+`, keyword)
 
-    if (!content) {
-      console.log("⚠️ Empty content → skip:", keyword)
-      continue
-    }
+if (!content) {
+  console.log("⚠️ Empty content → skip:", keyword)
+  continue
+}
 
-    const slug = keyword.replace(/\s+/g, "-").toLowerCase()
-    const url = `${context.domain}/${slug}.html`
+const slug = keyword.replace(/\s+/g, "-").toLowerCase()
+const url = `${context.domain}/${slug}.html`
+
 
     // 🌐 HTML TEMPLATE (NO AFFILIATE)
     let html = `
