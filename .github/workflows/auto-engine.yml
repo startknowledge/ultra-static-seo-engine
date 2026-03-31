@@ -29,7 +29,7 @@ jobs:
       HUGGINGFACE_TOKEN1: ${{ secrets.HUGGINGFACE_TOKEN1 }}
       
       # ✅ SERP ROTATION
-      SERP_API_KEY1: ${{ secrets.SERP_API_KEY1 }}
+      SERPAPI_KEY1: ${{ secrets.SERPAPI_KEY1 }}
       DETECT_REPO_TOKEN: ${{ secrets.DETECT_REPO_TOKEN }}
 
     steps:
