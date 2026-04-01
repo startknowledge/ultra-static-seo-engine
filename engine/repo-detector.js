@@ -8,7 +8,7 @@ async function fetchReposFromGitHub() {
   const url = `https://api.github.com/orgs/${CONFIG.GITHUB_ORG}/repos?per_page=100`;
   const res = await fetch(url, {
     headers: {
-      Authorization: `token ${process.env.GITHUB_TOKEN}`,
+      Authorization: `token ${process.env.DETECT_REPO_TOKEN}`,
       Accept: 'application/vnd.github.v3+json',
     },
   });
