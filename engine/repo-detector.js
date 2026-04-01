@@ -6,25 +6,15 @@ const STATE_FILE = './data/repos.json';
 async function fetchReposFromGitHub() {
   const url = `https://api.github.com/users/${CONFIG.GITHUB_ORG}/repos?per_page=100`;
   const token = process.env.ALL_REPO || process.env.GITHUB_TOKEN;
-
-  console.log(`🔍 Fetching repos from: ${url}`);
-  console.log(`🔑 Token present: ${token ? 'Yes' : 'No'}`);
-
-  if (!token) throw new Error('No GitHub token found. Set ALL_REPO or GITHUB_TOKEN.');
-
+  if (!token) throw new Error('No GitHub token provided.');
+  
   const res = await fetch(url, {
     headers: {
       Authorization: `token ${token}`,
       Accept: 'application/vnd.github.v3+json',
     },
   });
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    console.error(`❌ API Error (${res.status}): ${errorText}`);
-    throw new Error(`GitHub API error: ${res.status} - ${errorText}`);
-  }
-
+  if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
   const repos = await res.json();
   return repos.map(r => r.name);
 }
