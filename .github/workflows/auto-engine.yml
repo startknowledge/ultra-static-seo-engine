@@ -20,10 +20,10 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      GEMINI_API_KEY1: ${{ secrets.GEMINI_API_KEY1 }}
-      GEMINI_API_KEY2: ${{ secrets.GEMINI_API_KEY2 }}
-      GEMINI_API_KEY3: ${{ secrets.GEMINI_API_KEY3 }}
       GEMINI_API_KEY4: ${{ secrets.GEMINI_API_KEY4 }}
+      GEMINI_API_KEY3: ${{ secrets.GEMINI_API_KEY3 }}
+      GEMINI_API_KEY2: ${{ secrets.GEMINI_API_KEY2 }}
+      GEMINI_API_KEY1: ${{ secrets.GEMINI_API_KEY1 }}       
       GROQ_API1: ${{ secrets.GROQ_API1 }}
       OPENAI_OPENROUTER1: ${{ secrets.OPENAI_OPENROUTER1 }}
       HUGGINGFACE_TOKEN1: ${{ secrets.HUGGINGFACE_TOKEN1 }}
@@ -43,6 +43,15 @@ jobs:
 
       - name: 📦 Install dependencies
         run: npm ci
+      
+      - name: 🔍 Test GitHub API token
+        run: |
+           curl -H "Authorization: Bearer $ALL_REPO" \
+                -H "Accept: application/vnd.github.v3+json" \ 
+                https://api.github.com/users/startknowledge/repos?per_page=1
+         
+        env:
+          ALL_REPO: ${{ secrets.ALL_REPO }}
 
       - name: 🧠 Run GOD-LEVEL-SYSTEM SEO ENGINE
         run: node engine/core.js

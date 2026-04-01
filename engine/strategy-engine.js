@@ -6,10 +6,10 @@ const KEYWORD_DB = './data/keywords.json';
 
 // Round‑robin API config (same as before)
 const API_CONFIG = [
-  { key: process.env.GEMINI_API_KEY1, type: 'gemini', model: 'gemini-2.0-flash' },
-  { key: process.env.GEMINI_API_KEY2, type: 'gemini', model: 'gemini-2.0-flash' },
-  { key: process.env.GEMINI_API_KEY3, type: 'gemini', model: 'gemini-2.0-flash' },
   { key: process.env.GEMINI_API_KEY4, type: 'gemini', model: 'gemini-2.0-flash' },
+  { key: process.env.GEMINI_API_KEY3, type: 'gemini', model: 'gemini-2.0-flash' },
+  { key: process.env.GEMINI_API_KEY2, type: 'gemini', model: 'gemini-2.0-flash' },
+  { key: process.env.GEMINI_API_KEY1, type: 'gemini', model: 'gemini-2.0-flash' },  
   { key: process.env.GROQ_API1, type: 'groq', model: 'mixtral-8x7b-32768' },
   { key: process.env.OPENAI_OPENROUTER1, type: 'openrouter', model: 'openai/gpt-4o-mini' },
   { key: process.env.HUGGINGFACE_TOKEN1, type: 'huggingface', model: 'mistralai/Mistral-7B-Instruct' },

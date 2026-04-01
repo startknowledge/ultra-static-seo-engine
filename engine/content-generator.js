@@ -11,7 +11,6 @@ async function generateBlogPost(keyword, repoName, domain) {
   if (!content || content.length < CONFIG.MIN_CONTENT_LENGTH) {
     content = `<p>No AI content generated for "${keyword}".</p>`;
   }
-
   return content;
 }
 

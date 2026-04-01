@@ -12,7 +12,7 @@ export const CONFIG = {
   // Blog generation
   BLOGS_PER_REPO: 5,              // how many new blogs per run
   MIN_CONTENT_LENGTH: 3500,        // discard too short AI output
-  BLOG_RETENTION_DAYS: 60,
+  BLOG_RETENTION_DAYS: 90,
   
   // Ads
   ADSENSE_CLIENT: "ca-pub-2162324894765763",
