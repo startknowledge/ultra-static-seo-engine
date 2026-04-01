@@ -1,58 +1,49 @@
-import { runStrategy } from "./strategy-engine.js"
-import { generateBlogs } from "../content/blog-generator.js"
-import { generatePages } from "../content/page-generator.js"
-import { runInternalLinking } from "../seo/internal-linking.js"
-import { updateLearning } from "./learning-engine-v2.js"
-import { runGrowth } from "./growth-engine.js"
-import { runCleaner } from "../system/cleaner.js"
-import { generateSitemap } from "../seo/sitemap-engine.js"
-import { generateSchema } from "../seo/schema-engine.js"
-import { deploy } from "../system/deploy-engine.js"
-import { detectNewRepo, detectRepoContext } from "./repo-detector.js"
-import { generateIndex } from "../content/index-generator.js"
+import { getRepos, detectNewRepos } from './repo-detector.js';
+import { runStrategy } from './strategy-engine.js';
+import { generateContentForRepo } from './content-generator.js';
+import { generateSEO } from './seo-generator.js';
+import { generateCSS } from './css-generator.js';
+import { runCleaner } from './cleaner.js';
+import { CONFIG } from '../config.js';
 
 export async function runUltraCore() {
-  console.log("🚀 GOD-LEVEL SYSTEM STARTED")
+  console.log('🚀 GOD-LEVEL AUTONOMOUS SEO ENGINE STARTED');
 
-  const isNewRepo = detectNewRepo()
-  const context = detectRepoContext()
+  // 1. Get all repos (and detect new ones)
+  const { all: repos, new: newRepos } = await detectNewRepos();
+  if (repos.length === 0) {
+    console.log('⚠️ No repositories found. Exiting.');
+    return;
+  }
+  console.log(`📦 Found ${repos.length} repos. New: ${newRepos.length}`);
 
-  if (!context) return
+  // 2. Process each repo
+  for (const repo of repos) {
+    console.log(`\n--- Processing repo: ${repo} ---`);
+    const domain = CONFIG.DOMAIN_TEMPLATE(repo);
 
-  console.log("🌐 DOMAIN:", context.domain)
-  console.log("📂 CONTEXT:", context.niche)
+    // Generate keywords strategy
+    const strategy = await runStrategy(repo);
 
-  let strategy
+    // Generate all content (blogs + pages)
+    const { blogs, pages } = await generateContentForRepo(repo, domain, strategy);
 
-  try {
-    strategy = await runStrategy(context)
-  } catch (err) {
-    console.log("❌ STRATEGY ERROR:", err.message)
-    return
+    // Generate SEO files (sitemap, robots, etc.)
+    await generateSEO(repo, domain, blogs, pages);
+
+    // Generate dynamic CSS
+    await generateCSS(repo);
+
+    console.log(`✅ Completed ${repo} | ${blogs.length} blogs, ${pages.length} pages`);
   }
 
-  if (isNewRepo) {
-    console.log("🆕 New Repo → Trend Priority")
-  }
-  
-  await generateIndex(blogs)
-  const blogs = await generateBlogs(strategy, context)
-  const pages = await generatePages(strategy, context)
+  // 3. Clean up orphaned folders/files
+  await runCleaner(repos);
 
-  await runInternalLinking(blogs, pages)
-
-  await updateLearning({ repo: context.repo, blogs })
-
-  await runCleaner()
-
-  await generateSitemap(blogs, pages)
-  await generateSchema(blogs, pages)
-
-  await runGrowth(strategy)
-
-  await deploy()
-
-  console.log("🔥 SYSTEM COMPLETE")
+  console.log('🔥 SYSTEM COMPLETE');
 }
 
-runUltraCore()
+// Run if called directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  runUltraCore().catch(console.error);
+}

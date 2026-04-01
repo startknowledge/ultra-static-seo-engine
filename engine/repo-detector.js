@@ -1,62 +1,46 @@
-import fs from "fs"
-import { REPO_CONFIG } from "../config/repo-config.js"
+import { CONFIG } from '../config.js';
+import { readJson, writeJson } from './utils.js';
 
-const LOG_PATH = "./data/repo-log.json"
+const STATE_FILE = './data/repos.json';
 
-// 🔥 detect new repo
-export function detectNewRepo() {
-  const repoName = process.env.GITHUB_REPOSITORY || "default-repo"
-
-  if (!fs.existsSync("./data")) fs.mkdirSync("./data")
-
-  let log = []
-
-  if (fs.existsSync(LOG_PATH)) {
-    try {
-      log = JSON.parse(fs.readFileSync(LOG_PATH, "utf-8"))
-    } catch {
-      log = []
-    }
-  }
-
-  if (!log.includes(repoName)) {
-    log.push(repoName)
-    fs.writeFileSync(LOG_PATH, JSON.stringify(log, null, 2))
-
-    console.log("🆕 NEW REPO DETECTED:", repoName)
-    return true
-  }
-
-  console.log("♻️ Existing Repo")
-  return false
+// Fetch all repos from GitHub organisation
+async function fetchReposFromGitHub() {
+  const url = `https://api.github.com/orgs/${CONFIG.GITHUB_ORG}/repos?per_page=100`;
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `token ${process.env.GITHUB_TOKEN}`,
+      Accept: 'application/vnd.github.v3+json',
+    },
+  });
+  if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+  const repos = await res.json();
+  return repos.map(r => r.name);
 }
 
-// 🔥 FINAL CONTEXT DETECTOR (repo-config based)
-export function detectRepoContext() {
-  const full = process.env.GITHUB_REPOSITORY || "default-repo"
-  const repoName = full.split("/")[1] || full
+// Main function: get all repos (from cache or fresh)
+export async function getRepos(forceRefresh = false) {
+  let repos = readJson(STATE_FILE, []);
 
-  const domain = REPO_CONFIG[repoName]
-
-  if (!domain) {
-    console.log("⚠️ Repo not mapped → skipping")
-    return null
+  if (forceRefresh || repos.length === 0) {
+    console.log('🔄 Fetching repos from GitHub...');
+    repos = await fetchReposFromGitHub();
+    writeJson(STATE_FILE, repos);
   }
 
-  // 🔥 repo words
-  const words = repoName
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, " ")
-    .split(" ")
-    .filter(Boolean)
+  return repos;
+}
 
-  // 🔥 niche (no hardcode)
-  const niche = words.join(" ")
+// Detect new repos since last run
+export async function detectNewRepos() {
+  const old = readJson(STATE_FILE, []);
+  const fresh = await fetchReposFromGitHub();
+  const newRepos = fresh.filter(r => !old.includes(r));
 
-  return {
-    repo: repoName,
-    domain,
-    words,
-    niche
+  if (newRepos.length) {
+    console.log(`🆕 New repos detected: ${newRepos.join(', ')}`);
+    // update state immediately
+    writeJson(STATE_FILE, fresh);
   }
+
+  return { all: fresh, new: newRepos };
 }

@@ -1,78 +1,61 @@
-name: 🚀 GOD-LEVEL AUTONOMOUS SEO SYSTEM (LIVE DATA BASED)
+name: 🚀 GOD-LEVEL AUTONOMOUS SEO SYSTEM
 
 on:
   schedule:
-    - cron: "0 */7 * * *"
-  workflow_dispatch:
+    - cron: "0 */7 * * *"      # runs every 7 hours
+  workflow_dispatch:            # manual trigger
 
 permissions:
   contents: write
 
 concurrency:
-  group: GOD-LEVEL
+  group: GOD-LEVEL-SYSTEM
   cancel-in-progress: false
-  
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    # Add all your API keys as secrets
     env:
-      GEMINI_API_KEY3: ${{ secrets.GEMINI_API_KEY3 }}
-      GEMINI_API_KEY4: ${{ secrets.GEMINI_API_KEY4 }}
       GEMINI_API_KEY1: ${{ secrets.GEMINI_API_KEY1 }}
       GEMINI_API_KEY2: ${{ secrets.GEMINI_API_KEY2 }}
+      GEMINI_API_KEY3: ${{ secrets.GEMINI_API_KEY3 }}
+      GEMINI_API_KEY4: ${{ secrets.GEMINI_API_KEY4 }}
       GROQ_API1: ${{ secrets.GROQ_API1 }}
       OPENAI_OPENROUTER1: ${{ secrets.OPENAI_OPENROUTER1 }}
       HUGGINGFACE_TOKEN1: ${{ secrets.HUGGINGFACE_TOKEN1 }}
-      
-      # ✅ SERP ROTATION
-      SERPAPI_KEY1: ${{ secrets.SERPAPI_KEY1 }}
-      DETECT_REPO_TOKEN: ${{ secrets.DETECT_REPO_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # needed for repo detection
 
     steps:
-    # ================= CHECKOUT =================
-    - name: 📥 Checkout Repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth:  0
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    # ================= NODE =================
-    - name: ⚙️ Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: "24"
-        cache: npm
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
 
-    # ================= INSTALL =================
-    - name: 📦 Install Dependencies
-      run: npm ci --prefer-offline --no-audit
+      - name: 📦 Install dependencies
+        run: npm ci
 
-    # ================= CORE ENGINE =================
-    # ✅ FIXED
-    - name: 🧠 Run Main Engine (Main System)
-      run: node start.js
+      - name: 🧠 Run GOD-LEVEL-SYSTEM SEO ENGINE
+        run: node engine/core.js
 
-    # ================= SEO FILES =================
-    - name: 📊 SEO Files
-      run: |
-          if [ -f "seo/sitemap-engine.js" ]; then
-            node seo/sitemap-engine.js
+      - name: 💾 Commit & push changes
+        run: |
+          git config --global user.name "seo-bot"
+          git config --global user.email "bot@seo.com"
+          git add .
+          if git diff --cached --quiet; then
+            echo "🟢 No changes to commit"
+          else
+            git commit -m "🚀 auto update [skip ci]"
+            git push
           fi
-
-    # ================= COMMIT =================
-    - name: 💾 Commit & Push Changes
-      run: |
-        git config --global user.name "seo-bot"
-        git config --global user.email "bot@seo.com"
-
-        git add .
-
-        if git diff --cached --quiet; then
-          echo "🟢 No changes to commit"
-        else
-          git commit -m "🚀 auto update"
-          git push
-        fi

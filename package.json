@@ -1,11 +1,11 @@
 {
-  "name": "ultra-seo-engine",
+  "name": "god-level-seo-engine",
   "version": "2.0.0",
   "type": "module",
   "scripts": {
-    "start": "node start.js"
+    "start": "node engine/core.js"
   },
   "dependencies": {
-    "axios": "^1.14.0"
+    "axios": "^1.7.9"
   }
 }
