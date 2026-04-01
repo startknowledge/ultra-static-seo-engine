@@ -4,7 +4,7 @@ import { readJson, writeJson } from './utils.js';
 const STATE_FILE = './data/repos.json';
 
 async function fetchReposFromGitHub() {
-  const url = `https://api.github.com/users/${CONFIG.GITHUB_ORG}/repos?per_page=100`;
+  const url = `https://api.github.com/orgs/${CONFIG.GITHUB_ORG}/repos?per_page=100`;
   const token = process.env.ALL_REPO || process.env.GITHUB_TOKEN;
   if (!token) throw new Error('No GitHub token provided.');
   

@@ -48,7 +48,7 @@ jobs:
         run: |
            curl -H "Authorization: token $ALL_REPO" \
                 -H "Accept: application/vnd.github.v3+json" \ 
-                https://api.github.com/users/startknowledge/repos?per_page=1
+                https://api.github.com/orgs/startknowledge/repos?per_page=1
          
         env:
           ALL_REPO: ${{ secrets.ALL_REPO }}

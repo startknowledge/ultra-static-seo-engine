@@ -1,6 +1,6 @@
 export const CONFIG = {
   // GitHub organisation (or user) to scan for repos
-  GITHUB_ORG: "startknowledge",   // change to your org
+  GITHUB_ORG: "startknowledge-org",   // change to your org
 
   // Domain pattern: https://{repo}.startknowledge.in (default)
   DOMAIN_TEMPLATE: (repo) => `https://${repo}.startknowledge.in`,
