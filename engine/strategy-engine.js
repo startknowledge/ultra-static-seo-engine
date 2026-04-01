@@ -4,7 +4,7 @@ import { readJson, writeJson, retry } from './utils.js';
 
 const KEYWORD_DB = './data/keywords.json';
 
-// Round‑robin API config
+// Round‑robin API config (same as before)
 const API_CONFIG = [
   { key: process.env.GEMINI_API_KEY1, type: 'gemini', model: 'gemini-2.0-flash' },
   { key: process.env.GEMINI_API_KEY2, type: 'gemini', model: 'gemini-2.0-flash' },
@@ -23,7 +23,57 @@ function getNextAPI() {
   return api;
 }
 
-// Google Trends (simple RSS)
+// --- Generic AI content generator (used by both strategy and blog content) ---
+export async function generateAIContent(prompt) {
+  for (let attempt = 0; attempt < API_CONFIG.length * 2; attempt++) {
+    const api = getNextAPI();
+    if (!api) break;
+    try {
+      let result = null;
+      if (api.type === 'gemini') {
+        const url = `https://generativelanguage.googleapis.com/v1/models/${api.model}:generateContent?key=${api.key}`;
+        const res = await axios.post(url, {
+          contents: [{ parts: [{ text: prompt }] }],
+        });
+        result = res.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      } else if (api.type === 'groq') {
+        const res = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
+          model: api.model,
+          messages: [{ role: 'user', content: prompt }],
+        }, {
+          headers: { Authorization: `Bearer ${api.key}` },
+        });
+        result = res.data?.choices?.[0]?.message?.content;
+      } else if (api.type === 'openrouter') {
+        const res = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
+          model: api.model,
+          messages: [{ role: 'user', content: prompt }],
+        }, {
+          headers: { Authorization: `Bearer ${api.key}` },
+        });
+        result = res.data?.choices?.[0]?.message?.content;
+      } else if (api.type === 'huggingface') {
+        const res = await axios.post(`https://api-inference.huggingface.co/models/${api.model}`, {
+          inputs: prompt,
+        }, {
+          headers: { Authorization: `Bearer ${api.key}` },
+        });
+        result = res.data?.[0]?.generated_text;
+      }
+
+      if (result && result.length > 100) {
+        console.log(`✅ AI generated content using ${api.type}`);
+        return result.trim();
+      }
+    } catch (err) {
+      console.warn(`⚠️ API ${api.type} failed:`, err.message);
+    }
+  }
+  console.error('❌ All AI providers failed to generate content.');
+  return null;
+}
+
+// --- Google Trends (as before) ---
 async function getTrendingKeyword() {
   try {
     const res = await axios.get('https://trends.google.com/trending/rss?geo=IN');
@@ -37,19 +87,16 @@ async function getTrendingKeyword() {
   return null;
 }
 
-// Generate keywords using selected API
+// --- Keyword generation helper (using AI) ---
 async function generateKeywordsViaAPI(api, seed) {
   const prompt = `Generate 10 SEO keywords related to "${seed}". Return only a list, one per line, no numbers or extra text.`;
-
   if (api.type === 'gemini') {
     const url = `https://generativelanguage.googleapis.com/v1/models/${api.model}:generateContent?key=${api.key}`;
     const res = await axios.post(url, {
       contents: [{ parts: [{ text: prompt }] }],
     });
-    const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    return text;
+    return res.data?.candidates?.[0]?.content?.parts?.[0]?.text;
   }
-
   if (api.type === 'groq') {
     const res = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
       model: api.model,
@@ -59,7 +106,6 @@ async function generateKeywordsViaAPI(api, seed) {
     });
     return res.data?.choices?.[0]?.message?.content;
   }
-
   if (api.type === 'openrouter') {
     const res = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
       model: api.model,
@@ -69,7 +115,6 @@ async function generateKeywordsViaAPI(api, seed) {
     });
     return res.data?.choices?.[0]?.message?.content;
   }
-
   if (api.type === 'huggingface') {
     const res = await axios.post(`https://api-inference.huggingface.co/models/${api.model}`, {
       inputs: prompt,
@@ -78,33 +123,27 @@ async function generateKeywordsViaAPI(api, seed) {
     });
     return res.data?.[0]?.generated_text;
   }
-
   return null;
 }
 
-// Clean keywords from AI output
 function cleanKeywords(text) {
   if (!text) return [];
-  const lines = text.split('\n');
-  return lines
+  return text.split('\n')
     .map(line => line.replace(/^\d+[).-]\s*/, '').trim())
     .filter(k => k.length > 2)
     .slice(0, 10);
 }
 
-// Main strategy: get seed (trend or repo name) and generate cluster
+// --- Main strategy export ---
 export async function runStrategy(repoName) {
   console.log(`🧠 Generating keywords for repo: ${repoName}`);
 
-  // 1. Load existing keywords
   let allKeywords = readJson(KEYWORD_DB, {});
 
-  // 2. Get seed
   let seed = await getTrendingKeyword();
   if (!seed) seed = repoName.replace(/[^a-z0-9]/gi, ' ').trim();
   console.log(`🌐 Seed keyword: ${seed}`);
 
-  // 3. Try APIs to generate keywords
   let newKeywords = [];
   for (let attempt = 0; attempt < API_CONFIG.length * 2; attempt++) {
     const api = getNextAPI();
@@ -121,13 +160,11 @@ export async function runStrategy(repoName) {
     }
   }
 
-  // Fallback: use seed itself
   if (newKeywords.length === 0) {
     console.warn('⚠️ No keywords generated, using seed fallback');
     newKeywords = [seed];
   }
 
-  // 4. Update global DB
   if (!allKeywords[repoName]) allKeywords[repoName] = [];
   const existing = new Set(allKeywords[repoName]);
   for (const kw of newKeywords) {
@@ -135,7 +172,6 @@ export async function runStrategy(repoName) {
   }
   writeJson(KEYWORD_DB, allKeywords);
 
-  // Return the cluster (take only BLOGS_PER_REPO)
   const cluster = allKeywords[repoName].slice(-CONFIG.BLOGS_PER_REPO);
   return {
     niche: seed,
