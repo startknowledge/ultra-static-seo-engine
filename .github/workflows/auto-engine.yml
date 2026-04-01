@@ -2,12 +2,11 @@ name: 🚀 GOD-LEVEL AUTONOMOUS SEO SYSTEM
 
 on:
   schedule:
-    - cron: "0 */7 * * *"      # runs every 7 hours
-  workflow_dispatch:            # manual trigger
+    - cron: "0 */7 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: write
-  
 
 concurrency:
   group: GOD-LEVEL-SYSTEM
@@ -20,7 +19,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # Add all your API keys as secrets
     env:
       GEMINI_API_KEY1: ${{ secrets.GEMINI_API_KEY1 }}
       GEMINI_API_KEY2: ${{ secrets.GEMINI_API_KEY2 }}
@@ -29,7 +27,7 @@ jobs:
       GROQ_API1: ${{ secrets.GROQ_API1 }}
       OPENAI_OPENROUTER1: ${{ secrets.OPENAI_OPENROUTER1 }}
       HUGGINGFACE_TOKEN1: ${{ secrets.HUGGINGFACE_TOKEN1 }}
-      DETECT_REPO_TOKEN: ${{ secrets.DETECT_REPO_TOKEN }}   # needed for repo detection
+      ALL_REPO: ${{ secrets.ALL_REPO }}   # <-- use your token secret
 
     steps:
       - name: 📥 Checkout repository
