@@ -1,37 +1,37 @@
 import fs from 'fs';
 import { CONFIG } from '../config.js';
-import { sanitizeSlug, retry } from './utils.js';
-import { generateAIContent } from './strategy-engine.js';   // reuse the AI call
+import { sanitizeSlug, cleanMarkdown } from './utils.js';
+import { generateAIContent } from './strategy-engine.js';
 
-// Generate a full blog post using AI
-async function generateBlogPost(keyword, repoName, domain) {
-  const prompt = `Write a detailed, SEO-optimized blog post about "${keyword}". Use headings (h2, h3), paragraphs, and a conclusion. The content should be informative, engaging, and at least 800 words. Return only the HTML body content (no <html>, <head>).`;
-
-  let content = await retry(() => generateAIContent(prompt));
+async function generateBlogPost(keyword, repoName, domain, strategy) {
+  const prompt = `Write a detailed, SEO-optimized blog post about "${keyword}" for a website about ${strategy.niche}. Use headings (h2, h3), paragraphs, and a conclusion. Minimum 800 words. Return plain HTML without markdown or backticks.`;
+  let content = await generateAIContent(prompt);
+  content = cleanMarkdown(content);
   if (!content || content.length < CONFIG.MIN_CONTENT_LENGTH) {
-    content = `<p>No AI content generated for "${keyword}".</p>`;
+    content = `<p>AI content unavailable for "${keyword}".</p>`;
   }
   return content;
 }
 
-// Generate static pages (about, contact, privacy)
-function generateStaticPage(title, content) {
-  return `
-    <h1>${title}</h1>
-    <div class="page-content">
-      ${content}
-    </div>
-  `;
+function generateFAQ(repoName, niche) {
+  // Generate 10+ FAQ items based on repo niche
+  const faqs = [
+    { q: `What is ${repoName}?`, a: `${repoName} is a comprehensive platform dedicated to ${niche}, providing expert insights, tools, and resources.` },
+    { q: `How can I get started with ${repoName}?`, a: `Simply explore our blog posts and tools. All content is free and updated regularly.` },
+    { q: `Is the information on ${repoName} free?`, a: `Yes, 100% free. No registration required.` },
+    { q: `How often is new content added?`, a: `New blog posts and resources are added automatically every few hours.` },
+    { q: `Can I contribute or suggest a topic?`, a: `Absolutely! Contact us via the contact page.` },
+    { q: `Does ${repoName} have a mobile app?`, a: `Not yet, but the website is fully responsive on all devices.` },
+    { q: `How do I report an issue?`, a: `Use the contact form or email us directly.` },
+    { q: `Are the tools on ${repoName} reliable?`, a: `Yes, we use up‑to‑date algorithms and data sources.` },
+    { q: `Can I use content from ${repoName} for my own site?`, a: `Please see our terms of service. Short excerpts with attribution are allowed.` },
+    { q: `How can I stay updated?`, a: `Subscribe to our RSS feed or check the blog regularly.` },
+  ];
+  return faqs.map(f => `<div class="faq-item"><h3>${f.q}</h3><p>${f.a}</p></div>`).join('');
 }
 
-// Inject ads into HTML body (intelligent placement)
 function injectAds(html, contentLength) {
-  // Choose ad frequency based on content length
-  let adCount = 2;
-  if (contentLength > 8000) adCount = 4;
-  else if (contentLength > 4000) adCount = 3;
-
-  // Scripts to add in <head>
+  let adCount = contentLength > 8000 ? 4 : contentLength > 4000 ? 3 : 2;
   const allScripts = `
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${CONFIG.ADSENSE_CLIENT}" crossorigin="anonymous"></script>
     ${CONFIG.PROPELLER_SCRIPT}
@@ -39,163 +39,83 @@ function injectAds(html, contentLength) {
     ${CONFIG.MEDIANET_SCRIPT}
   `;
   html = html.replace('</head>', `${allScripts}</head>`);
-
-  // Insert AdSense blocks after every ~nth paragraph
-  const paragraphs = html.split('</p>');
-  const step = Math.max(1, Math.floor(paragraphs.length / adCount));
+  const parts = html.split('</p>');
+  const step = Math.max(1, Math.floor(parts.length / adCount));
   let newHtml = '';
-  for (let i = 0; i < paragraphs.length; i++) {
-    newHtml += paragraphs[i] + '</p>';
-    if (i > 0 && i % step === 0 && i < paragraphs.length - 1) {
+  for (let i = 0; i < parts.length; i++) {
+    newHtml += parts[i] + '</p>';
+    if (i > 0 && i % step === 0 && i < parts.length - 1) {
       const slot = CONFIG.ADSENSE_SLOTS[Math.floor(Math.random() * CONFIG.ADSENSE_SLOTS.length)];
-      newHtml += `
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-format="fluid"
-             data-ad-client="${CONFIG.ADSENSE_CLIENT}"
-             data-ad-slot="${slot}"></ins>
-        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-      `;
+      newHtml += `<ins class="adsbygoogle" style="display:block" data-ad-format="fluid" data-ad-client="${CONFIG.ADSENSE_CLIENT}" data-ad-slot="${slot}"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script>`;
     }
   }
-
-  // Also add one at the end
-  newHtml += `
-    <ins class="adsbygoogle"
-         style="display:block"
-         data-ad-format="fluid"
-         data-ad-client="${CONFIG.ADSENSE_CLIENT}"
-         data-ad-slot="${CONFIG.ADSENSE_SLOTS[0]}"></ins>
-    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-  `;
-
   return newHtml;
 }
 
-// Main entry: generate all content for a repo
-export async function generateContentForRepo(repoName, domain, strategy) {
-  console.log(`📝 Generating content for ${repoName} (${domain})`);
+function buildNav(repoName) {
+  return `<nav><a href="/${repoName}/">Home</a> | <a href="/${repoName}/pages/about.html">About</a> | <a href="/${repoName}/pages/contact.html">Contact</a> | <a href="/${repoName}/pages/privacy.html">Privacy</a> | <a href="/${repoName}/pages/faq.html">FAQ</a> | <a href="/${repoName}/pages/disclaimer.html">Disclaimer</a> | <a href="/${repoName}/pages/terms.html">Terms</a></nav>`;
+}
 
-  const docsDir = `./docs/${repoName}`;
-  if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir, { recursive: true });
+function buildFooter(repoName) {
+  return `<footer><p>&copy; ${new Date().getFullYear()} ${repoName} | <a href="/${repoName}/pages/privacy.html">Privacy</a> | <a href="/${repoName}/pages/faq.html">FAQ</a> | <a href="/${repoName}/pages/disclaimer.html">Disclaimer</a> | <a href="/${repoName}/pages/terms.html">Terms</a></p></footer>`;
+}
+
+async function generateStaticPages(repoName, domain, niche) {
+  const pagesDir = `./docs/${repoName}/pages`;
+  if (!fs.existsSync(pagesDir)) fs.mkdirSync(pagesDir, { recursive: true });
+
+  const faqContent = generateFAQ(repoName, niche);
+  const pages = [
+    { slug: 'about', title: 'About Us', content: `<p>${repoName} is your trusted source for ${niche}. Our mission is to provide accurate, up‑to‑date information and tools.</p>` },
+    { slug: 'contact', title: 'Contact', content: `<p>Email: contact@${repoName}.com</p><p>Phone: +91-XXXXXXXXXX</p>` },
+    { slug: 'privacy', title: 'Privacy Policy', content: `<p>We respect your privacy. This site uses cookies and third‑party ads.</p>` },
+    { slug: 'faq', title: 'Frequently Asked Questions', content: faqContent },
+    { slug: 'disclaimer', title: 'Disclaimer', content: `<p>The information provided is for general informational purposes only. We are not liable for any errors or omissions.</p>` },
+    { slug: 'terms', title: 'Terms of Service', content: `<p>By using this site, you agree to these terms. All content is property of ${repoName}.</p>` },
+  ];
+
+  const nav = buildNav(repoName);
+  const footer = buildFooter(repoName);
+  const styleLink = `<link rel="stylesheet" href="/${repoName}/style.css">`;
+
+  for (const page of pages) {
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${page.title} | ${repoName}</title><meta name="description" content="${page.title} page for ${repoName}">${styleLink}</head>
+<body><header>${nav}</header><main><h1>${page.title}</h1>${page.content}</main>${footer}</body>
+</html>`;
+    fs.writeFileSync(`${pagesDir}/${page.slug}.html`, html);
+  }
+  return pages.map(p => ({ slug: p.slug, url: `${domain}/pages/${p.slug}.html`, date: new Date().toISOString() }));
+}
+
+export async function generateContentForRepo(repoName, domain, strategy) {
+  console.log(`📝 Generating content for ${repoName}`);
+  const blogDir = `./docs/${repoName}/blog`;
+  const pagesDir = `./docs/${repoName}/pages`;
+  if (!fs.existsSync(blogDir)) fs.mkdirSync(blogDir, { recursive: true });
+  if (!fs.existsSync(pagesDir)) fs.mkdirSync(pagesDir, { recursive: true });
 
   const blogs = [];
-  const pages = [];
+  const nav = buildNav(repoName);
+  const footer = buildFooter(repoName);
+  const styleLink = `<link rel="stylesheet" href="/${repoName}/style.css">`;
 
-  // --- Generate blogs (using keywords from strategy)
   for (const keyword of strategy.cluster) {
     const slug = sanitizeSlug(keyword);
-    const url = `${domain}/${slug}.html`;
-    const date = new Date().toISOString();
-
-    let bodyContent = await generateBlogPost(keyword, repoName, domain);
-    bodyContent = injectAds(bodyContent, bodyContent.length);
-
+    const url = `${domain}/blog/${slug}.html`;
+    let body = await generateBlogPost(keyword, repoName, domain, strategy);
+    body = injectAds(body, body.length);
     const fullHtml = `<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${keyword}</title>
-  <meta name="description" content="Complete guide about ${keyword}">
-  <meta name="keywords" content="${keyword}, ${strategy.niche}, ${repoName}">
-  <link rel="canonical" href="${url}">
-  
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="article">
-  <meta property="og:url" content="${url}">
-  <meta property="og:title" content="${keyword}">
-  <meta property="og:description" content="Complete guide about ${keyword}">
-  <meta property="og:image" content="https://source.unsplash.com/800x600/?${encodeURIComponent(keyword)}">
-  
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="${url}">
-  <meta name="twitter:title" content="${keyword}">
-  <meta name="twitter:description" content="Complete guide about ${keyword}">
-  <meta name="twitter:image" content="https://source.unsplash.com/800x600/?${encodeURIComponent(keyword)}">
-  
-  <link rel="stylesheet" href="/${repoName}/style.css">
-  <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "BlogPosting",
-  "headline": "${keyword}",
-  "url": "${url}",
-  "datePublished": "${new Date().toISOString()}",
-  "description": "Complete guide about ${keyword}",
-  "author": {
-    "@type": "Organization",
-    "name": "${repoName}"
-  }
-}
-</script>
-</head>
-<body>
-  <header>
-    <nav><a href="/${repoName}/">Home</a> | <a href="/${repoName}/about.html">About</a> | <a href="/${repoName}/contact.html">Contact</a> | <a href="/${repoName}/privacy.html">Privacy</a></nav>
-  </header>
-  <main>
-    ${bodyContent}
-  </main>
-  <footer>
-    <p>&copy; ${new Date().getFullYear()} ${repoName} - All rights reserved.</p>
-  </footer>
-</body>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${keyword}</title><meta name="description" content="Complete guide about ${keyword}"><link rel="canonical" href="${url}">${styleLink}</head>
+<body><header>${nav}</header><main>${body}</main>${footer}</body>
 </html>`;
-
-    const filePath = `${docsDir}/${slug}.html`;
-    fs.writeFileSync(filePath, fullHtml);
+    fs.writeFileSync(`${blogDir}/${slug}.html`, fullHtml);
+    blogs.push({ slug, keyword, url, date: new Date().toISOString() });
     console.log(`✅ Blog: ${url}`);
-
-    blogs.push({ slug, keyword, url, date });
   }
 
-  // --- Generate static pages (about, contact, privacy)
-  const staticPages = [
-  { slug: 'about', title: 'About Us', content: `<p>This site is dedicated to ${repoName}. We provide the latest information and insights.</p>` },
-  { slug: 'contact', title: 'Contact', content: `<p>Email: contact@${repoName}.com</p><p>Phone: 18001803246</p>` },
-  { slug: 'privacy', title: 'Privacy Policy', content: `<p>We respect your privacy. This site uses cookies and third-party ads.</p>` },
-  { slug: 'faq', title: 'FAQ', content: `<p><strong>Q: What is ${repoName}?</strong><br>A: ${repoName} is a site dedicated to providing helpful information on related topics.</p><p><strong>Q: How often is content updated?</strong><br>A: New content is generated automatically every few hours.</p>` },
-  { slug: 'disclaimer', title: 'Disclaimer', content: `<p>The information provided on this site is for general informational purposes only. We are not liable for any errors or omissions.</p>` },
-  { slug: 'terms', title: 'Terms of Service', content: `<p>By using this site, you agree to these terms. All content is property of ${repoName} and may not be reproduced without permission.</p>` },
-];
-
-  for (const page of staticPages) {
-    const bodyContent = generateStaticPage(page.title, page.content);
-    const url = `${domain}/${page.slug}.html`;
-    const fullHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${page.title} | ${repoName}</title>
-  <link rel="canonical" href="${url}">
-  <link rel="stylesheet" href="/${repoName}/style.css">
-</head>
-<body>
-  <header>
-  <nav>
-  <a href="/${repoName}/">Home</a> | 
-  <a href="/${repoName}/about.html">About</a> | 
-  <a href="/${repoName}/contact.html">Contact</a>
-  </nav>
-  </header>
-  <main>${bodyContent}</main>
-  <footer>
-  <nav>
-  <a href="/${repoName}/privacy.html">Privacy</a>|
-  <a href="/${repoName}/faq.html">FAQ</a>|
-  <a href="/${repoName}/disclaimer.html">Disclaimer</a>|
-  <a href="/${repoName}/terms.html">Terms</a>
-  </nav>
-  <p>&copy; ${new Date().getFullYear()} ${repoName}</p>
-  </footer>
-</body>
-</html>`;
-    fs.writeFileSync(`${docsDir}/${page.slug}.html`, fullHtml);
-    pages.push({ slug: page.slug, url, date: new Date().toISOString() });
-  }
-
+  const pages = await generateStaticPages(repoName, domain, strategy.niche);
   return { blogs, pages };
 }

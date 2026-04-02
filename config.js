@@ -1,9 +1,9 @@
 export const CONFIG = {
   GITHUB_ORG: "startknowledge",
   DOMAIN_TEMPLATE: (repo) => `https://${repo}.startknowledge.in`,
-  MAX_RETRIES: 2,               // fewer retries to avoid hammering
-  RETRY_DELAY_MS: 30000,        // 30 seconds between retries
-  BLOGS_PER_REPO: 2,            // generate only 2 blogs per repo per run
+  MAX_RETRIES: 2,
+  RETRY_DELAY_MS: 30000,
+  BLOGS_PER_REPO: 2,               // generate 2 new blogs per run
   MIN_CONTENT_LENGTH: 3500,
   BLOG_RETENTION_DAYS: 90,
   ADSENSE_CLIENT: "ca-pub-2162324894765763",

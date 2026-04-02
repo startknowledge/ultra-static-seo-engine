@@ -20,19 +20,26 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Gemini keys (4)
+      # Gemini
       GEMINI_API_KEY1: ${{ secrets.GEMINI_API_KEY1 }}
       GEMINI_API_KEY2: ${{ secrets.GEMINI_API_KEY2 }}
-      GEMINI_API_KEY3: ${{ secrets.GEMINI_API_KEY3 }}
-      GEMINI_API_KEY4: ${{ secrets.GEMINI_API_KEY4 }}
-      # Groq keys (2)
-      GROQ_API1: ${{ secrets.GROQ_API1 }}
+
+      # Groq
+      GROQ_API_KEY1: ${{ secrets.GROQ_API_KEY1 }}
       GROQ_API_KEY2: ${{ secrets.GROQ_API_KEY2 }}
       # OpenRouter
       OPENAI_OPENROUTER1: ${{ secrets.OPENAI_OPENROUTER1 }}
+      OPENAI_OPENROUTER2: ${{ secrets.OPENAI_OPENROUTER2 }}
       # Hugging Face
       HUGGINGFACE_TOKEN1: ${{ secrets.HUGGINGFACE_TOKEN1 }}
-      # GitHub token
+      HUGGINGFACE_TOKEN2: ${{ secrets.HUGGINGFACE_TOKEN2 }}
+      # Mistral
+      MISTRAL_API_KEY1: ${{ secrets.MISTRAL_API_KEY1 }}
+      MISTRAL_API_KEY2: ${{ secrets.MISTRAL_API_KEY2 }}
+      # Cloudflare
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      # GitHub token for repo detection
       ALL_REPO: ${{ secrets.ALL_REPO }}
 
     steps:
@@ -50,7 +57,7 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
-      - name: 🧠 Run GOD-LEVEL-SYSTEM SEO ENGINE
+      - name: 🧠 Run GOD-LEVEL SYSTEM
         run: node engine/core.js
 
       - name: 💾 Commit & push changes
