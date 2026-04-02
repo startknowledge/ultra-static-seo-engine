@@ -5,6 +5,7 @@ import { generateSEO } from './seo-generator.js';
 import { generateCSS } from './css-generator.js';
 import { runCleaner } from './cleaner.js';
 import { CONFIG } from '../config.js';
+import { delay } from './utils.js';  // <-- import delay
 
 export async function runUltraCore() {
   console.log('🚀 GOD-LEVEL AUTONOMOUS SEO ENGINE STARTED');
@@ -17,24 +18,35 @@ export async function runUltraCore() {
   }
   console.log(`📦 Found ${repos.length} repos. New: ${newRepos.length}`);
 
-  // 2. Process each repo
-  for (const repo of repos) {
-    console.log(`\n--- Processing repo: ${repo} ---`);
+  // 2. Process each repo with a delay between them
+  for (let i = 0; i < repos.length; i++) {
+    const repo = repos[i];
+    console.log(`\n--- Processing repo (${i+1}/${repos.length}): ${repo} ---`);
     const domain = CONFIG.DOMAIN_TEMPLATE(repo);
 
-    // Generate keywords strategy
-    const strategy = await runStrategy(repo);
+    try {
+      // Generate keywords strategy
+      const strategy = await runStrategy(repo);
 
-    // Generate all content (blogs + pages)
-    const { blogs, pages } = await generateContentForRepo(repo, domain, strategy);
+      // Generate all content (blogs + pages)
+      const { blogs, pages } = await generateContentForRepo(repo, domain, strategy);
 
-    // Generate SEO files (sitemap, robots, etc.)
-    await generateSEO(repo, domain, blogs, pages);
+      // Generate SEO files (sitemap, robots, etc.)
+      await generateSEO(repo, domain, blogs, pages);
 
-    // Generate dynamic CSS
-    await generateCSS(repo);
+      // Generate dynamic CSS
+      await generateCSS(repo);
 
-    console.log(`✅ Completed ${repo} | ${blogs.length} blogs, ${pages.length} pages`);
+      console.log(`✅ Completed ${repo} | ${blogs.length} blogs, ${pages.length} pages`);
+    } catch (err) {
+      console.error(`❌ Failed to process ${repo}:`, err.message);
+    }
+
+    // Wait 5 seconds before processing next repo to avoid rate limits
+    if (i < repos.length - 1) {
+      console.log(`⏳ Waiting 5 seconds before next repo...`);
+      await delay(5000);
+    }
   }
 
   // 3. Clean up orphaned folders/files

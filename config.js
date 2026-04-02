@@ -1,20 +1,11 @@
 export const CONFIG = {
-  // GitHub organisation (or user) to scan for repos
-  GITHUB_ORG: "startknowledge",   // change to your org
-
-  // Domain pattern: https://{repo}.startknowledge.in (default)
+  GITHUB_ORG: "startknowledge",
   DOMAIN_TEMPLATE: (repo) => `https://${repo}.startknowledge.in`,
-
-  // AI settings
-  MAX_RETRIES: 3,
-  RETRY_DELAY_MS: 20000,
-
-  // Blog generation
-  BLOGS_PER_REPO: 5,              // how many new blogs per run
-  MIN_CONTENT_LENGTH: 3500,        // discard too short AI output
+  MAX_RETRIES: 2,               // fewer retries to avoid hammering
+  RETRY_DELAY_MS: 30000,        // 30 seconds between retries
+  BLOGS_PER_REPO: 2,            // generate only 2 blogs per repo per run
+  MIN_CONTENT_LENGTH: 3500,
   BLOG_RETENTION_DAYS: 90,
-  
-  // Ads
   ADSENSE_CLIENT: "ca-pub-2162324894765763",
   ADSENSE_SLOTS: ["1966379200", "8024521099", "4441349363", "3958418735"],
   PROPELLER_SCRIPT: `<script async src="https://upgulpinon.com/1?z=XXXXXX"></script>`,

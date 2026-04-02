@@ -1,19 +1,26 @@
 import axios from 'axios';
 import { CONFIG } from '../config.js';
-import { readJson, writeJson, retry } from './utils.js';
+import { readJson, writeJson, delay } from './utils.js';
 
 const KEYWORD_DB = './data/keywords.json';
 
-// Round‑robin API config (same as before)
+// 🔥 ALL YOUR API KEYS – ADD AS MANY AS YOU HAVE
 const API_CONFIG = [
-  { key: process.env.GEMINI_API_KEY4, type: 'gemini', model: 'gemini-2.0-flash' },
-  { key: process.env.GEMINI_API_KEY3, type: 'gemini', model: 'gemini-2.0-flash' },
+  // Gemini keys (4)
+  { key: process.env.GEMINI_API_KEY1, type: 'gemini', model: 'gemini-2.0-flash' },
   { key: process.env.GEMINI_API_KEY2, type: 'gemini', model: 'gemini-2.0-flash' },
-  { key: process.env.GEMINI_API_KEY1, type: 'gemini', model: 'gemini-2.0-flash' },  
+  { key: process.env.GEMINI_API_KEY3, type: 'gemini', model: 'gemini-2.0-flash' },
+  { key: process.env.GEMINI_API_KEY4, type: 'gemini', model: 'gemini-2.0-flash' },
+  // Groq keys (2)
   { key: process.env.GROQ_API1, type: 'groq', model: 'mixtral-8x7b-32768' },
+  { key: process.env.GROQ_API_KEY2, type: 'groq', model: 'mixtral-8x7b-32768' },
+  // OpenRouter
   { key: process.env.OPENAI_OPENROUTER1, type: 'openrouter', model: 'openai/gpt-4o-mini' },
+  // Hugging Face
   { key: process.env.HUGGINGFACE_TOKEN1, type: 'huggingface', model: 'mistralai/Mistral-7B-Instruct' },
-].filter(api => api.key);
+].filter(api => api.key && api.key.trim() !== '');
+
+console.log(`🔑 Loaded ${API_CONFIG.length} API keys`);
 
 let apiIndex = 0;
 function getNextAPI() {
@@ -25,9 +32,11 @@ function getNextAPI() {
 
 // --- Generic AI content generator (used by both strategy and blog content) ---
 export async function generateAIContent(prompt) {
-  for (let attempt = 0; attempt < API_CONFIG.length * 2; attempt++) {
+  const maxAttempts = API_CONFIG.length * 2;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const api = getNextAPI();
     if (!api) break;
+
     try {
       let result = null;
       if (api.type === 'gemini') {
@@ -62,18 +71,26 @@ export async function generateAIContent(prompt) {
       }
 
       if (result && result.length > 100) {
-        console.log(`✅ AI generated content using ${api.type}`);
+        console.log(`✅ AI content generated using ${api.type} (key index ${apiIndex % API_CONFIG.length})`);
         return result.trim();
       }
     } catch (err) {
+      const status = err.response?.status;
+      if (status === 429) {
+        console.warn(`⚠️ Rate limit on ${api.type} – waiting 60s then switching key`);
+        await delay(60000); // wait 1 minute
+        continue; // try next key immediately
+      }
       console.warn(`⚠️ API ${api.type} failed:`, err.message);
     }
+    // Small delay between API calls to avoid bursts
+    await delay(1000);
   }
   console.error('❌ All AI providers failed to generate content.');
   return null;
 }
 
-// --- Google Trends (as before) ---
+// --- Google Trends (unchanged) ---
 async function getTrendingKeyword() {
   try {
     const res = await axios.get('https://trends.google.com/trending/rss?geo=IN');
@@ -87,7 +104,7 @@ async function getTrendingKeyword() {
   return null;
 }
 
-// --- Keyword generation helper (using AI) ---
+// --- Keyword generation using same API rotation ---
 async function generateKeywordsViaAPI(api, seed) {
   const prompt = `Generate 10 SEO keywords related to "${seed}". Return only a list, one per line, no numbers or extra text.`;
   if (api.type === 'gemini') {
@@ -145,6 +162,7 @@ export async function runStrategy(repoName) {
   console.log(`🌐 Seed keyword: ${seed}`);
 
   let newKeywords = [];
+  // Try each API in rotation
   for (let attempt = 0; attempt < API_CONFIG.length * 2; attempt++) {
     const api = getNextAPI();
     if (!api) break;
@@ -158,6 +176,7 @@ export async function runStrategy(repoName) {
     } catch (err) {
       console.warn(`API ${api.type} failed:`, err.message);
     }
+    await delay(1000);
   }
 
   if (newKeywords.length === 0) {

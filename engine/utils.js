@@ -1,3 +1,4 @@
+import { CONFIG } from '../config.js';
 import fs from 'fs';
 
 // Sanitise a string to be a safe filename (no spaces, quotes, colons, etc.)
