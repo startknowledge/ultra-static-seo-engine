@@ -1,0 +1,35 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "name": "pension-calculator",
+      "url": "https://pension-calculator.startknowledge.in"
+    },
+    {
+      "@type": "Organization",
+      "name": "pension-calculator",
+      "url": "https://pension-calculator.startknowledge.in"
+    },
+    {
+      "@type": "BlogPosting",
+      "headline": "monthly pension calculator",
+      "url": "https://pension-calculator.startknowledge.in/monthly-pension-calculator.html",
+      "datePublished": "2026-04-02T13:59:34.142Z",
+      "author": {
+        "@type": "Organization",
+        "name": "pension-calculator"
+      }
+    },
+    {
+      "@type": "BlogPosting",
+      "headline": "social security pension calculator",
+      "url": "https://pension-calculator.startknowledge.in/social-security-pension-calculator.html",
+      "datePublished": "2026-04-02T14:04:00.167Z",
+      "author": {
+        "@type": "Organization",
+        "name": "pension-calculator"
+      }
+    }
+  ]
+}

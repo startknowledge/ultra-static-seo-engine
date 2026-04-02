@@ -1,0 +1,4 @@
+
+User-agent: *
+Allow: /
+Sitemap: https://bn-ration-scale.startknowledge.in/sitemap.xml

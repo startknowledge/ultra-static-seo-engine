@@ -1,0 +1,4 @@
+
+User-agent: *
+Allow: /
+Sitemap: https://pension-calculator.startknowledge.in/sitemap.xml
