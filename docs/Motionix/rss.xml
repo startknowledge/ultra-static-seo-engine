@@ -1,21 +1,4 @@
 <?xml version="1.0"?>
-<rss version="2.0">
-<channel>
-  <title>Motionix</title>
-  <link>https://Motionix.startknowledge.in</link>
-  <description>Latest updates from Motionix</description>
-  
-  <item>
-    <title>Motionix download</title>
-    <link>https://Motionix.startknowledge.in/motionix-download.html</link>
-    <pubDate>2026-04-02T15:28:59.300Z</pubDate>
-    <guid>https://Motionix.startknowledge.in/motionix-download.html</guid>
-  </item>
-  <item>
-    <title>Motionix compatibility</title>
-    <link>https://Motionix.startknowledge.in/motionix-compatibility.html</link>
-    <pubDate>2026-04-02T15:33:30.066Z</pubDate>
-    <guid>https://Motionix.startknowledge.in/motionix-compatibility.html</guid>
-  </item>
-</channel>
-</rss>
+<rss version="2.0"><channel><title>Motionix</title><link>https://Motionix.startknowledge.in</link>
+<item><title>Motionix compatibility</title><link>https://Motionix.startknowledge.in/blog/motionix-compatibility.html</link><pubDate>2026-04-02T17:47:59.874Z</pubDate></item><item><title>Motionix</title><link>https://Motionix.startknowledge.in/blog/motionix.html</link><pubDate>2026-04-02T17:48:21.826Z</pubDate></item>
+</channel></rss>

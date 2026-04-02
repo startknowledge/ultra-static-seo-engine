@@ -1,21 +1,4 @@
 <?xml version="1.0"?>
-<rss version="2.0">
-<channel>
-  <title>Calculator-Library-Portal</title>
-  <link>https://Calculator-Library-Portal.startknowledge.in</link>
-  <description>Latest updates from Calculator-Library-Portal</description>
-  
-  <item>
-    <title>Advanced calculator library</title>
-    <link>https://Calculator-Library-Portal.startknowledge.in/advanced-calculator-library.html</link>
-    <pubDate>2026-04-02T15:10:40.698Z</pubDate>
-    <guid>https://Calculator-Library-Portal.startknowledge.in/advanced-calculator-library.html</guid>
-  </item>
-  <item>
-    <title>Calculator application resources</title>
-    <link>https://Calculator-Library-Portal.startknowledge.in/calculator-application-resources.html</link>
-    <pubDate>2026-04-02T15:15:07.988Z</pubDate>
-    <guid>https://Calculator-Library-Portal.startknowledge.in/calculator-application-resources.html</guid>
-  </item>
-</channel>
-</rss>
+<rss version="2.0"><channel><title>Calculator-Library-Portal</title><link>https://Calculator-Library-Portal.startknowledge.in</link>
+<item><title>Calculator application resources</title><link>https://Calculator-Library-Portal.startknowledge.in/blog/calculator-application-resources.html</link><pubDate>2026-04-02T17:43:22.384Z</pubDate></item><item><title>Calculator Library Portal</title><link>https://Calculator-Library-Portal.startknowledge.in/blog/calculator-library-portal.html</link><pubDate>2026-04-02T17:44:31.477Z</pubDate></item>
+</channel></rss>

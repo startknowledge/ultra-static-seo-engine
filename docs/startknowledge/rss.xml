@@ -1,21 +1,4 @@
 <?xml version="1.0"?>
-<rss version="2.0">
-<channel>
-  <title>startknowledge</title>
-  <link>https://startknowledge.startknowledge.in</link>
-  <description>Latest updates from startknowledge</description>
-  
-  <item>
-    <title>startknowledge innovation</title>
-    <link>https://startknowledge.startknowledge.in/startknowledge-innovation.html</link>
-    <pubDate>2026-04-02T15:47:17.907Z</pubDate>
-    <guid>https://startknowledge.startknowledge.in/startknowledge-innovation.html</guid>
-  </item>
-  <item>
-    <title>startknowledge best practices</title>
-    <link>https://startknowledge.startknowledge.in/startknowledge-best-practices.html</link>
-    <pubDate>2026-04-02T15:51:42.837Z</pubDate>
-    <guid>https://startknowledge.startknowledge.in/startknowledge-best-practices.html</guid>
-  </item>
-</channel>
-</rss>
+<rss version="2.0"><channel><title>startknowledge</title><link>https://startknowledge.startknowledge.in</link>
+<item><title>startknowledge best practices</title><link>https://startknowledge.startknowledge.in/blog/startknowledge-best-practices.html</link><pubDate>2026-04-02T17:53:40.898Z</pubDate></item><item><title>startknowledge</title><link>https://startknowledge.startknowledge.in/blog/startknowledge.html</link><pubDate>2026-04-02T17:53:45.126Z</pubDate></item>
+</channel></rss>

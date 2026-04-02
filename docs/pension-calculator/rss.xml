@@ -1,21 +1,4 @@
 <?xml version="1.0"?>
-<rss version="2.0">
-<channel>
-  <title>pension-calculator</title>
-  <link>https://pension-calculator.startknowledge.in</link>
-  <description>Latest updates from pension-calculator</description>
-  
-  <item>
-    <title>pension contribution calculator</title>
-    <link>https://pension-calculator.startknowledge.in/pension-contribution-calculator.html</link>
-    <pubDate>2026-04-02T15:38:09.931Z</pubDate>
-    <guid>https://pension-calculator.startknowledge.in/pension-contribution-calculator.html</guid>
-  </item>
-  <item>
-    <title>pension benefit estimator</title>
-    <link>https://pension-calculator.startknowledge.in/pension-benefit-estimator.html</link>
-    <pubDate>2026-04-02T15:42:38.162Z</pubDate>
-    <guid>https://pension-calculator.startknowledge.in/pension-benefit-estimator.html</guid>
-  </item>
-</channel>
-</rss>
+<rss version="2.0"><channel><title>pension-calculator</title><link>https://pension-calculator.startknowledge.in</link>
+<item><title>pension contribution calculator</title><link>https://pension-calculator.startknowledge.in/blog/pension-contribution-calculator.html</link><pubDate>2026-04-02T17:49:49.778Z</pubDate></item><item><title>pension benefit estimator</title><link>https://pension-calculator.startknowledge.in/blog/pension-benefit-estimator.html</link><pubDate>2026-04-02T17:51:04.768Z</pubDate></item>
+</channel></rss>

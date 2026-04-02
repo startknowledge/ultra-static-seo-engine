@@ -13,23 +13,15 @@
     },
     {
       "@type": "BlogPosting",
-      "headline": "Advanced calculator library",
-      "url": "https://Calculator-Library-Portal.startknowledge.in/advanced-calculator-library.html",
-      "datePublished": "2026-04-02T15:10:40.698Z",
-      "author": {
-        "@type": "Organization",
-        "name": "Calculator-Library-Portal"
-      }
+      "headline": "Calculator application resources",
+      "url": "https://Calculator-Library-Portal.startknowledge.in/blog/calculator-application-resources.html",
+      "datePublished": "2026-04-02T17:43:22.384Z"
     },
     {
       "@type": "BlogPosting",
-      "headline": "Calculator application resources",
-      "url": "https://Calculator-Library-Portal.startknowledge.in/calculator-application-resources.html",
-      "datePublished": "2026-04-02T15:15:07.988Z",
-      "author": {
-        "@type": "Organization",
-        "name": "Calculator-Library-Portal"
-      }
+      "headline": "Calculator Library Portal",
+      "url": "https://Calculator-Library-Portal.startknowledge.in/blog/calculator-library-portal.html",
+      "datePublished": "2026-04-02T17:44:31.477Z"
     }
   ]
 }
