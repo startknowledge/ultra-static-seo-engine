@@ -8,6 +8,9 @@ async function fetchReposFromGitHub() {
   const url = `https://api.github.com/users/${CONFIG.GITHUB_ORG}/repos?per_page=100`;
   const token = process.env.ALL_REPO || process.env.GITHUB_TOKEN;
 
+  console.log(`🔍 Fetching repos from: ${url}`);
+  console.log(`🔑 Token present: ${token ? 'Yes' : 'No'}`);
+
   if (!token) throw new Error('No GitHub token provided. Set ALL_REPO or GITHUB_TOKEN.');
 
   const res = await fetch(url, {
@@ -23,6 +26,7 @@ async function fetchReposFromGitHub() {
   }
 
   const repos = await res.json();
+  console.log(`📦 Found ${repos.length} repos:`, repos.map(r => r.name).join(', '));
   return repos.map(r => r.name);
 }
 
