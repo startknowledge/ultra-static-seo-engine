@@ -3,20 +3,20 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   
   <url>
-    <loc>https://Calculator-Library-Portal.startknowledge.in/interactive-math-calculators.html</loc>
+    <loc>https://Calculator-Library-Portal.startknowledge.in/advanced-calculator-library.html</loc>
     <image:image>
-      <image:loc>https://source.unsplash.com/800x600/?Interactive%20math%20calculators</image:loc>
+      <image:loc>https://source.unsplash.com/800x600/?Advanced%20calculator%20library</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:32:22.692Z</lastmod>
+    <lastmod>2026-04-02T15:10:40.698Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://Calculator-Library-Portal.startknowledge.in/programming-calculator-resources.html</loc>
+    <loc>https://Calculator-Library-Portal.startknowledge.in/calculator-application-resources.html</loc>
     <image:image>
-      <image:loc>https://source.unsplash.com/800x600/?Programming%20calculator%20resources</image:loc>
+      <image:loc>https://source.unsplash.com/800x600/?Calculator%20application%20resources</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:36:48.595Z</lastmod>
+    <lastmod>2026-04-02T15:15:07.988Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -25,7 +25,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?about</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:41:11.916Z</lastmod>
+    <lastmod>2026-04-02T15:19:38.707Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -34,7 +34,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?contact</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:41:11.916Z</lastmod>
+    <lastmod>2026-04-02T15:19:38.707Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -43,7 +43,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?privacy</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:41:11.916Z</lastmod>
+    <lastmod>2026-04-02T15:19:38.707Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -52,7 +52,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?faq</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:41:11.916Z</lastmod>
+    <lastmod>2026-04-02T15:19:38.707Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -61,7 +61,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?disclaimer</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:41:11.916Z</lastmod>
+    <lastmod>2026-04-02T15:19:38.707Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -70,7 +70,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?terms</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:41:11.916Z</lastmod>
+    <lastmod>2026-04-02T15:19:38.707Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>

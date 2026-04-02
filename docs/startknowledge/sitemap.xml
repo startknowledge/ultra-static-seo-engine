@@ -3,20 +3,20 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   
   <url>
-    <loc>https://startknowledge.startknowledge.in/corporate-training-solutions.html</loc>
+    <loc>https://startknowledge.startknowledge.in/startknowledge-innovation.html</loc>
     <image:image>
-      <image:loc>https://source.unsplash.com/800x600/?corporate%20training%20solutions</image:loc>
+      <image:loc>https://source.unsplash.com/800x600/?startknowledge%20innovation</image:loc>
     </image:image>
-    <lastmod>2026-04-02T14:08:41.747Z</lastmod>
+    <lastmod>2026-04-02T15:47:17.907Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://startknowledge.startknowledge.in/employee-onboarding-software.html</loc>
+    <loc>https://startknowledge.startknowledge.in/startknowledge-best-practices.html</loc>
     <image:image>
-      <image:loc>https://source.unsplash.com/800x600/?employee%20onboarding%20software</image:loc>
+      <image:loc>https://source.unsplash.com/800x600/?startknowledge%20best%20practices</image:loc>
     </image:image>
-    <lastmod>2026-04-02T14:13:04.405Z</lastmod>
+    <lastmod>2026-04-02T15:51:42.837Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -25,7 +25,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?about</image:loc>
     </image:image>
-    <lastmod>2026-04-02T14:17:32.113Z</lastmod>
+    <lastmod>2026-04-02T15:59:53.169Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -34,7 +34,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?contact</image:loc>
     </image:image>
-    <lastmod>2026-04-02T14:17:32.113Z</lastmod>
+    <lastmod>2026-04-02T15:59:53.169Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -43,7 +43,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?privacy</image:loc>
     </image:image>
-    <lastmod>2026-04-02T14:17:32.113Z</lastmod>
+    <lastmod>2026-04-02T15:59:53.169Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -52,7 +52,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?faq</image:loc>
     </image:image>
-    <lastmod>2026-04-02T14:17:32.113Z</lastmod>
+    <lastmod>2026-04-02T15:59:53.169Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -61,7 +61,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?disclaimer</image:loc>
     </image:image>
-    <lastmod>2026-04-02T14:17:32.113Z</lastmod>
+    <lastmod>2026-04-02T15:59:53.170Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -70,7 +70,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?terms</image:loc>
     </image:image>
-    <lastmod>2026-04-02T14:17:32.113Z</lastmod>
+    <lastmod>2026-04-02T15:59:53.170Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>

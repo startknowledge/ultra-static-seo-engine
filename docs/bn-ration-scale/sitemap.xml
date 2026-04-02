@@ -3,20 +3,20 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   
   <url>
-    <loc>https://bn-ration-scale.startknowledge.in/bn-ration-scale-formula.html</loc>
+    <loc>https://bn-ration-scale.startknowledge.in/bn-ration-scale-comparison.html</loc>
     <image:image>
-      <image:loc>https://source.unsplash.com/800x600/?bn%20ration%20scale%20formula</image:loc>
+      <image:loc>https://source.unsplash.com/800x600/?bn%20ration%20scale%20comparison</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:23:00.127Z</lastmod>
+    <lastmod>2026-04-02T15:02:00.910Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://bn-ration-scale.startknowledge.in/bn-ration-scale-review.html</loc>
+    <loc>https://bn-ration-scale.startknowledge.in/bn-ration-scale-for-meal-planning.html</loc>
     <image:image>
-      <image:loc>https://source.unsplash.com/800x600/?bn%20ration%20scale%20review</image:loc>
+      <image:loc>https://source.unsplash.com/800x600/?bn%20ration%20scale%20for%20meal%20planning</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:27:37.365Z</lastmod>
+    <lastmod>2026-04-02T15:06:16.139Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -25,7 +25,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?about</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:32:08.504Z</lastmod>
+    <lastmod>2026-04-02T15:10:26.316Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -34,7 +34,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?contact</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:32:08.504Z</lastmod>
+    <lastmod>2026-04-02T15:10:26.316Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -43,7 +43,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?privacy</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:32:08.504Z</lastmod>
+    <lastmod>2026-04-02T15:10:26.316Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -52,7 +52,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?faq</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:32:08.504Z</lastmod>
+    <lastmod>2026-04-02T15:10:26.316Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -61,7 +61,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?disclaimer</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:32:08.505Z</lastmod>
+    <lastmod>2026-04-02T15:10:26.316Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -70,7 +70,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?terms</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:32:08.505Z</lastmod>
+    <lastmod>2026-04-02T15:10:26.316Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>

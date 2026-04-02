@@ -3,20 +3,20 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   
   <url>
-    <loc>https://design-painting.startknowledge.in/design-painting-color-palettes.html</loc>
+    <loc>https://design-painting.startknowledge.in/wall-design-painting-inspiration.html</loc>
     <image:image>
-      <image:loc>https://source.unsplash.com/800x600/?design%20painting%20color%20palettes</image:loc>
+      <image:loc>https://source.unsplash.com/800x600/?wall%20design%20painting%20inspiration</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:41:25.785Z</lastmod>
+    <lastmod>2026-04-02T15:19:53.121Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://design-painting.startknowledge.in/design-painting-for-home-decor.html</loc>
+    <loc>https://design-painting.startknowledge.in/design-painting-workshops-near-me.html</loc>
     <image:image>
-      <image:loc>https://source.unsplash.com/800x600/?design%20painting%20for%20home%20decor</image:loc>
+      <image:loc>https://source.unsplash.com/800x600/?design%20painting%20workshops%20near%20me</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:45:49.459Z</lastmod>
+    <lastmod>2026-04-02T15:24:24.422Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -25,7 +25,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?about</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:50:11.468Z</lastmod>
+    <lastmod>2026-04-02T15:28:44.718Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -34,7 +34,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?contact</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:50:11.468Z</lastmod>
+    <lastmod>2026-04-02T15:28:44.718Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -43,7 +43,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?privacy</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:50:11.468Z</lastmod>
+    <lastmod>2026-04-02T15:28:44.718Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -52,7 +52,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?faq</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:50:11.468Z</lastmod>
+    <lastmod>2026-04-02T15:28:44.718Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -61,7 +61,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?disclaimer</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:50:11.468Z</lastmod>
+    <lastmod>2026-04-02T15:28:44.718Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -70,7 +70,7 @@
     <image:image>
       <image:loc>https://source.unsplash.com/800x600/?terms</image:loc>
     </image:image>
-    <lastmod>2026-04-02T13:50:11.468Z</lastmod>
+    <lastmod>2026-04-02T15:28:44.718Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
