@@ -4,17 +4,24 @@ import { readJson, writeJson } from './utils.js';
 const STATE_FILE = './data/repos.json';
 
 async function fetchReposFromGitHub() {
-  const url = `https://api.github.com/orgs/${CONFIG.GITHUB_ORG}/repos?per_page=100`;
+  // Use 'users' endpoint because startknowledge is a user account
+  const url = `https://api.github.com/users/${CONFIG.GITHUB_ORG}/repos?per_page=100`;
   const token = process.env.ALL_REPO || process.env.GITHUB_TOKEN;
-  if (!token) throw new Error('No GitHub token provided.');
-  
+
+  if (!token) throw new Error('No GitHub token provided. Set ALL_REPO or GITHUB_TOKEN.');
+
   const res = await fetch(url, {
     headers: {
       Authorization: `token ${token}`,
       Accept: 'application/vnd.github.v3+json',
     },
   });
-  if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`GitHub API error: ${res.status} - ${errorText}`);
+  }
+
   const repos = await res.json();
   return repos.map(r => r.name);
 }
