@@ -5,7 +5,7 @@ import { generateSEO } from './seo-generator.js';
 import { generateCSS } from './css-generator.js';
 import { runCleaner } from './cleaner.js';
 import { CONFIG } from '../config.js';
-import { delay } from './utils.js';
+import { delay, sanitizeSlug } from './utils.js';
 import fs from 'fs';
 
 // Import new engines
@@ -16,6 +16,23 @@ import { buildTopicClusters, crossLinkRepos } from './authority-engine.js';
 import { autoBacklink } from './backlink-engine.js';
 import { refreshOldBlogs } from './content-rewriter.js';
 
+// Helper functions for home page (simplified versions of those in content-generator)
+function buildNav(repoName) {
+  return `<nav>
+    <a href="/${repoName}/">Home</a>
+    <a href="/${repoName}/blog/">Blog</a>
+    <a href="/${repoName}/pages/about.html">About</a>
+    <a href="/${repoName}/pages/contact.html">Contact</a>
+    <a href="/${repoName}/pages/privacy.html">Privacy</a>
+    <a href="/${repoName}/pages/faq.html">FAQ</a>
+    <a href="/${repoName}/pages/disclaimer.html">Disclaimer</a>
+    <a href="/${repoName}/pages/terms.html">Terms</a>
+  </nav>`;
+}
+function buildFooter(repoName) {
+  return `<footer><p>&copy; ${new Date().getFullYear()} ${repoName} | <a href="/${repoName}/pages/privacy.html">Privacy</a> | <a href="/${repoName}/pages/faq.html">FAQ</a> | <a href="/${repoName}/pages/disclaimer.html">Disclaimer</a> | <a href="/${repoName}/pages/terms.html">Terms</a></p></footer>`;
+}
+
 async function generateRootIndex(repos) {
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -23,6 +40,26 @@ async function generateRootIndex(repos) {
 <body><h1>🚀 StartKnowledge SEO Engine</h1><p>Automatically generated sites for all repositories:</p><ul>${repos.map(r => `<li><a href="/${r}/">${r}</a></li>`).join('')}</ul><footer><p>Updated automatically every 7 hours.</p></footer></body>
 </html>`;
   fs.writeFileSync('./docs/index.html', html);
+}
+
+async function generateHomePage(repoName, domain, strategy, blogs) {
+  const nav = buildNav(repoName);
+  const footer = buildFooter(repoName);
+  const homeHtml = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${repoName} – Expert Insights & Tools</title><meta name="description" content="Welcome to ${repoName}. Discover the latest articles, guides, and tools."><link rel="stylesheet" href="/${repoName}/style.css"></head>
+<body><header>${nav}</header><div class="container"><h1>Welcome to ${repoName}</h1><p>Your trusted source for ${strategy.niche}.</p><div class="blog-grid">${blogs.slice(0, 6).map(b => `
+  <div class="blog-card">
+    <img src="/${repoName}/blog/images/${sanitizeSlug(b.keyword)}.jpg" alt="${b.keyword}" onerror="this.src='https://placehold.co/600x400?text=Blog+Image'">
+    <div class="blog-card-content">
+      <h3>${b.keyword}</h3>
+      <p>Read our latest insights about ${b.keyword}.</p>
+      <a href="${b.url}" class="read-more">Read more →</a>
+    </div>
+  </div>`).join('')}</div><div style="text-align:center; margin:2rem;"><a href="/${repoName}/blog/" class="read-more">View All Posts →</a></div></div>${footer}</body>
+</html>`;
+  fs.writeFileSync(`./docs/${repoName}/index.html`, homeHtml);
+  console.log(`🏠 Generated home page for ${repoName}`);
 }
 
 export async function runUltraCore() {
@@ -49,7 +86,7 @@ export async function runUltraCore() {
   for (let i = 0; i < repos.length; i++) {
     const repo = repos[i];
     console.log(`\n--- Processing ${i+1}/${repos.length}: ${repo} ---`);
-    const domain = CONFIG.DOMAIN_MAP[repo] || CONFIG.DOMAIN_TEMPLATE(repo);
+    const domain = CONFIG.DOMAIN_MAP?.[repo] || CONFIG.DOMAIN_TEMPLATE(repo);
 
     try {
       // 1. Keyword strategy
@@ -106,6 +143,9 @@ export async function runUltraCore() {
         console.warn(`Blog refresh failed: ${err.message}`);
       }
 
+      // 10. Generate home page for this repo (after all content)
+      await generateHomePage(repo, domain, strategy, blogs);
+
       console.log(`✅ Completed ${repo} | ${blogs.length} blogs, ${pages.length} pages, ${moneyPages.length} money pages`);
 
     } catch (err) {
@@ -123,7 +163,7 @@ export async function runUltraCore() {
     console.warn(`Cross-linking failed: ${err.message}`);
   }
 
-  // Generate root index page
+  // Generate root index page (hub for all repos)
   await generateRootIndex(repos);
 
   // Clean up orphaned folders
