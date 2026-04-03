@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://ultra-static-seo-engine.startknowledge.in/sitemap.xml
+Sitemap: https://ultrastaticseoengine.startknowledge.in/sitemap.xml
