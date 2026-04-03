@@ -49,7 +49,7 @@ export async function runUltraCore() {
   for (let i = 0; i < repos.length; i++) {
     const repo = repos[i];
     console.log(`\n--- Processing ${i+1}/${repos.length}: ${repo} ---`);
-    const domain = CONFIG.DOMAIN_TEMPLATE(repo);
+    const domain = CONFIG.DOMAIN_MAP[repo] || CONFIG.DOMAIN_TEMPLATE(repo);
 
     try {
       // 1. Keyword strategy

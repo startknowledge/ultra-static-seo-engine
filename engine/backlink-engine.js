@@ -1,3 +1,5 @@
+import { generateAIContent } from './strategy-engine.js';
+import fs from 'fs';
 import axios from 'axios';
 
 // Medium integration (requires Medium integration token)

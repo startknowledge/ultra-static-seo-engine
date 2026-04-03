@@ -1,3 +1,4 @@
+import { CONFIG } from '../config.js';
 import { sanitizeSlug } from './utils.js';
 import fs from 'fs';
 

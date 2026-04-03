@@ -53,11 +53,26 @@ function injectAds(html, contentLength) {
 }
 
 function buildNav(repoName) {
-  return `<nav><a href="/${repoName}/">Home</a> | <a href="/${repoName}/pages/about.html">About</a> | <a href="/${repoName}/pages/contact.html">Contact</a> | <a href="/${repoName}/pages/privacy.html">Privacy</a> | <a href="/${repoName}/pages/faq.html">FAQ</a> | <a href="/${repoName}/pages/disclaimer.html">Disclaimer</a> | <a href="/${repoName}/pages/terms.html">Terms</a></nav>`;
+  return `<nav>
+    <a href="/${repoName}/">Home</a> |
+    <a href="/${repoName}/blog/">Blog</a> |
+    <a href="/${repoName}/pages/about.html">About</a> |
+    <a href="/${repoName}/pages/contact.html">Contact</a> |
+    <a href="/${repoName}/pages/privacy.html">Privacy</a> |
+    <a href="/${repoName}/pages/faq.html">FAQ</a> |
+    <a href="/${repoName}/pages/disclaimer.html">Disclaimer</a> |
+    <a href="/${repoName}/pages/terms.html">Terms</a>
+  </nav>`;
 }
 
 function buildFooter(repoName) {
-  return `<footer><p>&copy; ${new Date().getFullYear()} ${repoName} | <a href="/${repoName}/pages/privacy.html">Privacy</a> | <a href="/${repoName}/pages/faq.html">FAQ</a> | <a href="/${repoName}/pages/disclaimer.html">Disclaimer</a> | <a href="/${repoName}/pages/terms.html">Terms</a></p></footer>`;
+  return `<footer>
+  <p>&copy; ${new Date().getFullYear()} ${repoName} | 
+  <a href="/${repoName}/pages/privacy.html">Privacy</a> | 
+  <a href="/${repoName}/pages/faq.html">FAQ</a> | 
+  <a href="/${repoName}/pages/disclaimer.html">Disclaimer</a> | 
+  <a href="/${repoName}/pages/terms.html">Terms</a>
+  </p></footer>`;
 }
 
 async function generateStaticPages(repoName, domain, niche) {

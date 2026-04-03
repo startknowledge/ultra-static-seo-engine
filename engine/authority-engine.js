@@ -1,3 +1,4 @@
+import { sanitizeSlug } from './utils.js';
 import fs from 'fs';
 
 export async function buildTopicClusters(repoName, allBlogs) {

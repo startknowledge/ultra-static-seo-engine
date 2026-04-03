@@ -1,5 +1,6 @@
-import { generateAIContent } from './strategy-engine.js';
+import { CONFIG } from '../config.js';
 import { sanitizeSlug } from './utils.js';
+import { generateAIContent } from './strategy-engine.js';
 import fs from 'fs';
 
 // High CPC buyer intent keywords

@@ -1,5 +1,17 @@
 export const CONFIG = {
   GITHUB_ORG: "startknowledge",
+  // Domain mapping for each repo (custom subdomains)
+  DOMAIN_MAP: {
+    "ai-mosaic-studio": "https://aimosaicstudio.startknowledge.in",
+    "bn-ration-scale": "https://bnrationscale.startknowledge.in",
+    "Calculator-Library-Portal": "https://calculatorlibraryportal.startknowledge.in",
+    "design-painting": "https://designpainting.startknowledge.in",
+    "Motionix": "https://motionix.startknowledge.in", // assuming
+    "pension-calculator": "https://pencalculator.startknowledge.in",
+    "startknowledge": "https://www.startknowledge.in",
+    "ultra-static-seo-engine": "https://ultrastaticseoengine.startknowledge.in"
+  },
+  
   DOMAIN_TEMPLATE: (repo) => `https://${repo}.startknowledge.in`,
   MAX_RETRIES: 2,
   RETRY_DELAY_MS: 30000,
