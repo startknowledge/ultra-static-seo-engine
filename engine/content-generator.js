@@ -1,6 +1,7 @@
 import fs from 'fs';
+import path from 'path';
 import { CONFIG } from '../config.js';
-import { sanitizeSlug, cleanMarkdown } from './utils.js';
+import { sanitizeSlug, cleanMarkdown, generateImage } from './utils.js';
 import { generateAIContent } from './strategy-engine.js';
 
 async function generateBlogPost(keyword, repoName, domain, strategy) {
@@ -14,7 +15,6 @@ async function generateBlogPost(keyword, repoName, domain, strategy) {
 }
 
 function generateFAQ(repoName, niche) {
-  // Generate 10+ FAQ items based on repo niche
   const faqs = [
     { q: `What is ${repoName}?`, a: `${repoName} is a comprehensive platform dedicated to ${niche}, providing expert insights, tools, and resources.` },
     { q: `How can I get started with ${repoName}?`, a: `Simply explore our blog posts and tools. All content is free and updated regularly.` },
@@ -93,8 +93,10 @@ export async function generateContentForRepo(repoName, domain, strategy) {
   console.log(`📝 Generating content for ${repoName}`);
   const blogDir = `./docs/${repoName}/blog`;
   const pagesDir = `./docs/${repoName}/pages`;
+  const imgDir = `./docs/${repoName}/blog/images`;
   if (!fs.existsSync(blogDir)) fs.mkdirSync(blogDir, { recursive: true });
   if (!fs.existsSync(pagesDir)) fs.mkdirSync(pagesDir, { recursive: true });
+  if (!fs.existsSync(imgDir)) fs.mkdirSync(imgDir, { recursive: true });
 
   const blogs = [];
   const nav = buildNav(repoName);
@@ -104,16 +106,28 @@ export async function generateContentForRepo(repoName, domain, strategy) {
   for (const keyword of strategy.cluster) {
     const slug = sanitizeSlug(keyword);
     const url = `${domain}/blog/${slug}.html`;
+    const imageFilename = `${slug}.jpg`;
+    const imagePath = `${imgDir}/${imageFilename}`;
+    const imageUrl = `/blog/images/${imageFilename}`;
+
+    // Generate blog content
     let body = await generateBlogPost(keyword, repoName, domain, strategy);
     body = injectAds(body, body.length);
+
+    // Generate image based on keyword
+    console.log(`🖼️ Generating image for: ${keyword}`);
+    await generateImage(keyword, imagePath);
+
+    // Build HTML with image at the top
+    const imageHtml = `<img src="${imageUrl}" alt="${keyword}" class="featured-image" style="width:100%; max-width:800px; margin:1rem auto; display:block; border-radius:12px;">`;
     const fullHtml = `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${keyword}</title><meta name="description" content="Complete guide about ${keyword}"><link rel="canonical" href="${url}">${styleLink}</head>
-<body><header>${nav}</header><main>${body}</main>${footer}</body>
+<body><header>${nav}</header><main>${imageHtml}${body}</main>${footer}</body>
 </html>`;
     fs.writeFileSync(`${blogDir}/${slug}.html`, fullHtml);
     blogs.push({ slug, keyword, url, date: new Date().toISOString() });
-    console.log(`✅ Blog: ${url}`);
+    console.log(`✅ Blog: ${url} (with image)`);
   }
 
   const pages = await generateStaticPages(repoName, domain, strategy.niche);

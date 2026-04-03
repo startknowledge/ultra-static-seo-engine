@@ -1,11 +1,13 @@
 {
   "name": "god-level-seo-engine",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "type": "module",
   "scripts": {
     "start": "node engine/core.js"
   },
   "dependencies": {
-    "axios": "^1.7.9"
+    "axios": "^1.7.9",
+    "cheerio": "^1.0.0",
+    "snoowrap": "^1.23.0"
   }
 }

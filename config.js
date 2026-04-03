@@ -3,9 +3,26 @@ export const CONFIG = {
   DOMAIN_TEMPLATE: (repo) => `https://${repo}.startknowledge.in`,
   MAX_RETRIES: 2,
   RETRY_DELAY_MS: 30000,
-  BLOGS_PER_REPO: 2,               // generate 2 new blogs per run
+  BLOGS_PER_REPO: 2,
   MIN_CONTENT_LENGTH: 3500,
   BLOG_RETENTION_DAYS: 90,
+
+  // ===== NEW =====
+  // Programmatic SEO
+  PROGRAMMATIC_PAGES_PER_KEYWORD: 10,   // location pages, tool variations
+  // Money pages
+  MONEY_PAGES_PER_REPO: 3,
+  AFFILIATE_NETWORKS: {
+    amazon: "https://amzn.to/",
+    cj: "https://www.anrdoezrs.net/",
+    shareasale: "https://shareasale.com/r.cfm?",
+  },
+  // Trend engine
+  TREND_SOURCES: ["google", "twitter", "reddit"],
+  // Auto backlinks
+  MEDIUM_INTEGRATION: true,
+  REDDIT_INTEGRATION: true,
+  // Ads
   ADSENSE_CLIENT: "ca-pub-2162324894765763",
   ADSENSE_SLOTS: ["1966379200", "8024521099", "4441349363", "3958418735"],
   PROPELLER_SCRIPT: `<script async src="https://upgulpinon.com/1?z=XXXXXX"></script>`,
