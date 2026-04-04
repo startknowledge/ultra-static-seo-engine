@@ -10,6 +10,18 @@
       "@type": "Organization",
       "name": "Calculator-Library-Portal",
       "url": "https://calculatorlibraryportal.startknowledge.in"
+    },
+    {
+      "@type": "BlogPosting",
+      "headline": "Cloud Infrastructure",
+      "url": "https://calculatorlibraryportal.startknowledge.in/blog/cloud-infrastructure.html",
+      "datePublished": "2026-04-04T10:13:04.538Z"
+    },
+    {
+      "@type": "BlogPosting",
+      "headline": "Cloud Security Solutions",
+      "url": "https://calculatorlibraryportal.startknowledge.in/blog/cloud-security-solutions.html",
+      "datePublished": "2026-04-04T10:13:09.253Z"
     }
   ]
 }

@@ -10,6 +10,18 @@
       "@type": "Organization",
       "name": "startknowledge",
       "url": "https://www.startknowledge.in"
+    },
+    {
+      "@type": "BlogPosting",
+      "headline": "SEO best practices",
+      "url": "https://www.startknowledge.in/blog/seo-best-practices.html",
+      "datePublished": "2026-04-04T10:18:08.884Z"
+    },
+    {
+      "@type": "BlogPosting",
+      "headline": "Effective SEO techniques",
+      "url": "https://www.startknowledge.in/blog/effective-seo-techniques.html",
+      "datePublished": "2026-04-04T10:18:08.892Z"
     }
   ]
 }

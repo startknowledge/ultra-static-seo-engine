@@ -10,6 +10,18 @@
       "@type": "Organization",
       "name": "ai-mosaic-studio",
       "url": "https://aimosaicstudio.startknowledge.in"
+    },
+    {
+      "@type": "BlogPosting",
+      "headline": "Cloud Infrastructure",
+      "url": "https://aimosaicstudio.startknowledge.in/blog/cloud-infrastructure.html",
+      "datePublished": "2026-04-04T10:09:59.043Z"
+    },
+    {
+      "@type": "BlogPosting",
+      "headline": "Cloud Storage Solutions",
+      "url": "https://aimosaicstudio.startknowledge.in/blog/cloud-storage-solutions.html",
+      "datePublished": "2026-04-04T10:10:20.798Z"
     }
   ]
 }
