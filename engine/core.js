@@ -16,7 +16,7 @@ import { buildTopicClusters, crossLinkRepos } from './authority-engine.js';
 import { autoBacklink } from './backlink-engine.js';
 import { refreshOldBlogs } from './content-rewriter.js';
 
-// Helper functions for home page (simplified versions of those in content-generator)
+// Helper functions for home page
 function buildNav(repoName) {
   return `<nav>
     <a href="/${repoName}/">Home</a>
@@ -29,6 +29,7 @@ function buildNav(repoName) {
     <a href="/${repoName}/pages/terms.html">Terms</a>
   </nav>`;
 }
+
 function buildFooter(repoName) {
   return `<footer><p>&copy; ${new Date().getFullYear()} ${repoName} | <a href="/${repoName}/pages/privacy.html">Privacy</a> | <a href="/${repoName}/pages/faq.html">FAQ</a> | <a href="/${repoName}/pages/disclaimer.html">Disclaimer</a> | <a href="/${repoName}/pages/terms.html">Terms</a></p></footer>`;
 }
@@ -73,7 +74,7 @@ export async function runUltraCore() {
   }
   console.log(`📦 Found ${repos.length} repos. New: ${newRepos.length}`);
 
-  // Fetch trends once (for inspiration, not critical)
+  // Fetch trends once for inspiration (not used for keyword generation)
   let trends = [];
   try {
     trends = await getCombinedTrends();
@@ -82,14 +83,14 @@ export async function runUltraCore() {
     console.warn("Trend fetch failed:", err.message);
   }
 
-  // Process each repo
+  // Process each repo sequentially (respects API rate limits)
   for (let i = 0; i < repos.length; i++) {
     const repo = repos[i];
     console.log(`\n--- Processing ${i+1}/${repos.length}: ${repo} ---`);
     const domain = CONFIG.DOMAIN_MAP?.[repo] || CONFIG.DOMAIN_TEMPLATE(repo);
 
     try {
-      // 1. Keyword strategy
+      // 1. Keyword strategy (uses Google Trends + AI)
       const strategy = await runStrategy(repo);
 
       // 2. Regular content (blogs + pages)
@@ -152,7 +153,7 @@ export async function runUltraCore() {
       console.error(`❌ Failed to process ${repo}:`, err.message);
     }
 
-    // Delay between repos
+    // Delay between repos to respect API rate limits
     if (i < repos.length - 1) await delay(5000);
   }
 

@@ -9,7 +9,14 @@ async function generateBlogPost(keyword, repoName, domain, strategy) {
   let content = await generateAIContent(prompt);
   content = cleanMarkdown(content);
   if (!content || content.length < CONFIG.MIN_CONTENT_LENGTH) {
-    content = `<p>AI content unavailable for "${keyword}".</p>`;
+    console.log(`⚠️ AI failed for "${keyword}" – using fallback template`);
+    content = `<h2>What is ${keyword}?</h2>
+<p>${keyword} is an important topic in the field of ${strategy.niche}. This guide will help you understand the key aspects and how to leverage them.</p>
+<h2>Key Benefits</h2>
+<ul><li>Improve your understanding of ${keyword}</li><li>Apply best practices</li><li>Stay ahead with the latest trends</li></ul>
+<h2>Getting Started</h2>
+<p>Begin by exploring the resources and tools available on our site. Check back regularly for updates and in-depth articles.</p>
+<p>For more information, visit our <a href="/${repoName}/pages/contact.html">contact page</a>.</p>`;
   }
   return content;
 }

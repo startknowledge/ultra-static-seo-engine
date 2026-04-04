@@ -1,66 +1,48 @@
 import axios from 'axios';
 import { CONFIG } from '../config.js';
-import { readJson, writeJson, delay } from './utils.js';
+import { readJson, writeJson, delay, retry } from './utils.js';
 
 const KEYWORD_DB = './data/keywords.json';
+const AI_CACHE = new Map();
 
-// Build API list from environment variables
+// Build API list from environment variables (all your keys)
 const API_CONFIG = [
-  // Gemini (2)
   ...['GEMINI_API_KEY1','GEMINI_API_KEY2']
     .filter(k => process.env[k])
-    .map(key => ({ key: process.env[key], type: 'gemini', model: 'gemini-2.0-flash' })),
-  // Groq (2)
+    .map(key => ({ key: process.env[key], type: 'gemini', model: 'gemini-2.0-flash', rpm: 60 })),
   ...['GROQ_API_KEY1','GROQ_API_KEY2']
     .filter(k => process.env[k])
-    .map(key => ({ key: process.env[key], type: 'groq', model: 'llama-3.3-70b-versatile' })),
-  // OpenRouter (2)
+    .map(key => ({ key: process.env[key], type: 'groq', model: 'llama-3.3-70b-versatile', rpm: 30 })),
   ...['OPENAI_OPENROUTER1','OPENAI_OPENROUTER2']
     .filter(k => process.env[k])
-    .map(key => ({ key: process.env[key], type: 'openrouter', model: 'openai/gpt-4o-mini' })),
-  // Hugging Face (2)
+    .map(key => ({ key: process.env[key], type: 'openrouter', model: 'openai/gpt-4o-mini', rpm: 30 })),
   ...['HUGGINGFACE_TOKEN1','HUGGINGFACE_TOKEN2']
     .filter(k => process.env[k])
-    .map(key => ({ key: process.env[key], type: 'huggingface', model: 'meta-llama/Llama-2-7b-chat-hf' })),
-  // Mistral (2)
+    .map(key => ({ key: process.env[key], type: 'huggingface', model: 'mistralai/Mistral-7B-Instruct-v0.3', rpm: 30 })),
   ...['MISTRAL_API_KEY1','MISTRAL_API_KEY2']
     .filter(k => process.env[k])
-    .map(key => ({ key: process.env[key], type: 'mistral', model: 'mistral-large-latest' })),
-  // Cloudflare (if both account ID and token exist)
-  ...(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN ? [{
-    key: process.env.CLOUDFLARE_API_TOKEN,
-    type: 'cloudflare',
-    model: '@cf/meta/llama-3.3-70b-instruct',
-    accountId: process.env.CLOUDFLARE_ACCOUNT_ID
-  }] : []),
-];
+    .map(key => ({ key: process.env[key], type: 'mistral', model: 'mistral-large-latest', rpm: 30 })),
+].filter(api => api.key);
 
 console.log(`🔑 Loaded ${API_CONFIG.length} API keys`);
 
-// Per‑key rate limit state (simple counter + last reset)
+// Per‑key rate limit state
 const keyState = new Map();
 API_CONFIG.forEach(api => {
-  keyState.set(api, { used: 0, resetTime: Date.now() });
+  keyState.set(api, { used: 0, resetTime: Date.now(), rpm: api.rpm });
 });
 
 function canUseKey(api) {
   const state = keyState.get(api);
   if (!state) return false;
-  // Reset every minute (60000 ms)
-  if (Date.now() - state.resetTime > 60000) {
+  const now = Date.now();
+  if (now - state.resetTime >= 60000) {
     state.used = 0;
-    state.resetTime = Date.now();
-    return true;
+    state.resetTime = now;
   }
-  // Gemini: 60 req/min, others assume 30
-  const limit = api.type === 'gemini' ? 60 : 30;
-  return state.used < limit;
+  return state.used < state.rpm;
 }
-
-function markUsed(api) {
-  const state = keyState.get(api);
-  if (state) state.used++;
-}
+function markUsed(api) { keyState.get(api)?.used++; }
 
 let apiIndex = 0;
 function getNextAvailableKey() {
@@ -72,12 +54,18 @@ function getNextAvailableKey() {
   return null;
 }
 
-// Generic AI content generator
-export async function generateAIContent(prompt) {
-  for (let attempt = 0; attempt < API_CONFIG.length * 2; attempt++) {
+// Generic AI content generator (with cache)
+export async function generateAIContent(prompt, forceFresh = false) {
+  const cacheKey = prompt.slice(0, 200);
+  if (!forceFresh && AI_CACHE.has(cacheKey)) {
+    console.log("📦 Cache hit");
+    return AI_CACHE.get(cacheKey);
+  }
+
+  for (let attempt = 0; attempt < API_CONFIG.length * 3; attempt++) {
     const api = getNextAvailableKey();
     if (!api) {
-      console.warn('⚠️ No available API key – waiting 60s');
+      console.warn('⏳ No available key – waiting 60s');
       await delay(60000);
       continue;
     }
@@ -90,14 +78,12 @@ export async function generateAIContent(prompt) {
         result = res.data?.candidates?.[0]?.content?.parts?.[0]?.text;
       } else if (api.type === 'groq') {
         const res = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-          model: api.model,
-          messages: [{ role: 'user', content: prompt }],
+          model: api.model, messages: [{ role: 'user', content: prompt }]
         }, { headers: { Authorization: `Bearer ${api.key}` } });
         result = res.data?.choices?.[0]?.message?.content;
       } else if (api.type === 'openrouter') {
         const res = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-          model: api.model,
-          messages: [{ role: 'user', content: prompt }],
+          model: api.model, messages: [{ role: 'user', content: prompt }]
         }, { headers: { Authorization: `Bearer ${api.key}` } });
         result = res.data?.choices?.[0]?.message?.content;
       } else if (api.type === 'huggingface') {
@@ -106,59 +92,59 @@ export async function generateAIContent(prompt) {
         result = res.data?.[0]?.generated_text;
       } else if (api.type === 'mistral') {
         const res = await axios.post('https://api.mistral.ai/v1/chat/completions', {
-          model: api.model,
-          messages: [{ role: 'user', content: prompt }],
+          model: api.model, messages: [{ role: 'user', content: prompt }]
         }, { headers: { Authorization: `Bearer ${api.key}` } });
         result = res.data?.choices?.[0]?.message?.content;
-      } else if (api.type === 'cloudflare') {
-        const url = `https://api.cloudflare.com/client/v4/accounts/${api.accountId}/ai/run/${api.model}`;
-        const res = await axios.post(url, { messages: [{ role: 'user', content: prompt }] }, {
-          headers: { Authorization: `Bearer ${api.key}` }
-        });
-        result = res.data?.result?.response;
       }
 
       if (result && result.length > 100) {
         markUsed(api);
-        console.log(`✅ AI content using ${api.type} (key used: ${keyState.get(api).used}/min)`);
-        return result.trim();
+        const cleaned = result.trim();
+        AI_CACHE.set(cacheKey, cleaned);
+        console.log(`✅ AI using ${api.type} (used ${keyState.get(api).used}/${api.rpm} per min)`);
+        return cleaned;
       }
     } catch (err) {
       console.warn(`⚠️ ${api.type} failed: ${err.message}`);
       if (err.response?.status === 429) {
-        // Force reset of this key's state to block it for 60s
-        keyState.set(api, { used: 999, resetTime: Date.now() });
+        keyState.set(api, { used: 999, resetTime: Date.now(), rpm: api.rpm });
         await delay(60000);
       }
     }
     await delay(1000);
   }
-  console.error('❌ All AI providers failed');
+
+  console.error('❌ All AI providers failed – returning null');
   return null;
 }
 
-// Google Trends (unchanged)
-async function getTrendingKeyword() {
-  try {
-    const res = await axios.get('https://trends.google.com/trending/rss?geo=IN');
-    const xml = res.data;
-    const matches = [...xml.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)];
-    const titles = matches.map(m => m[1]).filter(t => t && t !== 'Daily Search Trends');
-    if (titles.length) return titles[Math.floor(Math.random() * titles.length)];
-  } catch {}
-  return null;
-}
-
-// Keyword generation (reuses same API rotation)
+// Keyword generation using the same API rotation (works for all types)
 async function generateKeywordsViaAPI(api, seed) {
   const prompt = `Generate 10 SEO keywords related to "${seed}". Return only a list, one per line, no numbers.`;
-  // same switch as generateAIContent but simpler
   if (api.type === 'gemini') {
     const url = `https://generativelanguage.googleapis.com/v1/models/${api.model}:generateContent?key=${api.key}`;
     const res = await axios.post(url, { contents: [{ parts: [{ text: prompt }] }] });
     return res.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  } else if (api.type === 'groq') {
+    const res = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
+      model: api.model, messages: [{ role: 'user', content: prompt }]
+    }, { headers: { Authorization: `Bearer ${api.key}` } });
+    return res.data?.choices?.[0]?.message?.content;
+  } else if (api.type === 'openrouter') {
+    const res = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
+      model: api.model, messages: [{ role: 'user', content: prompt }]
+    }, { headers: { Authorization: `Bearer ${api.key}` } });
+    return res.data?.choices?.[0]?.message?.content;
+  } else if (api.type === 'huggingface') {
+    const url = `https://api-inference.huggingface.co/models/${api.model}`;
+    const res = await axios.post(url, { inputs: prompt }, { headers: { Authorization: `Bearer ${api.key}` } });
+    return res.data?.[0]?.generated_text;
+  } else if (api.type === 'mistral') {
+    const res = await axios.post('https://api.mistral.ai/v1/chat/completions', {
+      model: api.model, messages: [{ role: 'user', content: prompt }]
+    }, { headers: { Authorization: `Bearer ${api.key}` } });
+    return res.data?.choices?.[0]?.message?.content;
   }
-  // similar for others – omitted for brevity, but you can copy the pattern
   return null;
 }
 
@@ -170,12 +156,36 @@ function cleanKeywords(text) {
     .slice(0, 10);
 }
 
+// Google Trends RSS – the only source for seed keyword
+async function getTrendingKeyword() {
+  try {
+    const res = await axios.get('https://trends.google.com/trending/rss?geo=IN', { timeout: 10000 });
+    const matches = [...res.data.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)];
+    const titles = matches.map(m => m[1]).filter(t => t && t !== 'Daily Search Trends');
+    if (titles.length) {
+      const selected = titles[Math.floor(Math.random() * titles.length)];
+      console.log(`📈 Google Trends seed: "${selected}"`);
+      return selected;
+    }
+  } catch (err) {
+    console.warn('Trend RSS failed:', err.message);
+  }
+  return null;
+}
+
 export async function runStrategy(repoName) {
   console.log(`🧠 Keywords for ${repoName}`);
-  let allKeywords = readJson(KEYWORD_DB, {});
-  let seed = await getTrendingKeyword() || repoName.replace(/[^a-z0-9]/gi, ' ').trim();
+
+  // 1. Get a trending keyword from Google Trends (no fallback)
+  let seed = await getTrendingKeyword();
+  if (!seed) {
+    console.error(`❌ No trending keyword available for ${repoName}. Skipping keyword generation.`);
+    // Return empty cluster – no blogs will be generated for this repo
+    return { niche: "", cluster: [] };
+  }
   console.log(`🌐 Seed: ${seed}`);
 
+  // 2. Generate related keywords using AI
   let newKeywords = [];
   for (let attempt = 0; attempt < API_CONFIG.length * 2; attempt++) {
     const api = getNextAvailableKey();
@@ -183,15 +193,32 @@ export async function runStrategy(repoName) {
     try {
       const raw = await generateKeywordsViaAPI(api, seed);
       const cleaned = cleanKeywords(raw);
-      if (cleaned.length) { newKeywords = cleaned; break; }
-    } catch (err) { console.warn(`Keyword gen fail ${api.type}`); }
+      if (cleaned.length) {
+        newKeywords = cleaned;
+        break;
+      }
+    } catch (err) {
+      console.warn(`Keyword gen fail ${api.type}: ${err.message}`);
+    }
     await delay(1000);
   }
-  if (!newKeywords.length) newKeywords = [seed];
 
+  // 3. If AI fails to generate keywords, use only the seed itself
+  if (!newKeywords.length) {
+    console.warn(`⚠️ No AI keywords generated, using only the trend seed: "${seed}"`);
+    newKeywords = [seed];
+  }
+
+  // 4. (Optional) Store keywords in DB for history – but do NOT use old ones
+  //    We always generate fresh keywords from current trend.
+  let allKeywords = readJson(KEYWORD_DB, {});
   if (!allKeywords[repoName]) allKeywords[repoName] = [];
-  for (const kw of newKeywords) if (!allKeywords[repoName].includes(kw)) allKeywords[repoName].push(kw);
+  for (const kw of newKeywords) {
+    if (!allKeywords[repoName].includes(kw)) allKeywords[repoName].push(kw);
+  }
   writeJson(KEYWORD_DB, allKeywords);
-  const cluster = allKeywords[repoName].slice(-CONFIG.BLOGS_PER_REPO);
+
+  // 5. Return the cluster (limit to BLOGS_PER_REPO)
+  const cluster = newKeywords.slice(0, CONFIG.BLOGS_PER_REPO);
   return { niche: seed, cluster };
 }
