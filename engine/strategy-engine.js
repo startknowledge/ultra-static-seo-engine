@@ -42,7 +42,11 @@ function canUseKey(api) {
   }
   return state.used < state.rpm;
 }
-function markUsed(api) { keyState.get(api)?.used++; }
+
+function markUsed(api) {
+  const state = keyState.get(api);
+  if (state) state.used++;
+}
 
 let apiIndex = 0;
 function getNextAvailableKey() {
@@ -180,7 +184,6 @@ export async function runStrategy(repoName) {
   let seed = await getTrendingKeyword();
   if (!seed) {
     console.error(`❌ No trending keyword available for ${repoName}. Skipping keyword generation.`);
-    // Return empty cluster – no blogs will be generated for this repo
     return { niche: "", cluster: [] };
   }
   console.log(`🌐 Seed: ${seed}`);
@@ -210,7 +213,6 @@ export async function runStrategy(repoName) {
   }
 
   // 4. (Optional) Store keywords in DB for history – but do NOT use old ones
-  //    We always generate fresh keywords from current trend.
   let allKeywords = readJson(KEYWORD_DB, {});
   if (!allKeywords[repoName]) allKeywords[repoName] = [];
   for (const kw of newKeywords) {
