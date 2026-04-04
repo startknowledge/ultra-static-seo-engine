@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { CONFIG } from '../config.js';
 import { readJson, writeJson, delay, retry } from './utils.js';
+import { getCombinedTrends } from './trend-engine.js'; // <-- import the working trends function
 
 const KEYWORD_DB = './data/keywords.json';
 const AI_CACHE = new Map();
@@ -160,35 +161,30 @@ function cleanKeywords(text) {
     .slice(0, 10);
 }
 
-// Google Trends RSS – the only source for seed keyword
+// Use the reliable combined trends (with fallback) as the seed source
 async function getTrendingKeyword() {
   try {
-    const res = await axios.get('https://trends.google.com/trending/rss?geo=IN', { timeout: 10000 });
-    const matches = [...res.data.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)];
-    const titles = matches.map(m => m[1]).filter(t => t && t !== 'Daily Search Trends');
-    if (titles.length) {
-      const selected = titles[Math.floor(Math.random() * titles.length)];
-      console.log(`📈 Google Trends seed: "${selected}"`);
+    const trends = await getCombinedTrends(); // this already includes fallback static list
+    if (trends && trends.length) {
+      const selected = trends[Math.floor(Math.random() * trends.length)];
+      console.log(`📈 Selected trend seed: "${selected}"`);
       return selected;
     }
   } catch (err) {
-    console.warn('Trend RSS failed:', err.message);
+    console.warn('Failed to fetch trends:', err.message);
   }
-  return null;
+  // Ultimate fallback (should never happen because getCombinedTrends has static fallback)
+  return "latest technology trends";
 }
 
 export async function runStrategy(repoName) {
   console.log(`🧠 Keywords for ${repoName}`);
 
-  // 1. Get a trending keyword from Google Trends (no fallback)
+  // Get a trending keyword from the reliable combined trends source
   let seed = await getTrendingKeyword();
-  if (!seed) {
-    console.error(`❌ No trending keyword available for ${repoName}. Skipping keyword generation.`);
-    return { niche: "", cluster: [] };
-  }
   console.log(`🌐 Seed: ${seed}`);
 
-  // 2. Generate related keywords using AI
+  // Generate related keywords using AI
   let newKeywords = [];
   for (let attempt = 0; attempt < API_CONFIG.length * 2; attempt++) {
     const api = getNextAvailableKey();
@@ -206,13 +202,13 @@ export async function runStrategy(repoName) {
     await delay(1000);
   }
 
-  // 3. If AI fails to generate keywords, use only the seed itself
+  // If AI fails to generate keywords, use only the seed itself
   if (!newKeywords.length) {
     console.warn(`⚠️ No AI keywords generated, using only the trend seed: "${seed}"`);
     newKeywords = [seed];
   }
 
-  // 4. (Optional) Store keywords in DB for history – but do NOT use old ones
+  // Store keywords in DB for history (optional)
   let allKeywords = readJson(KEYWORD_DB, {});
   if (!allKeywords[repoName]) allKeywords[repoName] = [];
   for (const kw of newKeywords) {
@@ -220,7 +216,7 @@ export async function runStrategy(repoName) {
   }
   writeJson(KEYWORD_DB, allKeywords);
 
-  // 5. Return the cluster (limit to BLOGS_PER_REPO)
+  // Return the cluster (limit to BLOGS_PER_REPO)
   const cluster = newKeywords.slice(0, CONFIG.BLOGS_PER_REPO);
   return { niche: seed, cluster };
 }
