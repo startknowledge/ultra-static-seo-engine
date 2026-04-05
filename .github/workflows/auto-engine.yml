@@ -41,6 +41,7 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       # GitHub token for repo detection
       ALL_REPO: ${{ secrets.ALL_REPO }}
+      GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
 
     steps:
       - name: 📥 Checkout repository
