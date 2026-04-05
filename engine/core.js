@@ -7,7 +7,15 @@ const parser = new Parser();
 
 // ========== CONFIG ==========
 const PROCESSED_FILE = 'config/processed-repos.json';
-let processedRepos = fs.existsSync(PROCESSED_FILE) ? JSON.parse(fs.readFileSync(PROCESSED_FILE, 'utf8')) : {};
+let processedRepos = {};
+if (fs.existsSync(PROCESSED_FILE)) {
+  try {
+    processedRepos = JSON.parse(fs.readFileSync(PROCESSED_FILE, 'utf8'));
+  } catch (e) {
+    console.warn(`⚠️ Invalid JSON in ${PROCESSED_FILE}, resetting.`);
+    processedRepos = {};
+  }
+}
 
 // List of static pages that should be in repo root (created if missing)
 const STATIC_PAGES = ['about.html', 'contact.html', 'privacy.html', 'terms.html', 'faq.html', 'disclaimer.html', 'cookies.html', 'support.html', 'documentation.html', 'changelog.html'];
