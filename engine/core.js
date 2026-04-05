@@ -2,17 +2,17 @@
 const fs = require('fs-extra');
 const path = require('path');
 const axios = require('axios');
-const { execSync } = require('child_process');
 const Parser = require('rss-parser');
 const parser = new Parser();
 const simpleGit = require('simple-git');
 
 // ========== CONFIG ==========
+// Try ALL_REPO first, fallback to MY_GITHUB_TOKEN
 const GITHUB_TOKEN = process.env.ALL_REPO || process.env.MY_GITHUB_TOKEN;
 const GITHUB_USER = 'startknowledge';
 const TEMP_DIR = path.join(__dirname, '..', 'temp_repos');
 
-// List of repos (excluding ultra-static-seo-engine? Actually include all)
+// List of all repositories to process
 const REPOS = [
   { name: 'bn-ration-scale', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/bn-ration-scale.git` },
   { name: 'Calculator-Library-Portal', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/Calculator-Library-Portal.git` },
@@ -31,6 +31,7 @@ async function prepareRepo(repoName, repoUrl) {
   if (fs.existsSync(repoPath)) {
     console.log(`🔄 Pulling latest changes for ${repoName}...`);
     const git = simpleGit(repoPath);
+    await git.fetch();
     await git.pull();
   } else {
     console.log(`📦 Cloning ${repoName}...`);
@@ -74,7 +75,7 @@ async function getTrendingKeywords(seed, repoName) {
 
 // ========== AI CONTENT ==========
 async function generateBlogContent(keyword, repoName) {
-  const GROQ_API_KEY = process.env.GROQ_API_KEY;
+  const GROQ_API_KEY = process.env.GROQ_API_KEY1 || process.env.GROQ_API_KEY2;
   if (!GROQ_API_KEY) return fallbackContent(keyword);
   const prompt = `Write a detailed, SEO-optimized blog post (2000+ words) about "${keyword}" for the website "${repoName}". Include: title, intro with stats, 5 strategies, examples, mistakes, FAQ, conclusion. Use H2/H3.`;
   try {
@@ -84,14 +85,22 @@ async function generateBlogContent(keyword, repoName) {
       temperature: 0.7,
     }, { headers: { Authorization: `Bearer ${GROQ_API_KEY}` } });
     let content = response.data.choices[0].message.content;
-    content = content.replace(/^# (.*?)$/gm, '<h1>$1</h1>').replace(/^## (.*?)$/gm, '<h2>$2</h2>').replace(/\n/g, '<br>');
+    content = content.replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+                     .replace(/^## (.*?)$/gm, '<h2>$2</h2>')
+                     .replace(/\n/g, '<br>');
     return content;
   } catch (err) {
+    console.error(`AI failed for ${keyword}:`, err.message);
     return fallbackContent(keyword);
   }
 }
+
 function fallbackContent(keyword) {
-  return `<p>Complete guide to ${keyword}. Learn actionable strategies.</p><h2>Why ${keyword} matters</h2><p>Understanding ${keyword} is crucial for success.</p>`;
+  return `<p>Complete guide to ${keyword}. Learn actionable strategies.</p>
+<h2>Why ${keyword} matters</h2>
+<p>Understanding ${keyword} is crucial for success in 2026.</p>
+<h2>Key strategies</h2>
+<ul><li>Strategy 1: Research and plan</li><li>Strategy 2: Implement effectively</li><li>Strategy 3: Measure and optimize</li></ul>`;
 }
 
 // ========== SITEMAP UPDATE ==========
@@ -229,8 +238,11 @@ async function processRepo(repo) {
     const status = await git.status();
     if (status.files.length > 0) {
       await git.commit('🤖 Auto-generate blogs from Google Trends');
-      await git.push('origin', 'main');
-      console.log(`✅ Pushed updates to ${repo.name}`);
+      // Auto-detect default branch
+      const branchSummary = await git.branch();
+      const currentBranch = branchSummary.current;
+      await git.push('origin', currentBranch);
+      console.log(`✅ Pushed updates to ${repo.name} (${currentBranch})`);
     } else {
       console.log(`📭 No changes to commit for ${repo.name}`);
     }
@@ -241,7 +253,7 @@ async function processRepo(repo) {
 // ========== MAIN ==========
 async function main() {
   if (!GITHUB_TOKEN) {
-    console.error('❌ GITHUB_TOKEN environment variable not set');
+    console.error('❌ GITHUB_TOKEN environment variable not set (ALL_REPO or MY_GITHUB_TOKEN)');
     process.exit(1);
   }
   fs.ensureDirSync(TEMP_DIR);
@@ -249,8 +261,8 @@ async function main() {
     await processRepo(repo);
   }
   console.log('🔥 SYSTEM COMPLETE');
-  // Cleanup temp dir (optional)
-  // fs.removeSync(TEMP_DIR);
+  // Optional: Cleanup temp directory
+  // await fs.remove(TEMP_DIR);
 }
 
 main().catch(console.error);

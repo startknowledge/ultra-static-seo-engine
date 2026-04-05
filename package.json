@@ -13,6 +13,7 @@
     "google-trends-api": "^4.9.2",
     "p-limit": "^7.3.0",
     "rss-parser": "^3.13.0",
+    "simple-git": "^3.33.0",
     "snoowrap": "^1.23.0"
   }
 }
