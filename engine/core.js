@@ -6,17 +6,9 @@ const Parser = require('rss-parser');
 const parser = new Parser();
 
 // ========== CONFIG ==========
-const PROCESSED_FILE = 'config/processed-repos.json';
-let processedRepos = {};
-if (fs.existsSync(PROCESSED_FILE)) {
-  try {
-    processedRepos = JSON.parse(fs.readFileSync(PROCESSED_FILE, 'utf8'));
-  } catch (e) {
-    console.warn(`⚠️ Invalid JSON in ${PROCESSED_FILE}, resetting.`);
-    processedRepos = {};
-  }
-}
-
+/* const PROCESSED_FILE = 'config/processed-repos.json';
+let processedRepos = fs.existsSync(PROCESSED_FILE) ? JSON.parse(fs.readFileSync(PROCESSED_FILE, 'utf8')) : {};
+ */
 // List of static pages that should be in repo root (created if missing)
 const STATIC_PAGES = ['about.html', 'contact.html', 'privacy.html', 'terms.html', 'faq.html', 'disclaimer.html', 'cookies.html', 'support.html', 'documentation.html', 'changelog.html'];
 
@@ -177,10 +169,10 @@ function ensureStaticPages(repo) {
 // ========== MAIN PROCESSING ==========
 async function processRepo(repo) {
   const force = process.argv.includes('--force');
-  if (!force && processedRepos[repo]) {
+/*   if (!force && processedRepos[repo]) {
     console.log(`⏭️ Skipping ${repo} – already processed on ${processedRepos[repo]}`);
     return;
-  }
+  } */
 
   console.log(`\n--- Processing ${repo} ---`);
   const repoDir = `docs/${repo}`;
@@ -254,7 +246,7 @@ async function processRepo(repo) {
     console.log(`✅ Blog: https://${repo}.startknowledge.in/blog/${slug}.html`);
     
     // Update sitemap
-    await updateSitemap(repo, `https://${repo}.startknowledge.in/blog/${slug}.html`);
+    updateSitemap(repo, `https://${repo}.startknowledge.in/blog/${slug}.html`);
     
     blogs.push({
       title: kw,
@@ -273,8 +265,8 @@ async function processRepo(repo) {
   }
 
   // Mark as processed
-  processedRepos[repo] = new Date().toISOString();
-  fs.writeFileSync(PROCESSED_FILE, JSON.stringify(processedRepos, null, 2));
+  /* processedRepos[repo] = new Date().toISOString();
+  fs.writeFileSync(PROCESSED_FILE, JSON.stringify(processedRepos, null, 2)); */
   console.log(`✅ Completed ${repo} | ${blogs.length} blogs in index`);
 }
 
