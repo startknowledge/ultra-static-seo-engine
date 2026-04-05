@@ -1,9 +1,10 @@
 {
   "name": "god-level-seo-engine",
   "version": "3.0.0",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
-    "start": "node engine/core.js"
+    "start": "node engine/core.js",
+    "clean-pages": "rm -rf docs/*/pages || Remove-Item -Path docs\\*\\pages -Recurse -Force"
   },
   "dependencies": {
     "axios": "^1.7.9",
@@ -11,4 +12,5 @@
     "p-limit": "^7.3.0",
     "snoowrap": "^1.23.0"
   }
+  
 }
