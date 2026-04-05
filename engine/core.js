@@ -1,39 +1,67 @@
-// engine/core.js (CommonJS version)
+// engine/core.js - CommonJS version with real Google Trends + News fallback
+// Generates blogs in docs/{repo}/blog/ and creates blog/index.html (no root index.html)
 const fs = require('fs-extra');
 const path = require('path');
 const axios = require('axios');
 const Parser = require('rss-parser');
 const parser = new Parser();
 
-// ========== CONFIG ==========
-/* const PROCESSED_FILE = 'config/processed-repos.json';
-let processedRepos = fs.existsSync(PROCESSED_FILE) ? JSON.parse(fs.readFileSync(PROCESSED_FILE, 'utf8')) : {};
- */
-// List of static pages that should be in repo root (created if missing)
+// Try to load google-trends-api (optional)
+let trendsApi = null;
+try {
+  trendsApi = require('google-trends-api');
+} catch(e) {
+  console.log("google-trends-api not installed, using only Google News RSS");
+}
+
 const STATIC_PAGES = ['about.html', 'contact.html', 'privacy.html', 'terms.html', 'faq.html', 'disclaimer.html', 'cookies.html', 'support.html', 'documentation.html', 'changelog.html'];
 
-// Special index.html for ultra-static-seo-engine (your beautiful design)
-// You must place the file at: docs/ultra-static-seo-engine/index.html
-// The script will restore it if missing.
-
-// ========== HELPERS ==========
+// ========== KEYWORD FETCHING ==========
 async function getTrendingKeywords(seed) {
-  // Use Google Trends RSS feed (daily trending searches)
-  const url = 'https://trends.google.com/trends/trendingsearches/daily/rss?geo=US';
+  // Option A: Google Trends API
+  if (trendsApi) {
+    try {
+      const result = await trendsApi.relatedQueries({
+        keyword: seed,
+        startTime: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      });
+      const data = JSON.parse(result);
+      const rising = data.default.risingQueryList || [];
+      const top = data.default.topQueryList || [];
+      let keywords = [...top, ...rising].slice(0, 6).map(q => q.query);
+      if (keywords.length > 0) {
+        console.log(`✅ Google Trends API keywords for "${seed}":`, keywords);
+        return keywords;
+      }
+    } catch (e) {
+      console.warn(`⚠️ Google Trends API failed: ${e.message}`);
+    }
+  }
+
+  // Option B: Google News RSS
+  const url = `https://news.google.com/rss/search?q=${encodeURIComponent(seed)}&hl=en-US&gl=US&ceid=US:en`;
   try {
     const feed = await parser.parseURL(url);
-    // Return up to 10 unique keywords related to the seed
-    const keywords = feed.items.slice(0, 10).map(item => item.title);
-    // Filter those that contain the seed or are relevant (simple heuristic)
-    return keywords.filter(k => k.toLowerCase().includes(seed.toLowerCase()) || Math.random() > 0.5).slice(0, 6);
+    const keywords = [];
+    for (const item of feed.items) {
+      let title = item.title;
+      title = title.replace(/\s*[–—-]\s*.*$/, '').replace(/\s*\|\s*.*$/, '').trim();
+      if (title.length > 10 && !keywords.includes(title)) {
+        keywords.push(title);
+      }
+      if (keywords.length >= 6) break;
+    }
+    if (keywords.length === 0) throw new Error('No valid news titles');
+    console.log(`✅ Google News RSS keywords for "${seed}":`, keywords);
+    return keywords;
   } catch (e) {
-    console.warn('Trends RSS failed, using fallback:', e.message);
-    return [`${seed} strategies`, `best ${seed} tools`, `how to ${seed}`, `${seed} for beginners`, `advanced ${seed}`, `${seed} trends 2026`];
+    console.error(`❌ No real keywords for "${seed}". Skipping.`);
+    throw new Error(`No real keywords for ${seed}`);
   }
 }
 
+// ========== AI CONTENT ==========
 async function generateBlogContent(keyword, repoName) {
-  // Use Groq API (or fallback)
   const GROQ_API_KEY = process.env.GROQ_API_KEY;
   if (!GROQ_API_KEY) return fallbackContent(keyword);
   
@@ -56,28 +84,28 @@ Use headings (H2, H3), bullet points, and bold text. Make it E-E-A-T compliant.`
     }, { headers: { Authorization: `Bearer ${GROQ_API_KEY}` } });
     
     let content = response.data.choices[0].message.content;
-    // Convert markdown-like headings to HTML
     content = content.replace(/^# (.*?)$/gm, '<h1>$1</h1>')
-                     .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
-                     .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
+                     .replace(/^## (.*?)$/gm, '<h2>$2</h2>')
+                     .replace(/^### (.*?)$/gm, '<h3>$3</h3>')
                      .replace(/\n/g, '<br>');
     return content;
   } catch (err) {
-    console.error(`AI failed for ${keyword}:`, err.message);
+    console.error(`AI failed: ${err.message}`);
     return fallbackContent(keyword);
   }
 }
 
 function fallbackContent(keyword) {
-  return `<p>This is a comprehensive guide about ${keyword}. We cover everything you need to know to master ${keyword} in 2026.</p>
+  return `<p>Complete guide to ${keyword}. Learn actionable strategies and best practices.</p>
 <h2>Why ${keyword} matters</h2>
-<p>With the rise of digital transformation, ${keyword} has become essential for businesses.</p>
+<p>Understanding ${keyword} is crucial for success in 2026.</p>
 <h2>Key strategies</h2>
-<ul><li>Strategy 1: Understand your audience</li><li>Strategy 2: Leverage data-driven insights</li><li>Strategy 3: Optimize continuously</li></ul>
+<ul><li>Strategy 1: Research and plan</li><li>Strategy 2: Implement effectively</li><li>Strategy 3: Measure and optimize</li></ul>
 <h2>FAQ</h2>
 <p><strong>What is ${keyword}?</strong> It's the process of...</p>`;
 }
 
+// ========== SITEMAP UPDATE ==========
 function updateSitemap(repo, newUrl, lastmod = new Date().toISOString()) {
   const sitemapPath = `docs/${repo}/sitemap.xml`;
   let sitemap = '';
@@ -93,8 +121,8 @@ function updateSitemap(repo, newUrl, lastmod = new Date().toISOString()) {
   fs.writeFileSync(sitemapPath, sitemap);
 }
 
-function generateRepoIndex(repo, blogs) {
-  // Create a beautiful index.html in repo root that lists all blogs with images
+// ========== GENERATE BLOG FOLDER INDEX.HTML (NOT ROOT) ==========
+function generateBlogIndex(repo, blogs) {
   const blogListHtml = blogs.map(blog => `
     <article class="blog-card">
       <img src="${blog.image}" alt="${blog.title}" loading="lazy">
@@ -111,8 +139,8 @@ function generateRepoIndex(repo, blogs) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${repo} | Programmatic SEO Blog</title>
-  <meta name="description" content="Latest insights on programmatic SEO, auto backlinks, and digital marketing.">
+  <title>Blog - ${repo}</title>
+  <meta name="description" content="Latest blog posts about programmatic SEO, auto backlinks, and digital marketing.">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -134,25 +162,27 @@ function generateRepoIndex(repo, blogs) {
 <body>
   <header>
     <div class="container">
-      <div class="logo"><h1>⚡ ${repo}</h1><span>programmatic SEO · auto blogs</span></div>
+      <div class="logo"><h1>📰 Blog | ${repo}</h1><span>programmatic SEO · auto blogs</span></div>
     </div>
   </header>
   <main class="container">
-    <h2 style="margin:40px 0 20px">Latest Blog Posts</h2>
+    <h2 style="margin:40px 0 20px">All Blog Posts</h2>
     <div class="blog-grid">
       ${blogListHtml}
     </div>
   </main>
   <footer>
-    <p>© ${new Date().getFullYear()} ${repo} — Auto‑generated with Google Trends & AI</p>
+    <p>© ${new Date().getFullYear()} ${repo} — Auto‑generated with Google Trends & AI | <a href="/">Home</a></p>
   </footer>
 </body>
 </html>`;
   
-  fs.writeFileSync(`docs/${repo}/index.html`, html);
-  console.log(`🏠 Generated/Updated root index.html for ${repo}`);
+  const blogIndexPath = `docs/${repo}/blog/index.html`;
+  fs.writeFileSync(blogIndexPath, html);
+  console.log(`📚 Generated blog index: ${blogIndexPath}`);
 }
 
+// ========== STATIC PAGES (about, contact, etc.) ==========
 function ensureStaticPages(repo) {
   const repoRoot = `docs/${repo}`;
   STATIC_PAGES.forEach(page => {
@@ -166,62 +196,43 @@ function ensureStaticPages(repo) {
   });
 }
 
-// ========== MAIN PROCESSING ==========
+// ========== PROCESS EACH REPO ==========
 async function processRepo(repo) {
-  const force = process.argv.includes('--force');
-/*   if (!force && processedRepos[repo]) {
-    console.log(`⏭️ Skipping ${repo} – already processed on ${processedRepos[repo]}`);
-    return;
-  } */
-
   console.log(`\n--- Processing ${repo} ---`);
   const repoDir = `docs/${repo}`;
   fs.ensureDirSync(repoDir);
   fs.ensureDirSync(`${repoDir}/blog`);
   fs.ensureDirSync(`${repoDir}/images`);
 
-  // Ensure static pages exist in root (not in /pages/)
   ensureStaticPages(repo);
 
-  // Special protection for ultra-static-seo-engine's custom index.html
+  // Only warn if custom root index.html is missing for ultra-static-seo-engine (do not create)
   if (repo === 'ultra-static-seo-engine') {
     const customIndex = path.join(repoDir, 'index.html');
-    if (!fs.existsSync(customIndex) || force) {
-      // The custom HTML should be placed manually at docs/ultra-static-seo-engine/index.html
-      // We'll not overwrite it – just warn if missing
-      if (!fs.existsSync(customIndex)) {
-        console.warn(`⚠️ Missing custom index.html for ${repo}. Please place your design at ${customIndex}`);
-      } else {
-        console.log(`🛡️ Preserved custom index.html for ${repo}`);
-      }
+    if (!fs.existsSync(customIndex)) {
+      console.warn(`⚠️ Missing custom root index.html for ${repo}. Please place your design at ${customIndex}`);
+    } else {
+      console.log(`🛡️ Preserved custom root index.html for ${repo}`);
     }
   }
 
-  // Get trending keywords based on repo name
   const seed = repo.replace(/-/g, ' ');
-  const keywords = await getTrendingKeywords(seed);
-  console.log(`📈 Trending keywords for ${repo}:`, keywords);
+  let keywords;
+  try {
+    keywords = await getTrendingKeywords(seed);
+  } catch (err) {
+    console.error(`❌ Skipping ${repo} - no real keywords`);
+    return;
+  }
+  console.log(`📈 Real keywords for ${repo}:`, keywords);
 
   let blogs = [];
   for (const kw of keywords) {
     const slug = kw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const blogPath = `${repoDir}/blog/${slug}.html`;
-    /* if (fs.existsSync(blogPath) && !force) {
-      console.log(`⏩ Blog already exists: ${slug}`);
-      // Still add to index even if exists
-      blogs.push({
-        title: kw,
-        url: `/blog/${slug}.html`,
-        image: `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/400/200`,
-        excerpt: `Read our latest guide on ${kw}. Learn actionable strategies.`,
-        date: new Date().toLocaleDateString()
-      });
-      continue;
-    } */
-    console.log(`📝 Generating blog for keyword: ${kw}`);
+    console.log(`📝 Generating blog: ${kw}`);
     const content = await generateBlogContent(kw, repo);
-    // Try to fetch an image from Unsplash (optional)
-    let imageUrl = `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/800/400`;
+    const imageUrl = `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/800/400`;
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -239,46 +250,37 @@ async function processRepo(repo) {
     <h1>${kw}</h1>
     ${content}
   </article>
-  <footer><p>© ${new Date().getFullYear()} ${repo} | <a href="/">Home</a></p></footer>
+  <footer><p>© ${new Date().getFullYear()} ${repo} | <a href="/">Home</a> | <a href="index.html">Blog Index</a></p></footer>
 </body>
 </html>`;
     fs.writeFileSync(blogPath, html);
     console.log(`✅ Blog: https://${repo}.startknowledge.in/blog/${slug}.html`);
     
-    // Update sitemap
     updateSitemap(repo, `https://${repo}.startknowledge.in/blog/${slug}.html`);
     
     blogs.push({
       title: kw,
-      url: `/blog/${slug}.html`,
+      url: `${slug}.html`,  // relative to blog folder
       image: imageUrl,
       excerpt: `Complete guide to ${kw} – expert insights and actionable tips.`,
       date: new Date().toLocaleDateString()
     });
   }
 
-  // Generate root index.html that lists all blogs
   if (blogs.length > 0) {
-    generateRepoIndex(repo, blogs);
+    generateBlogIndex(repo, blogs);
   } else {
-    console.log(`⚠️ No blogs generated for ${repo}, skipping index update.`);
+    console.log(`⚠️ No blogs generated for ${repo}, skipping blog index.`);
   }
-
-  // Mark as processed
-  /* processedRepos[repo] = new Date().toISOString();
-  fs.writeFileSync(PROCESSED_FILE, JSON.stringify(processedRepos, null, 2)); */
-  console.log(`✅ Completed ${repo} | ${blogs.length} blogs in index`);
+  console.log(`✅ Completed ${repo} | ${blogs.length} blogs`);
 }
 
-// ========== ENTRY POINT ==========
+// ========== MAIN ==========
 async function main() {
-  // List of repos to process (auto-fetched from GitHub if you want, but static list is fine)
   const repos = ['bn-ration-scale', 'Calculator-Library-Portal', 'startknowledge', 'pension-calculator', 'ultra-static-seo-engine'];
-  
   for (const repo of repos) {
     await processRepo(repo);
   }
-  
   console.log('🔥 SYSTEM COMPLETE');
 }
 
