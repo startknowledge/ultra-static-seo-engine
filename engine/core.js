@@ -1,179 +1,194 @@
-import { detectNewRepos } from './repo-detector.js';
-import { runStrategy } from './strategy-engine.js';
-import { generateContentForRepo } from './content-generator.js';
-import { generateSEO } from './seo-generator.js';
-import { generateCSS } from './css-generator.js';
-import { runCleaner } from './cleaner.js';
-import { CONFIG } from '../config.js';
-import { delay, sanitizeSlug } from './utils.js';
-import fs from 'fs';
+const fs = require('fs-extra');
+const path = require('path');
+const axios = require('axios');
+const { execSync } = require('child_process');
+const Parser = require('rss-parser');
+const parser = new Parser();
 
-// Import new engines
-import { getCombinedTrends } from './trend-engine.js';
-import { generateMoneyPagesForRepo } from './money-engine.js';
-import { generateLocationPages } from './programmatic-engine.js';
-import { buildTopicClusters, crossLinkRepos } from './authority-engine.js';
-import { autoBacklink } from './backlink-engine.js';
-import { refreshOldBlogs } from './content-rewriter.js';
+// ========== CONFIGURATION ==========
+const REPO_CONFIG = JSON.parse(fs.readFileSync('config/repo-config.json', 'utf8'));
+const PROCESSED_FILE = 'config/processed-repos.json';
+let processedRepos = fs.existsSync(PROCESSED_FILE) ? JSON.parse(fs.readFileSync(PROCESSED_FILE, 'utf8')) : {};
 
-// Helper functions for home page
-function buildNav(repoName) {
-  return `<nav>
-    <a href="/${repoName}/">Home</a>
-    <a href="/${repoName}/blog/">Blog</a>
-    <a href="/${repoName}/pages/about.html">About</a>
-    <a href="/${repoName}/pages/contact.html">Contact</a>
-    <a href="/${repoName}/pages/privacy.html">Privacy</a>
-    <a href="/${repoName}/pages/faq.html">FAQ</a>
-    <a href="/${repoName}/pages/disclaimer.html">Disclaimer</a>
-    <a href="/${repoName}/pages/terms.html">Terms</a>
-  </nav>`;
+// List of static pages that should exist in repo root (not in /pages/)
+const STATIC_PAGES = ['about.html', 'contact.html', 'privacy.html', 'terms.html', 'faq.html', 'disclaimer.html', 'cookies.html', 'support.html', 'documentation.html', 'changelog.html'];
+
+// Special index.html that must never be deleted (for ultra-static-seo-engine)
+const PROTECTED_INDEX = {
+  'ultra-static-seo-engine': fs.readFileSync('docs/ultra-static-seo-engine/index.html', 'utf8') // you'll provide this file
+};
+
+// ========== HELPER FUNCTIONS ==========
+async function getTrendingKeywords(seed) {
+  // Use Google Trends RSS feed
+  const url = `https://trends.google.com/trends/trendingsearches/daily/rss?geo=US`;
+  try {
+    const feed = await parser.parseURL(url);
+    const titles = feed.items.slice(0, 10).map(item => item.title);
+    return titles;
+  } catch (e) {
+    console.warn('Trends RSS failed, using fallback:', e.message);
+    return [`${seed} strategies`, `best ${seed} tools`, `how to ${seed}`, `${seed} for beginners`, `advanced ${seed}`];
+  }
 }
 
-function buildFooter(repoName) {
-  return `<footer><p>&copy; ${new Date().getFullYear()} ${repoName} | <a href="/${repoName}/pages/privacy.html">Privacy</a> | <a href="/${repoName}/pages/faq.html">FAQ</a> | <a href="/${repoName}/pages/disclaimer.html">Disclaimer</a> | <a href="/${repoName}/pages/terms.html">Terms</a></p></footer>`;
+async function generateBlogContent(keyword, repoName) {
+  // Use your AI API (Groq, Mistral, OpenRouter) – example with Groq
+  const GROQ_API_KEY = process.env.GROQ_API_KEY;
+  if (!GROQ_API_KEY) return fallbackContent(keyword);
+  
+  const prompt = `Write a detailed, SEO-optimized blog post (2000+ words) about "${keyword}". 
+Include: 
+- An engaging title with keyword
+- Introduction with recent stats
+- 5 actionable strategies
+- Real-world examples
+- Common mistakes to avoid
+- FAQ section with schema markup
+- Conclusion with call-to-action
+Use headings (H2, H3), bullet points, and bold text. Make it E-E-A-T compliant.`;
+  
+  try {
+    const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
+      model: 'mixtral-8x7b-32768',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+    }, { headers: { Authorization: `Bearer ${GROQ_API_KEY}` } });
+    
+    let content = response.data.choices[0].message.content;
+    // Ensure proper HTML structure
+    content = content.replace(/\n/g, '<br>').replace(/#{1,6} (.*?)(<br>)/g, '<h2>$1</h2>');
+    return content;
+  } catch (err) {
+    console.error(`AI failed for ${keyword}:`, err.message);
+    return fallbackContent(keyword);
+  }
 }
 
-async function generateRootIndex(repos) {
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>StartKnowledge – SEO Automation Hub</title><style>body{font-family:system-ui;max-width:800px;margin:2rem auto;padding:1rem;} ul{list-style:none;padding:0;} li{margin:0.5rem 0;} a{color:#667eea;text-decoration:none;} a:hover{text-decoration:underline;}</style></head>
-<body><h1>🚀 StartKnowledge SEO Engine</h1><p>Automatically generated sites for all repositories:</p><ul>${repos.map(r => `<li><a href="/${r}/">${r}</a></li>`).join('')}</ul><footer><p>Updated automatically every 7 hours.</p></footer></body>
-</html>`;
-  fs.writeFileSync('./docs/index.html', html);
+function fallbackContent(keyword) {
+  return `<p>This is a comprehensive guide about ${keyword}. We cover everything you need to know to master ${keyword} in 2026.</p>
+<h2>Why ${keyword} matters</h2>
+<p>With the rise of digital transformation, ${keyword} has become essential for businesses.</p>
+<h2>Key strategies</h2>
+<ul><li>Strategy 1: Understand your audience</li><li>Strategy 2: Leverage data-driven insights</li><li>Strategy 3: Optimize continuously</li></ul>
+<h2>FAQ</h2>
+<p><strong>What is ${keyword}?</strong> It's the process of...</p>`;
 }
 
-async function generateHomePage(repoName, domain, strategy, blogs) {
-  const nav = buildNav(repoName);
-  const footer = buildFooter(repoName);
-  const homeHtml = `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${repoName} – Expert Insights & Tools</title><meta name="description" content="Welcome to ${repoName}. Discover the latest articles, guides, and tools."><link rel="stylesheet" href="/${repoName}/style.css"></head>
-<body><header>${nav}</header><div class="container"><h1>Welcome to ${repoName}</h1><p>Your trusted source for ${strategy.niche}.</p><div class="blog-grid">${blogs.slice(0, 6).map(b => `
-  <div class="blog-card">
-    <img src="/${repoName}/blog/images/${sanitizeSlug(b.keyword)}.jpg" alt="${b.keyword}" onerror="this.src='https://placehold.co/600x400?text=Blog+Image'">
-    <div class="blog-card-content">
-      <h3>${b.keyword}</h3>
-      <p>Read our latest insights about ${b.keyword}.</p>
-      <a href="${b.url}" class="read-more">Read more →</a>
-    </div>
-  </div>`).join('')}</div><div style="text-align:center; margin:2rem;"><a href="/${repoName}/blog/" class="read-more">View All Posts →</a></div></div>${footer}</body>
-</html>`;
-  fs.writeFileSync(`./docs/${repoName}/index.html`, homeHtml);
-  console.log(`🏠 Generated home page for ${repoName}`);
+async function updateSitemap(repo, newUrl, lastmod = new Date().toISOString()) {
+  const sitemapPath = `docs/${repo}/sitemap.xml`;
+  let sitemap = '';
+  if (fs.existsSync(sitemapPath)) {
+    sitemap = fs.readFileSync(sitemapPath, 'utf8');
+    // Simple append if URL not already present
+    if (!sitemap.includes(newUrl)) {
+      const urlEntry = `  <url>\n    <loc>${newUrl}</loc>\n    <lastmod>${lastmod}</lastmod>\n  </url>\n`;
+      sitemap = sitemap.replace('</urlset>', `${urlEntry}</urlset>`);
+    }
+  } else {
+    sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>https://${repo}.startknowledge.in/</loc>\n    <lastmod>${lastmod}</lastmod>\n  </url>\n</urlset>`;
+  }
+  fs.writeFileSync(sitemapPath, sitemap);
 }
 
-export async function runUltraCore() {
-  console.log('🚀 GOD-LEVEL SYSTEM STARTED');
+function ensureStaticPages(repo) {
+  // Create essential pages in repo root if missing
+  const repoRoot = `docs/${repo}`;
+  STATIC_PAGES.forEach(page => {
+    const pagePath = path.join(repoRoot, page);
+    if (!fs.existsSync(pagePath)) {
+      const title = page.replace('.html', '').charAt(0).toUpperCase() + page.replace('.html', '').slice(1);
+      const content = `<!DOCTYPE html><html><head><title>${title} - ${repo}</title></head><body><h1>${title}</h1><p>This page is auto-generated. Update content as needed.</p></body></html>`;
+      fs.writeFileSync(pagePath, content);
+      console.log(`📄 Created missing page: ${pagePath}`);
+    }
+  });
+}
 
-  // Get all repos
-  const { all: repos, new: newRepos } = await detectNewRepos();
-  if (!repos.length) {
-    console.log('⚠️ No repos found');
+// ========== MAIN PROCESSING ==========
+async function processRepo(repo) {
+  const force = process.argv.includes('--force');
+  if (!force && processedRepos[repo]) {
+    console.log(`⏭️ Skipping ${repo} – already processed on ${processedRepos[repo]}`);
     return;
   }
-  console.log(`📦 Found ${repos.length} repos. New: ${newRepos.length}`);
 
-  // Fetch trends once for inspiration (not used for keyword generation)
-  let trends = [];
-  try {
-    trends = await getCombinedTrends();
-    console.log("Trends for content ideas:", trends.slice(0,5));
-  } catch (err) {
-    console.warn("Trend fetch failed:", err.message);
-  }
+  console.log(`\n--- Processing ${repo} ---`);
+  const repoDir = `docs/${repo}`;
+  fs.ensureDirSync(repoDir);
+  fs.ensureDirSync(`${repoDir}/blog`);
+  fs.ensureDirSync(`${repoDir}/images`);
 
-  // Process each repo sequentially (respects API rate limits)
-  for (let i = 0; i < repos.length; i++) {
-    const repo = repos[i];
-    console.log(`\n--- Processing ${i+1}/${repos.length}: ${repo} ---`);
-    const domain = CONFIG.DOMAIN_MAP?.[repo] || CONFIG.DOMAIN_TEMPLATE(repo);
+  // Ensure static pages exist (root, not in pages/)
+  ensureStaticPages(repo);
 
-    try {
-      // 1. Keyword strategy (uses Google Trends + AI)
-      const strategy = await runStrategy(repo);
-
-      // 2. Regular content (blogs + pages)
-      const { blogs, pages } = await generateContentForRepo(repo, domain, strategy);
-
-      // 3. SEO files
-      await generateSEO(repo, domain, blogs, pages);
-
-      // 4. Dynamic CSS
-      await generateCSS(repo);
-
-      // 5. Money pages (buyer intent + affiliate)
-      let moneyPages = [];
-      try {
-        moneyPages = await generateMoneyPagesForRepo(repo, domain, strategy.cluster);
-        console.log(`💰 Generated ${moneyPages.length} money pages`);
-      } catch (err) {
-        console.warn(`Money pages failed: ${err.message}`);
-      }
-
-      // 6. Programmatic pages (location pages, etc.)
-      let progPages = [];
-      try {
-        const locations = ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix"];
-        progPages = await generateLocationPages(repo, domain, strategy.niche, locations);
-        console.log(`📍 Generated ${progPages.length} programmatic pages`);
-      } catch (err) {
-        console.warn(`Programmatic pages failed: ${err.message}`);
-      }
-
-      // 7. Authority signals (topic clusters)
-      try {
-        await buildTopicClusters(repo, blogs);
-      } catch (err) {
-        console.warn(`Topic clusters failed: ${err.message}`);
-      }
-
-      // 8. Auto backlink (first blog only)
-      if (blogs.length) {
-        try {
-          await autoBacklink(blogs[0].keyword, blogs[0].url, blogs[0].url);
-        } catch (err) {
-          console.warn(`Auto backlink failed: ${err.message}`);
-        }
-      }
-
-      // 9. Refresh old blogs (older than 60 days)
-      try {
-        await refreshOldBlogs(repo, 60);
-      } catch (err) {
-        console.warn(`Blog refresh failed: ${err.message}`);
-      }
-
-      // 10. Generate home page for this repo (after all content)
-      await generateHomePage(repo, domain, strategy, blogs);
-
-      console.log(`✅ Completed ${repo} | ${blogs.length} blogs, ${pages.length} pages, ${moneyPages.length} money pages`);
-
-    } catch (err) {
-      console.error(`❌ Failed to process ${repo}:`, err.message);
+  // Protect ultra-static-seo-engine index.html
+  if (repo === 'ultra-static-seo-engine') {
+    const indexPath = `${repoDir}/index.html`;
+    if (!fs.existsSync(indexPath) || force) {
+      fs.writeFileSync(indexPath, PROTECTED_INDEX[repo]);
+      console.log(`🛡️ Restored protected index.html for ${repo}`);
     }
-
-    // Delay between repos to respect API rate limits
-    if (i < repos.length - 1) await delay(5000);
   }
 
-  // Cross-link all repos (authority network)
-  try {
-    await crossLinkRepos(repos);
-  } catch (err) {
-    console.warn(`Cross-linking failed: ${err.message}`);
+  // Get trending keywords based on repo name
+  const seed = repo.replace(/-/g, ' ');
+  const trending = await getTrendingKeywords(seed);
+  const targetBlogCount = REPO_CONFIG[repo] || REPO_CONFIG.default;
+  const keywords = trending.slice(0, targetBlogCount);
+
+  let blogsGenerated = 0;
+  for (const kw of keywords) {
+    const slug = kw.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const blogPath = `${repoDir}/blog/${slug}.html`;
+    if (fs.existsSync(blogPath) && !force) {
+      console.log(`⏩ Blog already exists: ${slug}`);
+      continue;
+    }
+    console.log(`📝 Generating blog for keyword: ${kw}`);
+    const content = await generateBlogContent(kw, repo);
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${kw} | ${repo}</title>
+  <meta name="description" content="Complete guide to ${kw}. Learn strategies, tools, and best practices.">
+  <link rel="canonical" href="https://${repo}.startknowledge.in/blog/${slug}.html">
+</head>
+<body>
+  <article>
+    <h1>${kw}</h1>
+    ${content}
+  </article>
+  <footer><p>© ${new Date().getFullYear()} ${repo}</p></footer>
+</body>
+</html>`;
+    fs.writeFileSync(blogPath, html);
+    console.log(`✅ Blog: https://${repo}.startknowledge.in/blog/${slug}.html`);
+    
+    // Update sitemap
+    await updateSitemap(repo, `https://${repo}.startknowledge.in/blog/${slug}.html`);
+    blogsGenerated++;
   }
 
-  // Generate root index page (hub for all repos)
-  await generateRootIndex(repos);
+  console.log(`✅ Completed ${repo} | ${blogsGenerated} blogs generated/updated`);
 
-  // Clean up orphaned folders
-  await runCleaner(repos);
+  // Mark as processed
+  processedRepos[repo] = new Date().toISOString();
+  fs.writeFileSync(PROCESSED_FILE, JSON.stringify(processedRepos, null, 2));
+}
 
+// ========== MAIN ==========
+async function main() {
+  // Get all repos from GitHub (or use a static list)
+  const repos = ['bn-ration-scale', 'Calculator-Library-Portal', 'startknowledge', 'pension-calculator', 'ultra-static-seo-engine'];
+  
+  for (const repo of repos) {
+    await processRepo(repo);
+  }
+  
   console.log('🔥 SYSTEM COMPLETE');
 }
 
-// Run if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  runUltraCore().catch(console.error);
-}
+main().catch(console.error);
