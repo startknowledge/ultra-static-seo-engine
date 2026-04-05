@@ -78,7 +78,7 @@ async function generateBlogContent(keyword, repoName) {
   for (const key of apiKeys) {
     try {
       const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-        model: 'mixtral-8x7b-32768',
+        model: 'llama3-70b-8192',
         messages: [{ role: 'user', content: `Write a detailed, SEO-optimized blog post (2000+ words) about "${keyword}" for the website "${repoName}". Include: title, intro with stats, 5 strategies, examples, mistakes, FAQ, conclusion. Use H2/H3.` }],
         temperature: 0.7,
       }, { headers: { Authorization: `Bearer ${key}` }, timeout: 30000 });
