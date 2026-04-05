@@ -206,7 +206,7 @@ async function processRepo(repo) {
   for (const kw of keywords) {
     const slug = kw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const blogPath = `${repoDir}/blog/${slug}.html`;
-    if (fs.existsSync(blogPath) && !force) {
+    /* if (fs.existsSync(blogPath) && !force) {
       console.log(`⏩ Blog already exists: ${slug}`);
       // Still add to index even if exists
       blogs.push({
@@ -217,7 +217,7 @@ async function processRepo(repo) {
         date: new Date().toLocaleDateString()
       });
       continue;
-    }
+    } */
     console.log(`📝 Generating blog for keyword: ${kw}`);
     const content = await generateBlogContent(kw, repo);
     // Try to fetch an image from Unsplash (optional)

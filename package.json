@@ -10,6 +10,7 @@
     "axios": "^1.14.0",
     "cheerio": "^1.0.0",
     "fs-extra": "^11.3.4",
+    "google-trends-api": "^4.9.2",
     "p-limit": "^7.3.0",
     "rss-parser": "^3.13.0",
     "snoowrap": "^1.23.0"
