@@ -7,12 +7,11 @@ const parser = new Parser();
 const simpleGit = require('simple-git');
 
 // ========== CONFIG ==========
-// Try ALL_REPO first, fallback to MY_GITHUB_TOKEN
 const GITHUB_TOKEN = process.env.ALL_REPO || process.env.MY_GITHUB_TOKEN;
 const GITHUB_USER = 'startknowledge';
 const TEMP_DIR = path.join(__dirname, '..', 'temp_repos');
 
-// List of all repositories to process
+// All repositories to process
 const REPOS = [
   { name: 'bn-ration-scale', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/bn-ration-scale.git` },
   { name: 'Calculator-Library-Portal', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/Calculator-Library-Portal.git` },
@@ -43,7 +42,6 @@ async function prepareRepo(repoName, repoUrl) {
 // ========== KEYWORD FETCHING ==========
 async function getTrendingKeywords(seed, repoName) {
   if (repoName === 'ultra-static-seo-engine') {
-    // Use curated SEO keywords (or try Google Trends)
     return [
       'programmatic SEO best practices',
       'auto blog generation for SEO',
@@ -75,32 +73,34 @@ async function getTrendingKeywords(seed, repoName) {
 
 // ========== AI CONTENT ==========
 async function generateBlogContent(keyword, repoName) {
-  const GROQ_API_KEY = process.env.GROQ_API_KEY1 || process.env.GROQ_API_KEY2;
-  if (!GROQ_API_KEY) return fallbackContent(keyword);
-  const prompt = `Write a detailed, SEO-optimized blog post (2000+ words) about "${keyword}" for the website "${repoName}". Include: title, intro with stats, 5 strategies, examples, mistakes, FAQ, conclusion. Use H2/H3.`;
-  try {
-    const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-      model: 'mixtral-8x7b-32768',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-    }, { headers: { Authorization: `Bearer ${GROQ_API_KEY}` } });
-    let content = response.data.choices[0].message.content;
-    content = content.replace(/^# (.*?)$/gm, '<h1>$1</h1>')
-                     .replace(/^## (.*?)$/gm, '<h2>$2</h2>')
-                     .replace(/\n/g, '<br>');
-    return content;
-  } catch (err) {
-    console.error(`AI failed for ${keyword}:`, err.message);
-    return fallbackContent(keyword);
+  // Try multiple API keys if available
+  const apiKeys = [process.env.GROQ_API_KEY1, process.env.GROQ_API_KEY2].filter(Boolean);
+  for (const key of apiKeys) {
+    try {
+      const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
+        model: 'mixtral-8x7b-32768',
+        messages: [{ role: 'user', content: `Write a detailed, SEO-optimized blog post (2000+ words) about "${keyword}" for the website "${repoName}". Include: title, intro with stats, 5 strategies, examples, mistakes, FAQ, conclusion. Use H2/H3.` }],
+        temperature: 0.7,
+      }, { headers: { Authorization: `Bearer ${key}` }, timeout: 30000 });
+      let content = response.data.choices[0].message.content;
+      content = content.replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+                       .replace(/^## (.*?)$/gm, '<h2>$2</h2>')
+                       .replace(/\n/g, '<br>');
+      return content;
+    } catch (err) {
+      console.warn(`AI failed with key: ${err.message}`);
+      continue;
+    }
   }
-}
-
-function fallbackContent(keyword) {
+  // Fallback if all keys fail
+  console.log(`Using fallback content for: ${keyword}`);
   return `<p>Complete guide to ${keyword}. Learn actionable strategies.</p>
 <h2>Why ${keyword} matters</h2>
 <p>Understanding ${keyword} is crucial for success in 2026.</p>
 <h2>Key strategies</h2>
-<ul><li>Strategy 1: Research and plan</li><li>Strategy 2: Implement effectively</li><li>Strategy 3: Measure and optimize</li></ul>`;
+<ul><li>Strategy 1: Research and plan</li><li>Strategy 2: Implement effectively</li><li>Strategy 3: Measure and optimize</li></ul>
+<h2>FAQ</h2>
+<p><strong>What is ${keyword}?</strong> It's the process of achieving goals through systematic approaches.</p>`;
 }
 
 // ========== SITEMAP UPDATE ==========
@@ -234,11 +234,13 @@ async function processRepo(repo) {
     generateBlogIndex(repoPath, repo.name, blogs);
     // Commit and push changes
     const git = simpleGit(repoPath);
+    // Set git user for this repository (fixes "Author identity unknown")
+    await git.addConfig('user.name', 'seo-bot', false, 'local');
+    await git.addConfig('user.email', 'bot@seo.com', false, 'local');
     await git.add('.');
     const status = await git.status();
     if (status.files.length > 0) {
       await git.commit('🤖 Auto-generate blogs from Google Trends');
-      // Auto-detect default branch
       const branchSummary = await git.branch();
       const currentBranch = branchSummary.current;
       await git.push('origin', currentBranch);
@@ -261,8 +263,6 @@ async function main() {
     await processRepo(repo);
   }
   console.log('🔥 SYSTEM COMPLETE');
-  // Optional: Cleanup temp directory
-  // await fs.remove(TEMP_DIR);
 }
 
 main().catch(console.error);
