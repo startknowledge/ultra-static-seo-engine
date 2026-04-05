@@ -120,42 +120,44 @@ function updateSitemap(repoPath, repoName, newUrl, lastmod) {
 }
 
 // ========== GENERATE BLOG INDEX (blog/index.html) ==========
+// ========== GENERATE BLOG INDEX (blog/index.html) + posts.json ==========
 function generateBlogIndex(repoPath, repoName, blogs) {
-  const blogListHtml = blogs.map(blog => `
-    <article class="blog-card">
-      <img src="${blog.image}" alt="${blog.title}">
-      <div class="blog-info">
-        <h3><a href="${blog.url}">${blog.title}</a></h3>
-        <p>${blog.excerpt}</p>
-        <span class="date">${blog.date}</span>
-      </div>
-    </article>
-  `).join('');
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><title>Blog - ${repoName}</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:sans-serif;background:#f5f7fb;padding:20px;}
-.container{max-width:1200px;margin:auto;}
-.blog-card{background:white;border-radius:24px;overflow:hidden;margin-bottom:20px;display:flex;}
-.blog-card img{width:200px;height:150px;object-fit:cover;}
-.blog-info{padding:20px;}
-@media(max-width:700px){.blog-card{flex-direction:column;}.blog-card img{width:100%;}}
-</style>
-</head>
-<body>
-<div class="container">
-<h1>Blog | ${repoName}</h1>
-${blogListHtml}
-<footer><a href="/">Home</a></footer>
-</div>
-</body>
-</html>`;
+  // 1. Create posts.json for dynamic loading
+  const postsJson = blogs.map(blog => ({
+    title: blog.title,
+    url: blog.url,
+    image: blog.image,
+    excerpt: blog.excerpt,
+    date: blog.date
+  }));
+  const jsonPath = path.join(repoPath, 'blog', 'posts.json');
+  fs.writeFileSync(jsonPath, JSON.stringify(postsJson, null, 2));
+  console.log(`📄 Generated posts.json: ${jsonPath}`);
+
+  // 2. Also generate a simple index.html (fallback, if your custom index is missing)
+  // But we will NOT overwrite custom index.html – only create if not exists.
   const indexPath = path.join(repoPath, 'blog', 'index.html');
-  fs.ensureDirSync(path.dirname(indexPath));
-  fs.writeFileSync(indexPath, html);
-  console.log(`📚 Blog index: ${indexPath}`);
+  if (!fs.existsSync(indexPath)) {
+    // Create a basic index only if custom one is missing
+    const blogListHtml = blogs.map(blog => `
+      <article class="blog-card">
+        <img src="${blog.image}" alt="${blog.title}">
+        <div class="blog-info">
+          <h3><a href="${blog.url}">${blog.title}</a></h3>
+          <p>${blog.excerpt}</p>
+          <span class="date">${blog.date}</span>
+        </div>
+      </article>
+    `).join('');
+    const html = `<!DOCTYPE html>
+    <html><head><title>Blog - ${repoName}</title>
+    <style>/* basic styles */</style>
+    </head><body>...${blogListHtml}...</body></html>`;
+    fs.writeFileSync(indexPath, html);
+    console.log(`📚 Created fallback blog index: ${indexPath}`);
+  } else {
+    console.log(`🛡️ Preserved existing custom index.html: ${indexPath}`);
+  }
 }
 
 // ========== STATIC PAGES ==========
