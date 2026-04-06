@@ -19,7 +19,8 @@ const REPOS = [
   { name: 'pension-calculator', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/pension-calculator.git` },
   { name: 'design-painting', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/design-painting.git` },
   { name: 'ai-mosaic-studio', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/ai-mosaic-studio.git` },
-  { name: 'ultra-static-seo-engine', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/ultra-static-seo-engine.git` }
+  { name: 'ultra-static-seo-engine', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/ultra-static-seo-engine.git` },
+  { name: 'universal-image-data-explorer-forge', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/universal-image-data-explorer-forge.git` }
 ];
 
 const STATIC_PAGES = ['about.html', 'contact.html', 'privacy.html', 'terms.html', 'faq.html', 'disclaimer.html', 'cookies.html', 'support.html', 'documentation.html', 'changelog.html'];
