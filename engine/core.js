@@ -74,12 +74,12 @@ async function getTrendingKeywords(seed, repoName) {
 
 // ========== AI CONTENT ==========
 async function generateBlogContent(keyword, repoName) {
-  // Try multiple API keys if available
   const apiKeys = [process.env.GROQ_API_KEY1, process.env.GROQ_API_KEY2].filter(Boolean);
   for (const key of apiKeys) {
     try {
       const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-        model: 'llama3-70b-8192',
+        model: "llama-3.3-70b-versatile",
+        max_tokens: 2048,
         messages: [{ role: 'user', content: `Write a detailed, SEO-optimized blog post (2000+ words) about "${keyword}" for the website "${repoName}". Include: title, intro with stats, 5 strategies, examples, mistakes, FAQ, conclusion. Use H2/H3.` }],
         temperature: 0.7,
       }, { headers: { Authorization: `Bearer ${key}` }, timeout: 30000 });
@@ -93,7 +93,6 @@ async function generateBlogContent(keyword, repoName) {
       continue;
     }
   }
-  // Fallback if all keys fail
   console.log(`Using fallback content for: ${keyword}`);
   return `<p>Complete guide to ${keyword}. Learn actionable strategies.</p>
 <h2>Why ${keyword} matters</h2>
@@ -120,44 +119,64 @@ function updateSitemap(repoPath, repoName, newUrl, lastmod) {
   fs.writeFileSync(sitemapPath, sitemap);
 }
 
-// ========== GENERATE BLOG INDEX (blog/index.html) ==========
-// ========== GENERATE BLOG INDEX (blog/index.html) + posts.json ==========
-function generateBlogIndex(repoPath, repoName, blogs) {
-  // 1. Create posts.json for dynamic loading
-  const postsJson = blogs.map(blog => ({
-    title: blog.title,
-    url: blog.url,
-    image: blog.image,
-    excerpt: blog.excerpt,
-    date: blog.date
-  }));
-  const jsonPath = path.join(repoPath, 'blog', 'posts.json');
-  fs.writeFileSync(jsonPath, JSON.stringify(postsJson, null, 2));
-  console.log(`📄 Generated posts.json: ${jsonPath}`);
+// ========== INCREMENTAL posts.json & TEMPLATE COPY ==========
+async function updatePostsJsonAndIndex(repoPath, repoName, newBlogs) {
+  const blogDir = path.join(repoPath, 'blog');
+  const postsJsonPath = path.join(blogDir, 'posts.json');
+  const indexPath = path.join(blogDir, 'index.html');
+  const templatePath = path.join(__dirname, '..', 'templates', 'blog-index.html');
 
-  // 2. Also generate a simple index.html (fallback, if your custom index is missing)
-  // But we will NOT overwrite custom index.html – only create if not exists.
-  const indexPath = path.join(repoPath, 'blog', 'index.html');
-  if (!fs.existsSync(indexPath)) {
-    // Create a basic index only if custom one is missing
-    const blogListHtml = blogs.map(blog => `
-      <article class="blog-card">
-        <img src="${blog.image}" alt="${blog.title}">
-        <div class="blog-info">
-          <h3><a href="${blog.url}">${blog.title}</a></h3>
-          <p>${blog.excerpt}</p>
-          <span class="date">${blog.date}</span>
-        </div>
-      </article>
-    `).join('');
-    const html = `<!DOCTYPE html>
-    <html><head><title>Blog - ${repoName}</title>
-    <style>/* basic styles */</style>
-    </head><body>...${blogListHtml}...</body></html>`;
-    fs.writeFileSync(indexPath, html);
-    console.log(`📚 Created fallback blog index: ${indexPath}`);
-  } else {
+  // --- 1. Build a map of existing posts from the blog folder (all .html files) ---
+  const files = fs.readdirSync(blogDir);
+  const htmlFiles = files.filter(f => f.endsWith('.html') && f !== 'index.html');
+  const postsMap = new Map();
+
+  // Read existing posts.json if present
+  if (fs.existsSync(postsJsonPath)) {
+    try {
+      const existing = JSON.parse(fs.readFileSync(postsJsonPath, 'utf8'));
+      existing.forEach(post => postsMap.set(post.url, post));
+    } catch(e) {}
+  }
+
+  // Scan all existing HTML blog posts
+  for (const file of htmlFiles) {
+    const filePath = path.join(blogDir, file);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // Extract title from <h1> or <title>
+    let titleMatch = content.match(/<h1>(.*?)<\/h1>/);
+    let title = titleMatch ? titleMatch[1] : file.replace('.html', '').replace(/-/g, ' ');
+    let excerpt = content.substring(0, 200).replace(/<[^>]*>/g, '').substring(0, 120);
+    let imageMatch = content.match(/<img[^>]+src="([^">]+)"/);
+    let image = imageMatch ? imageMatch[1] : `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/800/400`;
+    let dateMatch = content.match(/\d{1,2}\/\d{1,2}\/\d{4}/);
+    let date = dateMatch ? dateMatch[0] : new Date().toLocaleDateString();
+    const url = file;
+    if (!postsMap.has(url)) {
+      postsMap.set(url, { title, url, image, excerpt: excerpt + '...', date });
+    }
+  }
+
+  // Add newly generated blogs (these are already in newBlogs array)
+  for (const blog of newBlogs) {
+    if (!postsMap.has(blog.url)) {
+      postsMap.set(blog.url, blog);
+    }
+  }
+
+  // Write updated posts.json
+  const allPosts = Array.from(postsMap.values());
+  fs.writeFileSync(postsJsonPath, JSON.stringify(allPosts, null, 2));
+  console.log(`📄 Updated posts.json (${allPosts.length} total posts)`);
+
+  // --- 2. Copy custom blog index template if missing ---
+  if (!fs.existsSync(indexPath) && fs.existsSync(templatePath)) {
+    fs.copyFileSync(templatePath, indexPath);
+    console.log(`📄 Copied custom blog index from template to ${indexPath}`);
+  } else if (fs.existsSync(indexPath)) {
     console.log(`🛡️ Preserved existing custom index.html: ${indexPath}`);
+  } else {
+    console.warn(`⚠️ Template missing: ${templatePath}, cannot copy blog index.`);
   }
 }
 
@@ -169,6 +188,7 @@ function ensureStaticPages(repoPath, repoName) {
       const title = page.replace('.html', '').charAt(0).toUpperCase() + page.replace('.html', '').slice(1);
       const content = `<!DOCTYPE html><html><head><title>${title} - ${repoName}</title></head><body><h1>${title}</h1><p><a href="/">Home</a></p></body></html>`;
       fs.writeFileSync(pagePath, content);
+      console.log(`📄 Created missing static page: ${pagePath}`);
     }
   });
 }
@@ -186,9 +206,9 @@ async function processRepo(repo) {
   if (repo.name === 'ultra-static-seo-engine') {
     const customIndex = path.join(repoPath, 'index.html');
     if (!fs.existsSync(customIndex)) {
-      console.warn(`⚠️ Missing custom index.html in ${repo.name}. Please add it manually.`);
+      console.warn(`⚠️ Missing custom root index.html for ${repo.name}. Please add it manually.`);
     } else {
-      console.log(`🛡️ Preserved custom index.html for ${repo.name}`);
+      console.log(`🛡️ Preserved custom root index.html for ${repo.name}`);
     }
   }
 
@@ -234,10 +254,9 @@ async function processRepo(repo) {
   }
 
   if (blogs.length) {
-    generateBlogIndex(repoPath, repo.name, blogs);
+    await updatePostsJsonAndIndex(repoPath, repo.name, blogs);
     // Commit and push changes
     const git = simpleGit(repoPath);
-    // Set git user for this repository (fixes "Author identity unknown")
     await git.addConfig('user.name', 'seo-bot', false, 'local');
     await git.addConfig('user.email', 'bot@seo.com', false, 'local');
     await git.add('.');
