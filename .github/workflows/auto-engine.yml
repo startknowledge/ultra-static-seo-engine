@@ -69,6 +69,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "🟢 No changes to commit"
           else
-            git commit -m "🚀 auto update [skip ci]"
+            git commit -m "🚀 update [skip ci]"
             git push
           fi
