@@ -43,15 +43,59 @@ async function prepareRepo(repoName, repoUrl) {
 // ========== KEYWORD FETCHING ==========
 async function getTrendingKeywords(seed, repoName) {
   if (repoName === 'ultra-static-seo-engine') {
-    return [
-      'programmatic SEO best practices',
-      'auto blog generation for SEO',
-      'Google Indexing API tutorial',
-      'semantic SEO strategies 2026',
-      'E-E-A-T signals for ranking',
-      'multi-language SEO automation'
-    ];
-  }
+  return [
+    'AI content generation for blogs',
+    'long tail keyword automation',
+    'technical SEO automation tools',
+    'internal linking automation strategy',
+    'dynamic sitemap generation SEO',
+    'schema markup automation guide',
+    'headless CMS SEO setup',
+    'zero click search optimization',
+    'programmatic SEO best practices',
+    'auto blog generation for SEO',
+    'Google Indexing API tutorial',
+    'semantic SEO strategies 2026',
+    'E-E-A-T signals for ranking',
+    'multi-language SEO automation',    
+    'featured snippets optimization tips',
+    'AI keyword clustering techniques',
+    'SEO content scaling strategies',
+    'automated meta tags generation',
+    'bulk page generation SEO',
+    'content silo structure SEO',
+    'topical authority building strategy',
+    'AI SEO tools comparison 2026',
+    'search intent optimization guide',
+    'automated backlink generation myths',
+    'Google search console automation',
+    'SEO analytics automation dashboard',
+    'content freshness automation SEO',
+    'AI blog writing workflow',
+    'SEO A/B testing automation',
+    'auto schema generator tool',
+    'voice search SEO optimization',
+    'entity based SEO strategy',
+    'NLP SEO optimization techniques',
+    'AI powered content briefs',
+    'SEO automation with APIs',
+    'indexing issues troubleshooting SEO',
+    'crawl budget optimization automation',
+    'SEO friendly URL generation',
+    'automated image SEO optimization',
+    'core web vitals optimization automation',
+    'AI SEO audit tools guide',
+    'content gap analysis automation',
+    'SERP tracking automation tools',
+    'keyword cannibalization fix SEO',
+    'AI link building strategies',
+    'SEO automation pipelines',
+    'real time SEO monitoring system',
+    'automated blog publishing workflow',
+    'SEO performance tracking automation',
+    'AI driven niche site building'
+  ];
+}
   const url = `https://news.google.com/rss/search?q=${encodeURIComponent(seed)}&hl=en-US&gl=US&ceid=US:en`;
   try {
     const feed = await parser.parseURL(url);
@@ -119,19 +163,30 @@ function updateSitemap(repoPath, repoName, newUrl, lastmod) {
   fs.writeFileSync(sitemapPath, sitemap);
 }
 
-// ========== INCREMENTAL posts.json & TEMPLATE COPY ==========
+// ========== GENERATE NAVIGATION LINKS FROM STATIC PAGES ==========
+function generateNavLinks(currentRepo) {
+  // Create list items for all static pages
+  const links = STATIC_PAGES.map(page => {
+    const name = page.replace('.html', '');
+    const displayName = name.charAt(0).toUpperCase() + name.slice(1);
+    return `<li><a href="/${page}">${displayName}</a></li>`;
+  }).join('');
+  // Also add a link to the blog itself (current page)
+  return `<li><a href="index.html">Blog</a></li>${links}`;
+}
+
+// ========== INCREMENTAL posts.json & TEMPLATE COPY WITH NAV UPDATE ==========
 async function updatePostsJsonAndIndex(repoPath, repoName, newBlogs) {
   const blogDir = path.join(repoPath, 'blog');
   const postsJsonPath = path.join(blogDir, 'posts.json');
   const indexPath = path.join(blogDir, 'index.html');
   const templatePath = path.join(__dirname, '..', 'templates', 'blog-index.html');
 
-  // --- 1. Build a map of existing posts from the blog folder (all .html files) ---
+  // --- 1. Build posts.json (incremental) ---
   const files = fs.readdirSync(blogDir);
   const htmlFiles = files.filter(f => f.endsWith('.html') && f !== 'index.html');
   const postsMap = new Map();
 
-  // Read existing posts.json if present
   if (fs.existsSync(postsJsonPath)) {
     try {
       const existing = JSON.parse(fs.readFileSync(postsJsonPath, 'utf8'));
@@ -139,11 +194,9 @@ async function updatePostsJsonAndIndex(repoPath, repoName, newBlogs) {
     } catch(e) {}
   }
 
-  // Scan all existing HTML blog posts
   for (const file of htmlFiles) {
     const filePath = path.join(blogDir, file);
     const content = fs.readFileSync(filePath, 'utf8');
-    // Extract title from <h1> or <title>
     let titleMatch = content.match(/<h1>(.*?)<\/h1>/);
     let title = titleMatch ? titleMatch[1] : file.replace('.html', '').replace(/-/g, ' ');
     let excerpt = content.substring(0, 200).replace(/<[^>]*>/g, '').substring(0, 120);
@@ -157,26 +210,34 @@ async function updatePostsJsonAndIndex(repoPath, repoName, newBlogs) {
     }
   }
 
-  // Add newly generated blogs (these are already in newBlogs array)
   for (const blog of newBlogs) {
-    if (!postsMap.has(blog.url)) {
-      postsMap.set(blog.url, blog);
-    }
+    if (!postsMap.has(blog.url)) postsMap.set(blog.url, blog);
   }
 
-  // Write updated posts.json
   const allPosts = Array.from(postsMap.values());
   fs.writeFileSync(postsJsonPath, JSON.stringify(allPosts, null, 2));
   console.log(`📄 Updated posts.json (${allPosts.length} total posts)`);
 
-  // --- 2. Copy custom blog index template if missing ---
+  // --- 2. Ensure blog/index.html exists (copy template if missing) ---
   if (!fs.existsSync(indexPath) && fs.existsSync(templatePath)) {
     fs.copyFileSync(templatePath, indexPath);
     console.log(`📄 Copied custom blog index from template to ${indexPath}`);
-  } else if (fs.existsSync(indexPath)) {
-    console.log(`🛡️ Preserved existing custom index.html: ${indexPath}`);
+  } else if (!fs.existsSync(indexPath)) {
+    console.warn(`⚠️ Template missing: ${templatePath}, cannot create blog index.`);
+    return;
+  }
+
+  // --- 3. Update navigation links in blog/index.html ---
+  let indexContent = fs.readFileSync(indexPath, 'utf8');
+  const newNavLinks = generateNavLinks(repoName);
+  // Replace the content inside <ul class="nav-links"> ... </ul>
+  const navRegex = /(<ul class="nav-links">)([\s\S]*?)(<\/ul>)/;
+  if (navRegex.test(indexContent)) {
+    indexContent = indexContent.replace(navRegex, `$1${newNavLinks}$3`);
+    fs.writeFileSync(indexPath, indexContent);
+    console.log(`🔄 Updated navigation links in ${indexPath}`);
   } else {
-    console.warn(`⚠️ Template missing: ${templatePath}, cannot copy blog index.`);
+    console.warn(`⚠️ Could not find <ul class="nav-links"> in ${indexPath}, navigation not updated.`);
   }
 }
 
