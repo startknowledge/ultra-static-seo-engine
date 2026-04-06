@@ -1,4 +1,4 @@
-// engine/core.js - Multi-repo blog generator with direct commit to each repo
+// engine/core.js - Full SEO automation with internal links, schema, advanced CSS
 const fs = require('fs-extra');
 const path = require('path');
 const axios = require('axios');
@@ -11,7 +11,7 @@ const GITHUB_TOKEN = process.env.ALL_REPO || process.env.MY_GITHUB_TOKEN;
 const GITHUB_USER = 'startknowledge';
 const TEMP_DIR = path.join(__dirname, '..', 'temp_repos');
 
-// All repositories to process
+// All repositories (add new ones here)
 const REPOS = [
   { name: 'bn-ration-scale', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/bn-ration-scale.git` },
   { name: 'Calculator-Library-Portal', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/Calculator-Library-Portal.git` },
@@ -25,7 +25,21 @@ const REPOS = [
 
 const STATIC_PAGES = ['about.html', 'contact.html', 'privacy.html', 'terms.html', 'faq.html', 'disclaimer.html', 'cookies.html', 'support.html', 'documentation.html', 'changelog.html'];
 
-// ========== HELPER: CLONE OR UPDATE REPO ==========
+// High‑authority external backlinks (used in every blog post)
+const EXTERNAL_BACKLINKS = [
+  { title: 'Google Search Central – SEO Starter Guide', url: 'https://developers.google.com/search/docs/fundamentals/seo-starter-guide' },
+  { title: 'Moz Beginner’s Guide to SEO', url: 'https://moz.com/beginners-guide-to-seo' },
+  { title: 'Google Search Console', url: 'https://search.google.com/search-console/about' },
+  { title: 'Ahrefs Blog – SEO Strategies', url: 'https://ahrefs.com/blog/' },
+  { title: 'Semrush SEO Toolkit', url: 'https://www.semrush.com/blog/' },
+  { title: 'Yoast SEO Academy', url: 'https://yoast.com/academy/' },
+  { title: 'Backlinko – SEO Techniques', url: 'https://backlinko.com/blog' },
+  { title: 'Search Engine Journal', url: 'https://www.searchenginejournal.com/' },
+  { title: 'Google PageSpeed Insights', url: 'https://pagespeed.web.dev/' },
+  { title: 'Schema.org – Structured Data', url: 'https://schema.org/' }
+];
+
+// ========== HELPERS ==========
 async function prepareRepo(repoName, repoUrl) {
   const repoPath = path.join(TEMP_DIR, repoName);
   if (fs.existsSync(repoPath)) {
@@ -116,35 +130,98 @@ async function getTrendingKeywords(seed, repoName) {
   }
 }
 
-// ========== AI CONTENT ==========
-async function generateBlogContent(keyword, repoName) {
+// ========== AI CONTENT (3500+ words) ==========
+async function generateBlogContent(keyword, repoName, allBlogsForRepo = []) {
   const apiKeys = [process.env.GROQ_API_KEY1, process.env.GROQ_API_KEY2].filter(Boolean);
+  let content = '';
   for (const key of apiKeys) {
     try {
       const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
         model: "llama-3.3-70b-versatile",
-        max_tokens: 2048,
-        messages: [{ role: 'user', content: `Write a detailed, SEO-optimized blog post (2000+ words) about "${keyword}" for the website "${repoName}". Include: title, intro with stats, 5 strategies, examples, mistakes, FAQ, conclusion. Use H2/H3.` }],
+        max_tokens: 3500,
+        messages: [{ role: 'user', content: `Write a very detailed, SEO-optimized blog post (at least 3500 words) about "${keyword}" for the website "${repoName}". 
+Use proper HTML structure: <h1>Title</h1>, <h2>Subheadings</h2>, <p>, <ul>, <li>. Include:
+- An engaging title with the keyword
+- Introduction with recent statistics (cite years)
+- 8–10 actionable strategies or tips
+- Real‑world examples
+- Common mistakes and how to avoid them
+- FAQ section (5 questions) with schema markup (Question/Answer)
+- Conclusion with a strong call‑to‑action
+Write naturally, use bold and italics where appropriate.` }],
         temperature: 0.7,
-      }, { headers: { Authorization: `Bearer ${key}` }, timeout: 30000 });
-      let content = response.data.choices[0].message.content;
+      }, { headers: { Authorization: `Bearer ${key}` }, timeout: 60000 });
+      content = response.data.choices[0].message.content;
+      // Convert markdown headings to HTML if needed
       content = content.replace(/^# (.*?)$/gm, '<h1>$1</h1>')
                        .replace(/^## (.*?)$/gm, '<h2>$2</h2>')
+                       .replace(/^### (.*?)$/gm, '<h3>$3</h3>')
                        .replace(/\n/g, '<br>');
-      return content;
+      break;
     } catch (err) {
       console.warn(`AI failed with key: ${err.message}`);
       continue;
     }
   }
-  console.log(`Using fallback content for: ${keyword}`);
-  return `<p>Complete guide to ${keyword}. Learn actionable strategies.</p>
-<h2>Why ${keyword} matters</h2>
-<p>Understanding ${keyword} is crucial for success in 2026.</p>
-<h2>Key strategies</h2>
-<ul><li>Strategy 1: Research and plan</li><li>Strategy 2: Implement effectively</li><li>Strategy 3: Measure and optimize</li></ul>
-<h2>FAQ</h2>
-<p><strong>What is ${keyword}?</strong> It's the process of achieving goals through systematic approaches.</p>`;
+  if (!content) {
+    content = `<p>Complete guide to ${keyword}. Learn actionable strategies to master ${keyword} in 2026.</p>
+<h2>Why ${keyword} matters</h2><p>Understanding ${keyword} is crucial for success.</p>
+<h2>Key strategies</h2><ul><li>Research thoroughly</li><li>Implement step by step</li><li>Measure and optimize</li></ul>
+<h2>FAQ</h2><p><strong>What is ${keyword}?</strong> It's a process to achieve goals.</p>`;
+  }
+
+  // --- Internal links (related posts from same repo) ---
+  let internalLinksHtml = '';
+  if (allBlogsForRepo.length > 1) {
+    const otherBlogs = allBlogsForRepo.filter(b => b.title !== keyword);
+    const related = otherBlogs.slice(0, 4);
+    if (related.length) {
+      internalLinksHtml = '<h3>📚 You May Also Like</h3><ul>';
+      for (const blog of related) {
+        internalLinksHtml += `<li><a href="${blog.url}">${blog.title}</a></li>`;
+      }
+      internalLinksHtml += '</ul>';
+    }
+  }
+  // Add a link back to the blog index
+  internalLinksHtml += '<p><a href="index.html">← Browse all blog posts</a></p>';
+
+  // --- Cross‑repo internal links (links to other repos' homepages) ---
+  const crossRepoLinks = REPOS.filter(r => r.name !== repoName).map(r => 
+    `<li><a href="https://${r.name}.startknowledge.in/">${r.name.replace(/-/g, ' ')}</a></li>`
+  ).join('');
+  const crossRepoHtml = `<h3>🌐 Explore Our Other Sites</h3><ul>${crossRepoLinks}</ul>`;
+
+  // --- External backlinks (10 high authority links) ---
+  const externalHtml = `<h3>🔗 Useful Resources (External)</h3><ul>${EXTERNAL_BACKLINKS.map(link => 
+    `<li><a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.title}</a></li>`
+  ).join('')}</ul>`;
+
+  // Combine all
+  return content + internalLinksHtml + crossRepoHtml + externalHtml;
+}
+
+// ========== GENERATE JSON-LD SCHEMA ==========
+function generateSchema(keyword, repoName, slug, imageUrl, date) {
+  return `<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "${keyword.replace(/"/g, '\\"')}",
+  "description": "Complete guide to ${keyword.replace(/"/g, '\\"')} – strategies, tips, and best practices.",
+  "author": {
+    "@type": "Organization",
+    "name": "${repoName}"
+  },
+  "datePublished": "${date}",
+  "dateModified": "${new Date().toISOString()}",
+  "image": "${imageUrl}",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://${repoName}.startknowledge.in/blog/${slug}.html"
+  }
+}
+</script>`;
 }
 
 // ========== SITEMAP UPDATE ==========
@@ -163,37 +240,34 @@ function updateSitemap(repoPath, repoName, newUrl, lastmod) {
   fs.writeFileSync(sitemapPath, sitemap);
 }
 
-// ========== GENERATE NAVIGATION LINKS FROM STATIC PAGES ==========
+// ========== GENERATE NAVIGATION LINKS (static pages + home + blog) ==========
 function generateNavLinks(currentRepo) {
-  // Create list items for all static pages
-  const links = STATIC_PAGES.map(page => {
+  let links = `<li><a href="/">Home</a></li><li><a href="index.html">Blog</a></li>`;
+  for (const page of STATIC_PAGES) {
     const name = page.replace('.html', '');
     const displayName = name.charAt(0).toUpperCase() + name.slice(1);
-    return `<li><a href="/${page}">${displayName}</a></li>`;
-  }).join('');
-  // Also add a link to the blog itself (current page)
-  return `<li><a href="index.html">Blog</a></li>${links}`;
+    links += `<li><a href="/${page}">${displayName}</a></li>`;
+  }
+  return links;
 }
 
-// ========== INCREMENTAL posts.json & TEMPLATE COPY WITH NAV UPDATE ==========
+// ========== UPDATE BLOG INDEX (posts.json + navigation) ==========
 async function updatePostsJsonAndIndex(repoPath, repoName, newBlogs) {
   const blogDir = path.join(repoPath, 'blog');
   const postsJsonPath = path.join(blogDir, 'posts.json');
   const indexPath = path.join(blogDir, 'index.html');
   const templatePath = path.join(__dirname, '..', 'templates', 'blog-index.html');
 
-  // --- 1. Build posts.json (incremental) ---
+  // Build posts.json incrementally
   const files = fs.readdirSync(blogDir);
   const htmlFiles = files.filter(f => f.endsWith('.html') && f !== 'index.html');
   const postsMap = new Map();
-
   if (fs.existsSync(postsJsonPath)) {
     try {
       const existing = JSON.parse(fs.readFileSync(postsJsonPath, 'utf8'));
       existing.forEach(post => postsMap.set(post.url, post));
     } catch(e) {}
   }
-
   for (const file of htmlFiles) {
     const filePath = path.join(blogDir, file);
     const content = fs.readFileSync(filePath, 'utf8');
@@ -209,35 +283,33 @@ async function updatePostsJsonAndIndex(repoPath, repoName, newBlogs) {
       postsMap.set(url, { title, url, image, excerpt: excerpt + '...', date });
     }
   }
-
   for (const blog of newBlogs) {
     if (!postsMap.has(blog.url)) postsMap.set(blog.url, blog);
   }
-
   const allPosts = Array.from(postsMap.values());
   fs.writeFileSync(postsJsonPath, JSON.stringify(allPosts, null, 2));
   console.log(`📄 Updated posts.json (${allPosts.length} total posts)`);
 
-  // --- 2. Ensure blog/index.html exists (copy template if missing) ---
+  // Ensure blog/index.html exists (copy template if missing)
   if (!fs.existsSync(indexPath) && fs.existsSync(templatePath)) {
     fs.copyFileSync(templatePath, indexPath);
-    console.log(`📄 Copied custom blog index from template to ${indexPath}`);
-  } else if (!fs.existsSync(indexPath)) {
-    console.warn(`⚠️ Template missing: ${templatePath}, cannot create blog index.`);
+    console.log(`📄 Copied blog index template to ${indexPath}`);
+  }
+  if (!fs.existsSync(indexPath)) {
+    console.warn(`⚠️ No template and no existing index for ${repoName}`);
     return;
   }
 
-  // --- 3. Update navigation links in blog/index.html ---
+  // Update navigation links inside blog/index.html
   let indexContent = fs.readFileSync(indexPath, 'utf8');
   const newNavLinks = generateNavLinks(repoName);
-  // Replace the content inside <ul class="nav-links"> ... </ul>
   const navRegex = /(<ul class="nav-links">)([\s\S]*?)(<\/ul>)/;
   if (navRegex.test(indexContent)) {
     indexContent = indexContent.replace(navRegex, `$1${newNavLinks}$3`);
     fs.writeFileSync(indexPath, indexContent);
     console.log(`🔄 Updated navigation links in ${indexPath}`);
   } else {
-    console.warn(`⚠️ Could not find <ul class="nav-links"> in ${indexPath}, navigation not updated.`);
+    console.warn(`⚠️ Could not find nav-links ul in ${indexPath}`);
   }
 }
 
@@ -247,7 +319,7 @@ function ensureStaticPages(repoPath, repoName) {
     const pagePath = path.join(repoPath, page);
     if (!fs.existsSync(pagePath)) {
       const title = page.replace('.html', '').charAt(0).toUpperCase() + page.replace('.html', '').slice(1);
-      const content = `<!DOCTYPE html><html><head><title>${title} - ${repoName}</title></head><body><h1>${title}</h1><p><a href="/">Home</a></p></body></html>`;
+      const content = `<!DOCTYPE html><html><head><title>${title} - ${repoName}</title><meta charset="UTF-8"></head><body><h1>${title}</h1><p><a href="/">Home</a> | <a href="blog/index.html">Blog</a></p></body></html>`;
       fs.writeFileSync(pagePath, content);
       console.log(`📄 Created missing static page: ${pagePath}`);
     }
@@ -283,23 +355,69 @@ async function processRepo(repo) {
   }
   console.log(`📈 Keywords:`, keywords);
 
+  // Prepare data for internal linking
+  const allBlogsData = keywords.map(kw => ({
+    title: kw,
+    url: `/${kw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 100)}.html`
+  }));
+
   const blogs = [];
   for (const kw of keywords) {
     const slug = kw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 100);
     const blogPath = path.join(blogDir, `${slug}.html`);
     console.log(`📝 Generating: ${kw.substring(0, 60)}...`);
-    const content = await generateBlogContent(kw, repo.name);
-    const imageUrl = `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/800/400`;
+    const content = await generateBlogContent(kw, repo.name, allBlogsData);
+    const imageUrl = `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/1200/630`;
+    const publishDate = new Date().toISOString().split('T')[0];
+    const schema = generateSchema(kw, repo.name, slug, imageUrl, publishDate);
+    const metaDesc = `Complete guide to ${kw}. Learn actionable strategies, avoid common mistakes, and master ${kw} in 2026.`;
+    
     const html = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>${kw} | ${repo.name}</title>
-<meta name="description" content="Complete guide to ${kw}">
-<link rel="canonical" href="https://${repo.name}.startknowledge.in/blog/${slug}.html">
-<meta property="og:image" content="${imageUrl}">
-<style>body{font-family:sans-serif;max-width:900px;margin:0 auto;padding:20px;}</style>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${kw} | ${repo.name}</title>
+  <meta name="description" content="${metaDesc}">
+  <meta name="keywords" content="${kw.toLowerCase()}, SEO, guide, tips, strategies">
+  <link rel="canonical" href="https://${repo.name}.startknowledge.in/blog/${slug}.html">
+  <meta property="og:title" content="${kw} | ${repo.name}">
+  <meta property="og:description" content="${metaDesc}">
+  <meta property="og:image" content="${imageUrl}">
+  <meta property="og:type" content="article">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${kw}">
+  <meta name="twitter:description" content="${metaDesc}">
+  <meta name="twitter:image" content="${imageUrl}">
+  ${schema}
+  <style>
+    /* Advanced CSS: gradient, smooth scroll, card hover effects */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: system-ui, 'Inter', sans-serif; background: linear-gradient(145deg, #f9fafc 0%, #f0f4f9 100%); color: #1a2c3e; line-height: 1.6; padding: 20px; scroll-behavior: smooth; }
+    .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 32px; box-shadow: 0 25px 45px -12px rgba(0,0,0,0.2); overflow: hidden; transition: transform 0.2s; }
+    article { padding: 40px; }
+    img { max-width: 100%; border-radius: 20px; margin: 20px 0; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+    h1 { font-size: 2.5rem; margin-bottom: 20px; background: linear-gradient(135deg, #0f2b3d, #1e6f5c); background-clip: text; -webkit-background-clip: text; color: transparent; }
+    h2 { font-size: 1.8rem; margin: 30px 0 15px; border-left: 5px solid #1e6f5c; padding-left: 15px; }
+    h3 { font-size: 1.4rem; margin: 25px 0 10px; color: #2c4b66; }
+    p { margin-bottom: 1.2rem; }
+    ul, ol { margin: 15px 0 15px 30px; }
+    a { color: #1e6f5c; text-decoration: none; border-bottom: 1px solid transparent; transition: 0.2s; }
+    a:hover { border-bottom-color: #1e6f5c; }
+    footer { background: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; }
+    @media (max-width: 700px) { article { padding: 20px; } h1 { font-size: 1.8rem; } }
+  </style>
 </head>
 <body>
-<article><img src="${imageUrl}" alt="${kw}" style="width:100%"><h1>${kw}</h1>${content}</article>
-<footer><a href="/">Home</a> | <a href="index.html">Blog Index</a></footer>
+<div class="container">
+  <article>
+    <img src="${imageUrl}" alt="${kw}" style="width:100%">
+    ${content}
+  </article>
+  <footer>
+    <p>© ${new Date().getFullYear()} ${repo.name} | <a href="/">Home</a> | <a href="index.html">Blog Index</a></p>
+  </footer>
+</div>
 </body>
 </html>`;
     fs.writeFileSync(blogPath, html);
@@ -309,21 +427,20 @@ async function processRepo(repo) {
       title: kw,
       url: `${slug}.html`,
       image: imageUrl,
-      excerpt: `Complete guide to ${kw.substring(0, 100)}...`,
-      date: new Date().toLocaleDateString()
+      excerpt: metaDesc.substring(0, 120),
+      date: publishDate
     });
   }
 
   if (blogs.length) {
     await updatePostsJsonAndIndex(repoPath, repo.name, blogs);
-    // Commit and push changes
     const git = simpleGit(repoPath);
     await git.addConfig('user.name', 'seo-bot', false, 'local');
     await git.addConfig('user.email', 'bot@seo.com', false, 'local');
     await git.add('.');
     const status = await git.status();
     if (status.files.length > 0) {
-      await git.commit('🤖 Auto-generate blogs from Google Trends');
+      await git.commit('🤖 Auto-generate long‑form SEO blogs with internal links & schema');
       const branchSummary = await git.branch();
       const currentBranch = branchSummary.current;
       await git.push('origin', currentBranch);
