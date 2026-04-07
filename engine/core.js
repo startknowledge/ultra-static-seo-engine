@@ -13,13 +13,14 @@ const TEMP_DIR = path.join(__dirname, '..', 'temp_repos');
 
 // All repositories (add new ones here)
 const REPOS = [
+  { name: 'startknowledge', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/startknowledge.git` },
+  { name: 'ultra-static-seo-engine', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/ultra-static-seo-engine.git` },
   { name: 'bn-ration-scale', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/bn-ration-scale.git` },
   { name: 'Calculator-Library-Portal', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/Calculator-Library-Portal.git` },
-  { name: 'startknowledge', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/startknowledge.git` },
   { name: 'pension-calculator', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/pension-calculator.git` },
   { name: 'design-painting', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/design-painting.git` },
   { name: 'ai-mosaic-studio', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/ai-mosaic-studio.git` },
-  { name: 'ultra-static-seo-engine', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/ultra-static-seo-engine.git` },
+  { name: 'Motionix', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/Motionix.git` },
   { name: 'universal-image-data-explorer-forge', url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/universal-image-data-explorer-forge.git` }
 ];
 
@@ -313,15 +314,152 @@ async function updatePostsJsonAndIndex(repoPath, repoName, newBlogs) {
   }
 }
 
-// ========== STATIC PAGES ==========
+// ========== GENERATE RICH STATIC PAGE (with meta, schema, CSS) ==========
+function generateRichStaticPage(pageName, repoName) {
+  const title = pageName.replace('.html', '');
+  const displayTitle = title.charAt(0).toUpperCase() + title.slice(1);
+  const description = `Learn more about ${repoName} – ${displayTitle.toLowerCase()} page with complete information.`;
+  const keywords = `${displayTitle.toLowerCase()}, ${repoName}, information, details`;
+  const canonicalUrl = `https://${repoName}.startknowledge.in/${pageName}`;
+  const imageUrl = `https://source.unsplash.com/800x400/?${encodeURIComponent(displayTitle)}`;
+  const currentDate = new Date().toISOString().split('T')[0];
+
+  // Generate meaningful content based on page type
+  let contentHtml = '';
+  switch (title) {
+    case 'about':
+      contentHtml = `<p>${repoName} is a cutting‑edge platform powered by an advanced AI SEO automation engine. We generate high‑quality content, programmatic pages, and automated tools to help you scale your online presence.</p>
+<p>Our mission is to make SEO accessible and efficient through automation, leveraging the latest AI models and Google Trends data.</p>`;
+      break;
+    case 'contact':
+      contentHtml = `<p>You can reach us via email at <a href="mailto:contact@${repoName}.startknowledge.in">contact@${repoName}.startknowledge.in</a>.</p>
+<p>For business inquiries, please use the contact form (coming soon).</p>`;
+      break;
+    case 'privacy':
+      contentHtml = `<p>We respect your privacy. This website does not collect personal data unless explicitly provided by you. Any data collected is used solely for improving our services.</p>
+<p>We use cookies to enhance user experience. You can disable cookies in your browser settings.</p>`;
+      break;
+    case 'terms':
+      contentHtml = `<p>By using this website, you agree to our terms of service. All content is for informational purposes only. We are not liable for any damages resulting from the use of this site.</p>`;
+      break;
+    case 'faq':
+      contentHtml = `<p><strong>Q: How often is content updated?</strong><br>A: New blog posts are generated automatically every few hours based on Google Trends.</p>
+<p><strong>Q: Can I contribute?</strong><br>A: Currently, all content is AI‑generated. For suggestions, please contact us.</p>`;
+      break;
+    case 'disclaimer':
+      contentHtml = `<p>The information provided on this website is for general informational purposes only. We make no representations or warranties of any kind about the completeness, accuracy, reliability, or suitability of the information.</p>`;
+      break;
+    case 'cookies':
+      contentHtml = `<p>This site uses cookies to improve your experience. By continuing to browse, you agree to our use of cookies.</p>`;
+      break;
+    case 'support':
+      contentHtml = `<p>For technical support, please email <a href="mailto:support@${repoName}.startknowledge.in">support@${repoName}.startknowledge.in</a>. We aim to respond within 24 hours.</p>`;
+      break;
+    case 'documentation':
+      contentHtml = `<p>Our automation system is built on Node.js and uses Groq AI, Google News RSS, and GitHub Actions. For developer documentation, please refer to the project repository.</p>`;
+      break;
+    case 'changelog':
+      contentHtml = `<p>Latest updates: Automated blog generation, internal linking, schema markup, and rich static pages added.</p>`;
+      break;
+    default:
+      contentHtml = `<p>This page provides information about ${displayTitle} for ${repoName}. Please check back for updates.</p>`;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>${displayTitle} | ${repoName}</title>
+  <meta name="description" content="${description}">
+  <meta name="keywords" content="${keywords}">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="googlebot" content="index, follow">
+  <meta http-equiv="content-language" content="en-IN">
+  <meta name="geo.region" content="IN">
+  <meta name="theme-color" content="#0d6efd">
+  <link rel="canonical" href="${canonicalUrl}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="${canonicalUrl}">
+  <meta property="og:title" content="${displayTitle} | ${repoName}">
+  <meta property="og:description" content="${description}">
+  <meta property="og:image" content="${imageUrl}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${displayTitle} | ${repoName}">
+  <meta name="twitter:description" content="${description}">
+  <meta name="twitter:image" content="${imageUrl}">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "${displayTitle}",
+    "description": "${description}",
+    "url": "${canonicalUrl}",
+    "inLanguage": "en-IN",
+    "publisher": {
+      "@type": "Organization",
+      "name": "${repoName}",
+      "url": "https://${repoName}.startknowledge.in"
+    }
+  }
+  </script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: system-ui, 'Inter', sans-serif; background: linear-gradient(145deg, #f9fafc 0%, #f0f4f9 100%); color: #1a2c3e; line-height: 1.6; padding: 20px; }
+    .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 32px; box-shadow: 0 25px 45px -12px rgba(0,0,0,0.2); overflow: hidden; }
+    main { padding: 40px; }
+    h1 { font-size: 2.5rem; margin-bottom: 20px; background: linear-gradient(135deg, #0f2b3d, #1e6f5c); background-clip: text; -webkit-background-clip: text; color: transparent; }
+    img { max-width: 100%; border-radius: 20px; margin: 20px 0; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+    p { margin-bottom: 1.2rem; }
+    a { color: #1e6f5c; text-decoration: none; border-bottom: 1px solid transparent; transition: 0.2s; }
+    a:hover { border-bottom-color: #1e6f5c; }
+    .nav-links { display: flex; flex-wrap: wrap; gap: 24px; list-style: none; padding: 20px 40px; background: white; border-bottom: 1px solid #e9eef3; }
+    .nav-links a { font-weight: 500; color: #2c4b66; }
+    footer { background: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; }
+    @media (max-width: 700px) { main { padding: 20px; } h1 { font-size: 1.8rem; } }
+  </style>
+</head>
+<body>
+<div class="container">
+  <ul class="nav-links">
+    ${generateNavLinks(repoName)}
+  </ul>
+  <main>
+    <h1>${displayTitle}</h1>
+    <img src="${imageUrl}" alt="${displayTitle}" loading="lazy">
+    ${contentHtml}
+  </main>
+  <footer>
+    <p>© ${new Date().getFullYear()} ${repoName} | <a href="/">Home</a> | <a href="blog/index.html">Blog</a></p>
+  </footer>
+</div>
+</body>
+</html>`;
+}
+
+// ========== ENSURE STATIC PAGES (with rich HTML) ==========
 function ensureStaticPages(repoPath, repoName) {
   STATIC_PAGES.forEach(page => {
     const pagePath = path.join(repoPath, page);
-    if (!fs.existsSync(pagePath)) {
-      const title = page.replace('.html', '').charAt(0).toUpperCase() + page.replace('.html', '').slice(1);
-      const content = `<!DOCTYPE html><html><head><title>${title} - ${repoName}</title><meta charset="UTF-8"></head><body><h1>${title}</h1><p><a href="/">Home</a> | <a href="blog/index.html">Blog</a></p></body></html>`;
-      fs.writeFileSync(pagePath, content);
-      console.log(`📄 Created missing static page: ${pagePath}`);
+    // If file does not exist OR it's the old minimal version (contains only <h1> and <p><a href="/">Home</a>)
+    let shouldOverwrite = false;
+    if (fs.existsSync(pagePath)) {
+      const existing = fs.readFileSync(pagePath, 'utf8');
+      // Detect minimal version: very short, no meta tags, only basic structure
+      if (existing.includes('<title>') && existing.includes('</title>') && !existing.includes('og:title')) {
+        shouldOverwrite = true;
+      }
+    } else {
+      shouldOverwrite = true;
+    }
+
+    if (shouldOverwrite) {
+      const richHtml = generateRichStaticPage(page, repoName);
+      fs.writeFileSync(pagePath, richHtml);
+      console.log(`📄 Generated/Updated rich static page: ${pagePath}`);
+    } else {
+      console.log(`✅ Preserved existing rich page: ${pagePath}`);
     }
   });
 }
@@ -391,7 +529,6 @@ async function processRepo(repo) {
   <meta name="twitter:image" content="${imageUrl}">
   ${schema}
   <style>
-    /* Advanced CSS: gradient, smooth scroll, card hover effects */
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family: system-ui, 'Inter', sans-serif; background: linear-gradient(145deg, #f9fafc 0%, #f0f4f9 100%); color: #1a2c3e; line-height: 1.6; padding: 20px; scroll-behavior: smooth; }
     .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 32px; box-shadow: 0 25px 45px -12px rgba(0,0,0,0.2); overflow: hidden; transition: transform 0.2s; }
