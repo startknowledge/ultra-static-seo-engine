@@ -307,7 +307,7 @@ async function submitToGoogleIndexing(url) {
   // Real implementation would use google-auth-library and Indexing API.
 }
 
-// ========== OTHER HELPER FUNCTIONS (unchanged from before) ==========
+// ========== OTHER HELPER FUNCTIONS ==========
 async function prepareRepo(repoName, repoUrl) {
   const repoPath = path.join(TEMP_DIR, repoName);
   if (fs.existsSync(repoPath)) {
@@ -374,7 +374,8 @@ function updateSitemap(repoPath, repoName, newUrl, lastmod) {
   fs.writeFileSync(sitemapPath, sitemap);
 }
 
-function generateNavLinks(currentRepo) {
+// ========== GENERATE NAVIGATION LINKS (static pages + home + blog) ==========
+function generateNavLinks() {
   let links = `<li><a href="/">Home</a></li><li><a href="blog/index.html">Blog</a></li>`;
   for (const page of STATIC_PAGES) {
     const name = page.replace('.html', '');
@@ -384,12 +385,254 @@ function generateNavLinks(currentRepo) {
   return links;
 }
 
+// ========== GENERATE FOOTER LINKS ==========
+function generateFooterLinks() {
+  let links = `<a href="/">Home</a><a href="blog/index.html">Blog</a>`;
+  for (const page of STATIC_PAGES) {
+    const name = page.replace('.html', '');
+    const displayName = name.charAt(0).toUpperCase() + name.slice(1);
+    links += `<a href="/${page}">${displayName}</a>`;
+  }
+  return links;
+}
+
+// ========== GENERATE RICH STATIC PAGE (modern, full navigation, repo‑specific content) ==========
+function generateRichStaticPage(page, repoName) {
+  const pageName = page.replace('.html', '');
+  const displayTitle = pageName.charAt(0).toUpperCase() + pageName.slice(1);
+  const description = `${displayTitle} page of ${repoName} – learn more about our services, policies, and information.`;
+  const canonicalUrl = `https://${repoName}.startknowledge.in/${page}`;
+  const imageUrl = `https://source.unsplash.com/800x400/?${encodeURIComponent(displayTitle)}`;
+  const currentDate = new Date().toISOString().split('T')[0];
+
+  // Generate meaningful content based on page type and repo name
+  let contentHtml = '';
+  switch (pageName) {
+    case 'about':
+      contentHtml = `<p>${repoName} is a cutting‑edge platform powered by an advanced AI SEO automation engine. We generate high‑quality content, programmatic pages, and automated tools to help you scale your online presence.</p>
+<p>Our mission is to make SEO accessible and efficient through automation, leveraging the latest AI models and Google Trends data.</p>
+<p>We believe in transparent, data‑driven strategies that deliver real results. Our team is dedicated to continuous improvement and innovation.</p>`;
+      break;
+    case 'contact':
+      contentHtml = `<p>You can reach us via email at <a href="mailto:contact@${repoName}.startknowledge.in">contact@${repoName}.startknowledge.in</a>.</p>
+<p>For business inquiries, partnership opportunities, or technical support, please use the contact form (coming soon). We aim to respond within 24 hours.</p>`;
+      break;
+    case 'privacy':
+      contentHtml = `<p>We respect your privacy. This website does not collect personal data unless explicitly provided by you. Any data collected is used solely for improving our services.</p>
+<p>We use cookies to enhance user experience. You can disable cookies in your browser settings.</p>
+<p>For any privacy concerns, please contact us at the email above.</p>`;
+      break;
+    case 'terms':
+      contentHtml = `<p>By using this website, you agree to our terms of service. All content is for informational purposes only. We are not liable for any damages resulting from the use of this site.</p>
+<p>You may not reproduce, distribute, or exploit any content without prior written consent.</p>`;
+      break;
+    case 'faq':
+      contentHtml = `<p><strong>Q: How often is content updated?</strong><br>A: New blog posts are generated automatically every few hours based on Google Trends.</p>
+<p><strong>Q: Can I contribute?</strong><br>A: Currently, all content is AI‑generated. For suggestions, please contact us.</p>
+<p><strong>Q: Are the tools free?</strong><br>A: Yes, all calculators and tools on ${repoName} are completely free to use.</p>`;
+      break;
+    case 'disclaimer':
+      contentHtml = `<p>The information provided on this website is for general informational purposes only. We make no representations or warranties of any kind about the completeness, accuracy, reliability, or suitability of the information.</p>
+<p>Any reliance you place on such information is strictly at your own risk.</p>`;
+      break;
+    case 'cookies':
+      contentHtml = `<p>This site uses cookies to improve your experience. By continuing to browse, you agree to our use of cookies.</p>
+<p>Cookies are small text files stored on your device. They help us understand how visitors interact with our site.</p>`;
+      break;
+    case 'support':
+      contentHtml = `<p>For technical support, please email <a href="mailto:support@${repoName}.startknowledge.in">support@${repoName}.startknowledge.in</a>. We aim to respond within 24 hours.</p>
+<p>You can also refer to our <a href="/documentation.html">documentation</a> for common issues.</p>`;
+      break;
+    case 'documentation':
+      contentHtml = `<p>Our automation system is built on Node.js and uses Groq AI, Google News RSS, and GitHub Actions. For developer documentation, please refer to the project repository.</p>
+<p>Key components: blog generation, sitemap updates, static page creation, multi‑AI fallback, and money pages.</p>`;
+      break;
+    case 'changelog':
+      contentHtml = `<p><strong>Latest updates:</strong></p>
+<ul>
+<li>April 2026: Added multi‑language support (EN, ES, DE, FR, HI).</li>
+<li>March 2026: Introduced auto money pages and comparison tables.</li>
+<li>February 2026: Improved AI fallback with Ollama support.</li>
+</ul>`;
+      break;
+    default:
+      contentHtml = `<p>This page provides information about ${displayTitle} for ${repoName}. Please check back for updates.</p>`;
+  }
+
+  const navLinks = generateNavLinks();
+  const footerLinks = generateFooterLinks();
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>${displayTitle} | ${repoName}</title>
+  <meta name="description" content="${description}">
+  <meta name="keywords" content="${displayTitle.toLowerCase()}, ${repoName}, information, policies">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="googlebot" content="index, follow">
+  <meta http-equiv="content-language" content="en-IN">
+  <meta name="geo.region" content="IN">
+  <meta name="theme-color" content="#6c5ce7">
+  <link rel="canonical" href="${canonicalUrl}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="${canonicalUrl}">
+  <meta property="og:title" content="${displayTitle} | ${repoName}">
+  <meta property="og:description" content="${description}">
+  <meta property="og:image" content="${imageUrl}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${displayTitle} | ${repoName}">
+  <meta name="twitter:description" content="${description}">
+  <meta name="twitter:image" content="${imageUrl}">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": "${canonicalUrl}#webpage",
+        "url": "${canonicalUrl}",
+        "name": "${displayTitle}",
+        "description": "${description}",
+        "inLanguage": "en-IN",
+        "publisher": {
+          "@type": "Organization",
+          "name": "${repoName}",
+          "url": "https://${repoName}.startknowledge.in"
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "${canonicalUrl}#breadcrumb",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": { "@id": "https://${repoName}.startknowledge.in/" } },
+          { "@type": "ListItem", "position": 2, "name": "${displayTitle}", "item": { "@id": "${canonicalUrl}" } }
+        ]
+      }
+    ]
+  }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* Modern CSS – same as blog index */
+    :root {
+      --primary: #6c5ce7;
+      --primary-dark: #5a4bcf;
+      --secondary: #00cec9;
+      --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --glass-bg: rgba(255, 255, 255, 0.9);
+      --glass-border: rgba(255, 255, 255, 0.3);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      line-height: 1.6;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: var(--glass-bg);
+      backdrop-filter: blur(8px);
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 25px 45px -12px rgba(0,0,0,0.2);
+      border: 1px solid var(--glass-border);
+    }
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      list-style: none;
+      padding: 20px 32px;
+      background: rgba(255,255,255,0.7);
+      border-bottom: 1px solid rgba(108,92,231,0.2);
+    }
+    .nav-links a {
+      text-decoration: none;
+      font-weight: 500;
+      color: #334155;
+      transition: 0.3s;
+    }
+    .nav-links a:hover { color: var(--primary); }
+    main { padding: 40px; }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      background: var(--gradient-1);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    img {
+      max-width: 100%;
+      border-radius: 20px;
+      margin: 20px 0;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    p { margin-bottom: 1.2rem; color: #475569; }
+    a { color: var(--primary); text-decoration: none; border-bottom: 1px solid transparent; transition: 0.2s; }
+    a:hover { border-bottom-color: var(--primary); }
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+      background: #f1f5f9;
+      border-top: 1px solid #e2e8f0;
+    }
+    .footer-links a { color: #64748b; font-size: 0.9rem; border-bottom: none; }
+    .footer-links a:hover { color: var(--primary); }
+    footer p { text-align: center; padding: 20px; margin: 0; color: #64748b; }
+    @media (max-width: 700px) { main { padding: 20px; } h1 { font-size: 1.8rem; } .nav-links { justify-content: center; } }
+  </style>
+</head>
+<body>
+<div class="container">
+  <ul class="nav-links">
+    ${navLinks}
+  </ul>
+  <main>
+    <h1>${displayTitle}</h1>
+    <img src="${imageUrl}" alt="${displayTitle}" loading="lazy">
+    ${contentHtml}
+  </main>
+  <div class="footer-links">
+    ${footerLinks}
+  </div>
+  <footer>
+    <p>© ${new Date().getFullYear()} ${repoName} | <a href="/">Home</a> | <a href="blog/index.html">Blog</a></p>
+  </footer>
+</div>
+</body>
+</html>`;
+}
+
+// ========== ENSURE STATIC PAGES (overwrites minimal versions) ==========
+function ensureStaticPages(repoPath, repoName) {
+  STATIC_PAGES.forEach(page => {
+    const pagePath = path.join(repoPath, page);
+    // Always generate rich version (overwrites old minimal pages)
+    const richHtml = generateRichStaticPage(page, repoName);
+    fs.writeFileSync(pagePath, injectAdsAndAnalytics(richHtml));
+    console.log(`📄 Generated/Updated rich static page: ${pagePath}`);
+  });
+}
+
+// ========== UPDATE BLOG INDEX (posts.json + navigation) ==========
 async function updatePostsJsonAndIndex(repoPath, repoName, newBlogs) {
   const blogDir = path.join(repoPath, 'blog');
   const postsJsonPath = path.join(blogDir, 'posts.json');
   const indexPath = path.join(blogDir, 'index.html');
   const templatePath = path.join(__dirname, '..', 'templates', 'blog-index.html');
 
+  // Build posts.json incrementally
   const files = fs.readdirSync(blogDir);
   const htmlFiles = files.filter(f => f.endsWith('.html') && f !== 'index.html');
   const postsMap = new Map();
@@ -410,57 +653,39 @@ async function updatePostsJsonAndIndex(repoPath, repoName, newBlogs) {
     let dateMatch = content.match(/\d{1,2}\/\d{1,2}\/\d{4}/);
     let date = dateMatch ? dateMatch[0] : new Date().toLocaleDateString();
     const url = file;
-    if (!postsMap.has(url)) postsMap.set(url, { title, url, image, excerpt: excerpt + '...', date });
+    if (!postsMap.has(url)) {
+      postsMap.set(url, { title, url, image, excerpt: excerpt + '...', date });
+    }
   }
-  for (const blog of newBlogs) if (!postsMap.has(blog.url)) postsMap.set(blog.url, blog);
+  for (const blog of newBlogs) {
+    if (!postsMap.has(blog.url)) postsMap.set(blog.url, blog);
+  }
   const allPosts = Array.from(postsMap.values());
   fs.writeFileSync(postsJsonPath, JSON.stringify(allPosts, null, 2));
+  console.log(`📄 Updated posts.json (${allPosts.length} total posts)`);
 
-  if (!fs.existsSync(indexPath) && fs.existsSync(templatePath)) fs.copyFileSync(templatePath, indexPath);
-  if (fs.existsSync(indexPath)) {
-    let indexContent = fs.readFileSync(indexPath, 'utf8');
-    const newNavLinks = generateNavLinks(repoName);
-    indexContent = indexContent.replace(/(<ul class="nav-links">)([\s\S]*?)(<\/ul>)/, `$1${newNavLinks}$3`);
-    fs.writeFileSync(indexPath, injectAdsAndAnalytics(indexContent));
+  // Ensure blog/index.html exists (copy template if missing)
+  if (!fs.existsSync(indexPath) && fs.existsSync(templatePath)) {
+    fs.copyFileSync(templatePath, indexPath);
+    console.log(`📄 Copied blog index template to ${indexPath}`);
   }
-}
+  if (!fs.existsSync(indexPath)) {
+    console.warn(`⚠️ No template and no existing index for ${repoName}`);
+    return;
+  }
 
-function generateRichStaticPage(page, repoName) {
-  const title = page.replace('.html', '');
-  const displayTitle = title.charAt(0).toUpperCase() + title.slice(1);
-  const description = `Learn more about ${repoName} – ${displayTitle.toLowerCase()} page.`;
-  const imageUrl = `https://source.unsplash.com/800x400/?${encodeURIComponent(displayTitle)}`;
-  let contentHtml = `<p>This page provides information about ${displayTitle} for ${repoName}. Please check back for updates.</p>`;
-  if (title === 'about') contentHtml = `<p>${repoName} is a cutting‑edge platform powered by an advanced AI SEO automation engine.</p>`;
-  if (title === 'contact') contentHtml = `<p>Email: <a href="mailto:contact@${repoName}.startknowledge.in">contact@${repoName}.startknowledge.in</a></p>`;
-  if (title === 'privacy') contentHtml = `<p>We respect your privacy. No personal data is collected unless provided voluntarily.</p>`;
-  // ... similar for others
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><title>${displayTitle} | ${repoName}</title>
-<meta name="description" content="${description}">
-<link rel="canonical" href="https://${repoName}.startknowledge.in/${page}">
-<meta property="og:title" content="${displayTitle}">
-<meta property="og:image" content="${imageUrl}">
-<style>/* same as blog style */</style>
-</head>
-<body><ul class="nav-links">${generateNavLinks(repoName)}</ul>
-<main><h1>${displayTitle}</h1><img src="${imageUrl}" alt="${displayTitle}">${contentHtml}</main>
-<footer><p>© ${new Date().getFullYear()} ${repoName}</p></footer>
-</body>
-</html>`;
-}
-
-function ensureStaticPages(repoPath, repoName) {
-  STATIC_PAGES.forEach(page => {
-    const pagePath = path.join(repoPath, page);
-    if (!fs.existsSync(pagePath) || fs.readFileSync(pagePath, 'utf8').includes('<h1>') && !fs.readFileSync(pagePath, 'utf8').includes('og:title')) {
-      const richHtml = generateRichStaticPage(page, repoName);
-      fs.writeFileSync(pagePath, injectAdsAndAnalytics(richHtml));
-      console.log(`📄 Generated rich static page: ${pagePath}`);
-    }
-  });
+  // Update navigation links inside blog/index.html
+  let indexContent = fs.readFileSync(indexPath, 'utf8');
+  const newNavLinks = generateNavLinks();
+  // Replace the nav-links ul content
+  const navRegex = /(<ul class="nav-links">)([\s\S]*?)(<\/ul>)/;
+  if (navRegex.test(indexContent)) {
+    indexContent = indexContent.replace(navRegex, `$1${newNavLinks}$3`);
+    fs.writeFileSync(indexPath, injectAdsAndAnalytics(indexContent));
+    console.log(`🔄 Updated navigation links in ${indexPath}`);
+  } else {
+    console.warn(`⚠️ Could not find nav-links ul in ${indexPath}`);
+  }
 }
 
 // ========== PROCESS SINGLE REPO ==========
