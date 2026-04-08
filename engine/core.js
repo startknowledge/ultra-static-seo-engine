@@ -322,10 +322,45 @@ async function prepareRepo(repoName, repoUrl) {
   return repoPath;
 }
 
+// ========== ENHANCED KEYWORD FETCHING WITH MOTIONIX FALLBACK ==========
+// Predefined list of animation‑related keywords for Motionix (derived from user's mapping)
+const MOTIONIX_KEYWORDS = [
+  "web animation tool", "css animation generator", "motion UI", "interactive animation", "frontend animation",
+  "GSAP animation", "javascript animation library", "timeline animation", "scroll animation", "high performance animation",
+  "react animation library", "framer motion effects", "ui animation react", "spring animation", "gesture animation",
+  "lottie animations", "json animation", "after effects export", "lightweight animation", "mobile animation",
+  "3d web animation", "three.js animation", "webgl motion", "interactive 3d", "3d ui animation",
+  "scroll animation library", "parallax scrolling", "scroll trigger animation", "interactive scroll", "web storytelling",
+  "anime.js animation", "javascript motion library", "lightweight animation js", "timeline animation js", "svg animation",
+  "motion graphics library", "burst animation", "shape animation", "creative animation js", "interactive effects",
+  "rive animation tool", "interactive animation design", "real time animation", "ui animation engine", "cross platform animation",
+  "velocity animation", "fast dom animation", "jquery animation alternative", "high performance js animation", "ui transitions",
+  "functional animation library", "physics based animation", "motion engine", "gesture driven animation", "react animation base",
+  "page transition library", "smooth navigation animation", "spa transitions", "ajax page animation", "seamless ux",
+  "smooth scroll library", "scroll animation effects", "parallax engine", "scroll ux enhancement", "web interaction",
+  "motion one library", "web animations api wrapper", "lightweight motion library", "fast animation js", "modern animation",
+  "svg drawing animation", "line animation svg", "stroke animation", "svg interaction", "path animation",
+  "hover animation effects", "css hover library", "interactive hover ui", "button hover animation", "micro interactions",
+  "3d tilt effect", "mouse interaction ui", "parallax tilt", "card hover effect", "interactive perspective",
+  "particles animation", "background animation", "canvas particles", "interactive particles", "visual effects js",
+  "2d web rendering", "webgl animation engine", "high performance graphics", "game animation js", "canvas rendering",
+  "scroll reveal animation", "fade in on scroll", "viewport animation", "simple scroll effects", "ui animation",
+  "scroll animation wow", "css animation trigger", "animate on scroll", "frontend animation helper", "ux animation",
+  "animate on scroll library", "scroll animation css", "fade animation scroll", "lightweight animation", "frontend effects",
+  "slider animation library", "carousel motion", "touch slider", "responsive slider", "ui animation component",
+  "slider library", "carousel animation", "lightweight slider", "touch interaction", "ui component animation",
+  "swiper js slider", "touch slider animation", "mobile carousel", "interactive slider", "frontend motion",
+  "full page scroll animation", "section scroll effect", "landing page animation", "smooth navigation", "ux scrolling",
+  "typing animation", "text animation effect", "typewriter effect js", "interactive text", "ui micro animation"
+];
+
 async function getTrendingKeywords(seed, repoName) {
+  // Special case for ultra-static-seo-engine
   if (repoName === 'ultra-static-seo-engine') {
     return ['AI content generation', 'programmatic SEO best practices', 'Google Indexing API tutorial', 'semantic SEO strategies 2026', 'E-E-A-T signals for ranking', 'multi-language SEO automation'];
   }
+  
+  // Try Google News RSS first
   const url = `https://news.google.com/rss/search?q=${encodeURIComponent(seed)}&hl=en-US&gl=US&ceid=US:en`;
   try {
     const feed = await parser.parseURL(url);
@@ -333,14 +368,55 @@ async function getTrendingKeywords(seed, repoName) {
     for (const item of feed.items) {
       let title = item.title;
       title = title.replace(/\s*[–—-]\s*.*$/, '').replace(/\s*\|\s*.*$/, '').trim();
-      if (title.length > 10 && !keywords.includes(title)) keywords.push(title);
+      if (title.length > 10 && !keywords.includes(title)) {
+        keywords.push(title);
+      }
       if (keywords.length >= 6) break;
     }
     if (keywords.length === 0) throw new Error('No news');
     return keywords;
   } catch (e) {
-    console.error(`❌ No keywords for ${seed}`);
-    throw new Error(`No keywords`);
+    console.warn(`⚠️ Google News RSS failed for "${seed}", using fallback keywords.`);
+    
+    // Try India Trends RSS
+  const trendsUrl = `https://trends.google.com/trends/trendingsearches/daily/rss?geo=IN`;
+  try {
+    const trendsFeed = await parser.parseURL(trendsUrl);
+    const keywords = [];
+    for (const item of trendsFeed.items) {
+      let title = item.title;
+      title = title.replace(/\s*[–—-]\s*.*$/, '').replace(/\s*\|\s*.*$/, '').trim();
+      if (title.length > 10 && !keywords.includes(title)) {
+        keywords.push(title);
+      }
+      if (keywords.length >= 6) break;
+    }
+    if (keywords.length > 0) return keywords;
+  } catch (trendsErr) {
+    console.warn(`⚠️ India Trends RSS also failed.`);
+  }
+    // If repo is Motionix, return rich animation‑related keywords
+    if (repoName.toLowerCase() === 'motionix') {
+      console.log(`🎨 Using Motionix‑specific keyword set (${MOTIONIX_KEYWORDS.length} options).`);
+      // Return a shuffled slice of 6 unique keywords
+      const shuffled = [...MOTIONIX_KEYWORDS];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled.slice(0, 6);
+    }
+    
+    // Generic fallback for other repos
+    const fallback = [
+      `${seed} strategies`,
+      `best ${seed} tools`,
+      `how to ${seed}`,
+      `${seed} for beginners`,
+      `advanced ${seed}`,
+      `${seed} trends ${new Date().getFullYear()}`
+    ];
+    return fallback;
   }
 }
 
