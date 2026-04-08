@@ -665,15 +665,9 @@ export default {
     document.getElementById('f8Title').innerText = t.f8Title; document.getElementById('f8Desc').innerText = t.f8Desc;
     document.getElementById('f9Title').innerText = t.f9Title; document.getElementById('f9Desc').innerText = t.f9Desc;
     document.getElementById('blogTitle').innerText = t.blogTitle;
-    /*document.getElementById('footerText').innerHTML = `<div class="container">
-      <p>${t.footer}</p>
-      <p style="margin-top:12px;"><i class="fas fa-check-circle"></i> 
-        Semantic E‑E‑A‑T ready · Auto refresh · Social auto‑posting · Multi-language (EN/ES/DE/FR/HI)</p></div>`;
-    document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));*/
-    document.getElementById('footerCopyright').innerText = t.footer;// or a separate translation key
-    document.getElementById('footerTagline').innerHTML = `<i class="fas fa-check-circle"></i> ${t.footer.split('·').slice(1).join('·')}`; // extract the tagline part
+    document.getElementById('footerCopyright').innerText = t.footer;
+    document.getElementById('footerTagline').innerHTML = `<i class="fas fa-check-circle"></i> ${t.footer.split('·').slice(1).join('·')}`;
     document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));
-        
   }
   document.querySelectorAll('.lang-btn').forEach(btn => btn.addEventListener('click', () => setLanguage(btn.dataset.lang)));
   setLanguage('en');
@@ -681,10 +675,17 @@ export default {
   // Dynamic blog loading from posts.json (fixed image fallback)
   async function loadBlogPosts() {
     const grid = document.getElementById('blogGrid');
+    if (!grid) {
+      console.error('Blog grid element not found');
+      return;
+    }
     try {
+      console.log('Fetching posts.json...');
       const res = await fetch('posts.json');
-      if (!res.ok) throw new Error();
+      console.log('Response status:', res.status);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const posts = await res.json();
+      console.log('Posts loaded:', posts.length);
       if (!posts.length) {
         grid.innerHTML = '<div style="text-align:center;grid-column:span 3;">No blog posts yet. Check back soon!</div>';
         return;
@@ -702,6 +703,7 @@ export default {
         </article>
       `).join('');
     } catch (err) {
+      console.error('Error loading posts:', err);
       grid.innerHTML = '<div style="text-align:center;grid-column:span 3;">Unable to load posts. Please try again later.</div>';
     }
   }
