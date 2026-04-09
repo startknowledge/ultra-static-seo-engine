@@ -29,7 +29,9 @@ const REPOS_WITH_URL = REPOS.map(repo => ({
   url: `https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/${repo.name}.git`
 }));
 
-const STATIC_PAGES = ['about.html', 'contact.html', 'privacy.html', 'terms.html', 'faq.html', 'disclaimer.html', 'cookies.html', 'support.html', 'documentation.html', 'changelog.html'];
+const STATIC_PAGES = ['about.html', 'contact.html', 'privacy.html', 'terms.html', 
+  'faq.html', 'disclaimer.html', 'cookies.html', 'support.html', 
+  'documentation.html', 'changelog.html'];
 
 // ========== ADSENSE & ANALYTICS CONFIG ==========
 const ADSENSE_CLIENT = 'ca-pub-2162324894765763';
@@ -452,7 +454,8 @@ function updateSitemap(repoPath, repoName, newUrl, lastmod) {
 
 // ========== GENERATE NAVIGATION LINKS (static pages + home + blog) ==========
 function generateNavLinks() {
-  let links = `<li><a href="/">Home</a></li><li><a href="blog/index.html">Blog</a></li>`;
+  let links = `<li><a href="/">Home</a></li>
+  <li><a href="blog/index.html">Blog</a></li>`;
   for (const page of STATIC_PAGES) {
     const name = page.replace('.html', '');
     const displayName = name.charAt(0).toUpperCase() + name.slice(1);
@@ -702,22 +705,26 @@ function ensureStaticPages(repoPath, repoName) {
 }
 
 // ========== UPDATE BLOG INDEX (posts.json + navigation) ==========
-async function updatePostsJsonAndIndex(repoPath, repoName, newBlogs) {
+async function updatePostsJsonAndIndex(repoPath, repoName, newBlogs = []) {
   const blogDir = path.join(repoPath, 'blog');
   const postsJsonPath = path.join(blogDir, 'posts.json');
   const indexPath = path.join(blogDir, 'index.html');
   const templatePath = path.join(__dirname, '..', 'templates', 'blog-index.html');
 
-  // Build posts.json incrementally
+  // 1. Always scan the blog folder and rebuild posts.json from all HTML files
   const files = fs.readdirSync(blogDir);
   const htmlFiles = files.filter(f => f.endsWith('.html') && f !== 'index.html');
   const postsMap = new Map();
+
+  // Read existing posts.json if present (to preserve any extra fields)
   if (fs.existsSync(postsJsonPath)) {
     try {
       const existing = JSON.parse(fs.readFileSync(postsJsonPath, 'utf8'));
       existing.forEach(post => postsMap.set(post.url, post));
     } catch(e) {}
   }
+
+  // Scan all HTML blog files and extract metadata
   for (const file of htmlFiles) {
     const filePath = path.join(blogDir, file);
     const content = fs.readFileSync(filePath, 'utf8');
@@ -733,14 +740,17 @@ async function updatePostsJsonAndIndex(repoPath, repoName, newBlogs) {
       postsMap.set(url, { title, url, image, excerpt: excerpt + '...', date });
     }
   }
+
+  // Add any newly generated blogs (they are already in newBlogs)
   for (const blog of newBlogs) {
     if (!postsMap.has(blog.url)) postsMap.set(blog.url, blog);
   }
+
   const allPosts = Array.from(postsMap.values());
   fs.writeFileSync(postsJsonPath, JSON.stringify(allPosts, null, 2));
   console.log(`📄 Updated posts.json (${allPosts.length} total posts)`);
 
-  // Ensure blog/index.html exists (copy template if missing)
+  // 2. Ensure blog/index.html exists (copy template only if missing)
   if (!fs.existsSync(indexPath) && fs.existsSync(templatePath)) {
     fs.copyFileSync(templatePath, indexPath);
     console.log(`📄 Copied blog index template to ${indexPath}`);
@@ -750,10 +760,9 @@ async function updatePostsJsonAndIndex(repoPath, repoName, newBlogs) {
     return;
   }
 
-  // Update navigation links inside blog/index.html
+  // 3. Update navigation links inside blog/index.html (safe, even if file already existed)
   let indexContent = fs.readFileSync(indexPath, 'utf8');
   const newNavLinks = generateNavLinks();
-  // Replace the nav-links ul content
   const navRegex = /(<ul class="nav-links">)([\s\S]*?)(<\/ul>)/;
   if (navRegex.test(indexContent)) {
     indexContent = indexContent.replace(navRegex, `$1${newNavLinks}$3`);
@@ -803,8 +812,9 @@ async function processRepo(repo) {
     const imageUrl = `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/1200/630`;
     const publishDate = new Date().toISOString().split('T')[0];
     const schema = generateSchema(kw, repo.name, slug, imageUrl, publishDate);
-    const metaDesc = `Complete guide to ${kw}. Learn actionable strategies, avoid common mistakes, and master ${kw} in 2026.`;
-    
+    const metaDesc = `Complete guide to ${kw}. Learn actionable strategies, 
+    avoid common mistakes, and master ${kw} in 2026.`;
+
     let html = `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><title>${kw} | ${repo.name}</title>
@@ -813,7 +823,7 @@ async function processRepo(repo) {
 <meta property="og:title" content="${kw} | ${repo.name}">
 <meta property="og:image" content="${imageUrl}">
 ${schema}
-<style>/* advanced CSS (same as before) */</style>
+<style>/* advanced CSS */</style>
 </head>
 <body>
 <div class="container">
@@ -830,22 +840,22 @@ ${schema}
     await delay(2000);
   }
 
-  if (blogs.length) {
-    await updatePostsJsonAndIndex(repoPath, repo.name, blogs);
-    await fixBrokenLinks(repoPath, repo.name); // auto detect & fix 404s
-    const git = simpleGit(repoPath);
-    await git.addConfig('user.name', 'seo-bot', false, 'local');
-    await git.addConfig('user.email', 'bot@seo.com', false, 'local');
-    await git.add('.');
-    const status = await git.status();
-    if (status.files.length > 0) {
-      await git.commit('🤖 Auto-generate SEO blogs + money pages + ads + 404 fix');
-      const branchSummary = await git.branch();
-      await git.push('origin', branchSummary.current);
-      console.log(`✅ Pushed updates to ${repo.name}`);
-    } else {
-      console.log(`📭 No changes to commit for ${repo.name}`);
-    }
+  // ALWAYS update posts.json and blog index, even if no new blogs were generated
+  await updatePostsJsonAndIndex(repoPath, repo.name, blogs);
+  await fixBrokenLinks(repoPath, repo.name);
+
+  const git = simpleGit(repoPath);
+  await git.addConfig('user.name', 'seo-bot', false, 'local');
+  await git.addConfig('user.email', 'bot@seo.com', false, 'local');
+  await git.add('.');
+  const status = await git.status();
+  if (status.files.length > 0) {
+    await git.commit('🤖 Auto-generate SEO blogs + money pages + ads + 404 fix');
+    const branchSummary = await git.branch();
+    await git.push('origin', branchSummary.current);
+    console.log(`✅ Pushed updates to ${repo.name}`);
+  } else {
+    console.log(`📭 No changes to commit for ${repo.name}`);
   }
   console.log(`✅ Completed ${repo.name} | ${blogs.length} blogs`);
 }
