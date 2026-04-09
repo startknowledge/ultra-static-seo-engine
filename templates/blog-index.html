@@ -671,9 +671,8 @@ export default {
   }
   document.querySelectorAll('.lang-btn').forEach(btn => btn.addEventListener('click', () => setLanguage(btn.dataset.lang)));
   setLanguage('en');
-  
-  // Dynamic blog loading from posts.json (fixed image fallback)
-    // Improved blog loader with retry and timeout
+
+  // ========== IMPROVED BLOG LOADER (with cache busting & retry) ==========
   async function loadBlogPosts(retries = 3, delayMs = 1000) {
     const grid = document.getElementById('blogGrid');
     if (!grid) {
@@ -682,8 +681,10 @@ export default {
     }
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        console.log(`Fetching posts.json (attempt ${attempt})...`);
-        const res = await fetch('posts.json?v=' + Date.now()); // cache bust
+        // Add timestamp to force fresh fetch (bypass cache)
+        const url = `posts.json?v=${Date.now()}`;
+        console.log(`Fetching ${url} (attempt ${attempt})`);
+        const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const posts = await res.json();
         if (!Array.isArray(posts)) throw new Error('Invalid JSON');
