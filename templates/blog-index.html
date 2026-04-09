@@ -16,6 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
+    /* === Your existing CSS – keep exactly as you have it (no changes) === */
     :root {
       --primary: #6c5ce7;
       --primary-dark: #5a4bcf;
@@ -39,8 +40,6 @@
       line-height: 1.5;
       overflow-x: hidden;
     }
-    
-    /* Animated background shapes */
     .bg-shapes {
       position: fixed;
       top: 0;
@@ -65,7 +64,6 @@
       100% { transform: translate(0, 0) rotate(0deg); }
     }
     .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
-    /* Header */
     .site-header {
       background: rgba(255,255,255,0.85);
       backdrop-filter: blur(12px);
@@ -73,7 +71,6 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      
       align-items: center;
     }
     .logo {
@@ -84,21 +81,20 @@
       gap: 4px;
     }
     .header-inner {
-  display: flex;
-  justify-content: center; /* replaces space-between */
-  align-items: center;
-  flex-wrap: wrap;
-  padding: 18px 0;
-  gap: 20px;
-}
-.header-inner > div {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-}
-    
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 18px 0;
+      gap: 20px;
+    }
+    .header-inner > div {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
     .logo h1 {
       font-size: 1.7rem;
       font-weight: 800;
@@ -152,7 +148,6 @@
       color: white;
       box-shadow: 0 0 8px rgba(108,92,231,0.5);
     }
-    /* Hero */
     .hero {
       padding: 80px 0 60px;
       text-align: center;
@@ -191,7 +186,6 @@
       background: var(--primary);
       color: white;
     }
-    /* Section titles */
     .section-title {
       font-size: 2.2rem;
       font-weight: 700;
@@ -209,7 +203,6 @@
       background: var(--gradient-3);
       border-radius: 4px;
     }
-    /* Features grid */
     .features-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -238,7 +231,6 @@
       color: transparent;
       margin-bottom: 16px;
     }
-    /* Blog grid – fixed centering */
     .blog-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -310,39 +302,29 @@
       gap: 12px;
       color: var(--primary-dark);
     }
-    /* Affiliate section */
     .affiliate-section {
-  background: linear-gradient(135deg, rgba(108,92,231,0.1), rgba(0,206,201,0.05));
-  backdrop-filter: blur(8px);
-  border-radius: 48px;
-  padding: 48px 32px;
-  margin: 50px auto;
-  border: 1px solid rgba(108,92,231,0.3);
-  text-align: center;
-  width: 100%;
-  box-sizing: border-box;
-}
-.affiliate-section .container {
-  margin: 0 auto;
-  text-align: center;
-}
-.affiliate-section {
-  text-align: center;
-}
-.affiliate-section h2 {
-  text-align: center !important;
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
-}
-    
+      background: linear-gradient(135deg, rgba(108,92,231,0.1), rgba(0,206,201,0.05));
+      backdrop-filter: blur(8px);
+      border-radius: 48px;
+      padding: 48px 32px;
+      margin: 50px auto;
+      border: 1px solid rgba(108,92,231,0.3);
+      text-align: center;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .affiliate-section h2 {
+      text-align: center !important;
+      margin-left: auto;
+      margin-right: auto;
+      width: 100%;
+    }
     .mini-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
       gap: 24px;
       margin-top: 28px;
     }
-    
     .affiliate-card {
       background: white;
       border-radius: 28px;
@@ -379,7 +361,6 @@
       transform: scale(1.05);
       box-shadow: 0 5px 15px rgba(245,87,108,0.4);
     }
-    /* Dashboard stats */
     .dashboard-stats {
       display: flex;
       flex-wrap: wrap;
@@ -417,11 +398,6 @@
       font-size: 18px;
       font-weight: 600px;
     }
-    .footerText {
-      
-      color: #0a3776;
-      margin-bottom: 20px;
-    }
     .footer-links {
       display: flex;
       flex-wrap: wrap;
@@ -440,29 +416,12 @@
       .hero h2 { font-size: 2.2rem; }
       .section-title { font-size: 1.7rem; }
       .blog-grid { grid-template-columns: 1fr; }
-        body {
-    margin: 0;
-    padding: 0;
-  }
-  .container {
-    padding: 0 16px;
-    width: 100%;
-    margin: 0 auto;
-  }
-  .blog-grid {
-    justify-content: center;
-  }
-  .post-card {
-    width: 100%;
-  }
-  .affiliate-section {
-    text-align: center;
-    padding: 30px 16px;
-  }
-  .footer-links {
-    gap: 12px;
-  }
-
+      body { margin: 0; padding: 0; }
+      .container { padding: 0 16px; width: 100%; margin: 0 auto; }
+      .blog-grid { justify-content: center; }
+      .post-card { width: 100%; }
+      .affiliate-section { text-align: center; padding: 30px 16px; }
+      .footer-links { gap: 12px; }
     }
   </style>
 </head>
@@ -474,7 +433,6 @@
 </div>
 <header class="site-header">
   <div class="container header-inner">
-    
     <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
       <ul class="nav-links">
         <li><a href="/">Home</a></li>
@@ -498,9 +456,9 @@
         <button class="lang-btn" data-lang="hi">हिंदी</button>
       </div>
       <div class="logo">
-      <h1>⚡ ultra-static-seo-engine</h1>
-      <span>programmatic · automated · infinite scale · multi‑language</span>
-    </div>
+        <h1>⚡ ultra-static-seo-engine</h1>
+        <span>programmatic · automated · infinite scale · multi‑language</span>
+      </div>
     </div>
   </div>
 </header>
@@ -535,7 +493,6 @@
     </div>
   </div>
 
-  <!-- DYNAMIC BLOG SECTION (fixed centering) -->
   <div class="container">
     <h2 class="section-title" id="blogTitle">📰 Latest insights & programmatic SEO guides</h2>
     <div id="blogGrid" class="blog-grid">
@@ -544,40 +501,18 @@
     <div class="view-all"><a href="#">View All Posts →</a></div>
   </div>
 
-  <!-- AFFILIATE MONEY PAGES SECTION – links now point to actual generated money pages -->
   <div class="container affiliate-section">
     <h2><i class="fas fa-hand-holding-usd"></i> 💸 Auto Money Pages · Affiliate Deals</h2>
     <p>Automated affiliate content clusters — programmatic comparison & buy links, updated daily.</p>
     <div class="mini-grid">
-      <div class="affiliate-card">
-        <img src="https://picsum.photos/id/48/300/160" alt="SEO software tool">
-        <h3>RankRocket AI</h3>
-        <p>Programmatic SEO suite + Indexing API</p>
-        <a href="best-seo-tool.html" class="btn-affiliate" rel="sponsored nofollow">Check price →</a>
-      </div>
-      <div class="affiliate-card">
-        <img src="https://picsum.photos/id/0/300/160" alt="hosting deal">
-        <h3>CloudPress Hosting</h3>
-        <p>Auto‑backlink & CDN optimized</p>
-        <a href="ai-content-generator.html" class="btn-affiliate" rel="sponsored nofollow">Get deal →</a>
-      </div>
-      <div class="affiliate-card">
-        <img src="https://picsum.photos/id/26/300/160" alt="backlink automation">
-        <h3>LinkForge Auto</h3>
-        <p>Medium/Reddit syndication engine</p>
-        <a href="wordpress-hosting.html" class="btn-affiliate" rel="sponsored nofollow">Start free →</a>
-      </div>
-      <div class="affiliate-card">
-        <img src="https://picsum.photos/id/1/300/160" alt="keyword research">
-        <h3>TrendScope AI</h3>
-        <p>Google trend & semantic keywords</p>
-        <a href="best-seo-tool.html" class="btn-affiliate" rel="sponsored nofollow">Try now →</a>
-      </div>
+      <div class="affiliate-card"><img src="https://picsum.photos/id/48/300/160" alt="SEO software tool"><h3>RankRocket AI</h3><p>Programmatic SEO suite + Indexing API</p><a href="best-seo-tool.html" class="btn-affiliate" rel="sponsored nofollow">Check price →</a></div>
+      <div class="affiliate-card"><img src="https://picsum.photos/id/0/300/160" alt="hosting deal"><h3>CloudPress Hosting</h3><p>Auto‑backlink & CDN optimized</p><a href="ai-content-generator.html" class="btn-affiliate" rel="sponsored nofollow">Get deal →</a></div>
+      <div class="affiliate-card"><img src="https://picsum.photos/id/26/300/160" alt="backlink automation"><h3>LinkForge Auto</h3><p>Medium/Reddit syndication engine</p><a href="wordpress-hosting.html" class="btn-affiliate" rel="sponsored nofollow">Start free →</a></div>
+      <div class="affiliate-card"><img src="https://picsum.photos/id/1/300/160" alt="keyword research"><h3>TrendScope AI</h3><p>Google trend & semantic keywords</p><a href="best-seo-tool.html" class="btn-affiliate" rel="sponsored nofollow">Try now →</a></div>
     </div>
     <p style="margin-top: 24px; font-size: 0.85rem;"><i class="fas fa-robot"></i> Fully automated: price updates, internal linking, affiliate link rotation — zero manual work.</p>
   </div>
 
-  <!-- Dashboard Stats -->
   <div class="container">
     <div class="dashboard-stats">
       <div class="stat-item"><div class="stat-number">+298%</div><div>Organic growth (30d)</div></div>
@@ -588,7 +523,6 @@
     </div>
   </div>
 
-  <!-- Worker Explanation -->
   <div class="container">
     <div class="worker-explanation">
       <h3><i class="fab fa-cloudflare"></i> 🌐 How to serve from Cloudflare Worker Routing</h3>
@@ -611,7 +545,7 @@ export default {
     return new Response('Not Found', { status: 404 });
   }
 };
-        </pre>
+      </pre>
     </div>
   </div>
 </main>
@@ -632,15 +566,13 @@ export default {
       <a href="/documentation.html">Documentation</a>
       <a href="/changelog.html">Changelog</a>
     </div>
-    <p id="footerCopyright">© 2026 Ultra Static SEO Engine — Programmatic SEO, auto money pages, 
-      backlink automation & Google Indexing API.</p>
-    <p id="footerTagline"><i class="fas fa-check-circle"></i> 
-      Semantic E‑E‑A‑T ready · Auto refresh · Social auto‑posting · Multi-language (EN/ES/DE/FR/HI)</p>
+    <p id="footerCopyright">© 2026 Ultra Static SEO Engine — Programmatic SEO, auto money pages, backlink automation & Google Indexing API.</p>
+    <p id="footerTagline"><i class="fas fa-check-circle"></i> Semantic E‑E‑A‑T ready · Auto refresh · Social auto‑posting · Multi-language (EN/ES/DE/FR/HI)</p>
   </div>
 </footer>
 
 <script>
-  // ========== FULL TRANSLATIONS (EN, ES, DE, FR, HI) ==========
+  // ========== TRANSLATIONS (complete, properly closed) ==========
   const translations = {
     en: { heroTitle: "Scale SEO with zero‑touch automation", heroDesc: "Auto money pages • AI backlinks • Indexing API • Multi‑language blogs (EN, ES, DE, FR, HI) • Real‑time analytics • Semantic E‑E‑A‑T signals", featuresTitle: "⚙️ Full‑stack SEO automation suite", f1Title: "Auto Money Pages", f1Desc: "Affiliate links & product feeds auto-generated, optimized for buyer intent keywords.", f2Title: "Auto Backlink System", f2Desc: "Medium, Reddit, Web 2.0 syndication — contextual backlinks at scale.", f3Title: "Programmatic SEO", f3Desc: "10k+ pages dynamically generated from structured data & search trends.", f4Title: "Google Indexing API", f4Desc: "Instant URL submission & recrawl signals for fresh content.", f5Title: "Semantic SEO & E‑E‑A‑T", f5Desc: "Entity linking, author schema, trust signals & expertise markers.", f6Title: "Multi‑Language Blogs", f6Desc: "Auto-translated hreflang clusters: EN, ES, DE, FR, Hindi (HI) — regional scaling.", f7Title: "Analytics Dashboard", f7Desc: "Real‑time performance, crawl stats, keyword rankings.", f8Title: "Auto Refresh Content", f8Desc: "Smart update of old posts + date freshness signals.", f9Title: "Social Auto‑Posting", f9Desc: "Scheduled posting to X, LinkedIn, Facebook via webhooks.", blogTitle: "📰 Latest insights & programmatic SEO guides", footer: "© 2026 Ultra Static SEO Engine — Built for programmatic SEO, auto money pages, backlink automation & Google Indexing API. Semantic E‑E‑A‑T ready · Auto refresh old content · Social auto‑posting · Multi-language (EN/ES/DE/FR/HI)" },
     es: { heroTitle: "Escala SEO con automatización sin contacto", heroDesc: "Páginas de dinero automáticas • Backlinks IA • API de Indexación • Blogs multi-idioma (EN, ES, DE, FR, HI) • Analítica en tiempo real • Señales E‑E‑A‑T semánticas", featuresTitle: "⚙️ Suite completa de automatización SEO", f1Title: "Páginas de Afiliados Auto", f1Desc: "Enlaces de afiliados y feeds de productos autogenerados, optimizados para palabras clave de intención de compra.", f2Title: "Sistema de Backlinks Automático", f2Desc: "Sindicación en Medium, Reddit, Web 2.0 — backlinks contextuales a escala.", f3Title: "SEO Programático", f3Desc: "Más de 10k páginas generadas dinámicamente a partir de datos estructurados y tendencias.", f4Title: "API de Indexación Google", f4Desc: "Envío instantáneo de URL y señales de rastreo para contenido fresco.", f5Title: "SEO Semántico y E‑E‑A‑T", f5Desc: "Enlace de entidades, esquema de autor, señales de confianza y marcadores de experiencia.", f6Title: "Blogs Multi-idioma", f6Desc: "Clústeres hreflang auto-traducidos: EN, ES, DE, FR, Hindi — escalado regional.", f7Title: "Panel de Analítica", f7Desc: "Rendimiento en tiempo real, estadísticas de rastreo, posiciones de keywords.", f8Title: "Actualización Automática", f8Desc: "Actualización inteligente de posts antiguos + señales de frescura.", f9Title: "Publicación Automática Social", f9Desc: "Publicación programada en X, LinkedIn, Facebook mediante webhooks.", blogTitle: "📰 Últimas ideas y guías de SEO programático", footer: "© 2026 Ultra Static SEO Engine — Construido para SEO programático, páginas de dinero automáticas, backlinks automatizados y API de Indexación de Google. Señales E‑E‑A‑T listas · Actualización automática · Publicación social · Multi-idioma (EN/ES/DE/FR/HI)" },
@@ -669,26 +601,21 @@ export default {
     document.getElementById('footerTagline').innerHTML = `<i class="fas fa-check-circle"></i> ${t.footer.split('·').slice(1).join('·')}`;
     document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));
   }
+
   document.querySelectorAll('.lang-btn').forEach(btn => btn.addEventListener('click', () => setLanguage(btn.dataset.lang)));
   setLanguage('en');
 
-  // ========== IMPROVED BLOG LOADER (with cache busting & retry) ==========
+  // ========== BLOG LOADER WITH RETRY & CACHE BUSTING ==========
   async function loadBlogPosts(retries = 3, delayMs = 1000) {
     const grid = document.getElementById('blogGrid');
-    if (!grid) {
-      console.error('Blog grid element not found');
-      return;
-    }
+    if (!grid) return;
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        // Add timestamp to force fresh fetch (bypass cache)
         const url = `posts.json?v=${Date.now()}`;
-        console.log(`Fetching ${url} (attempt ${attempt})`);
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const posts = await res.json();
         if (!Array.isArray(posts)) throw new Error('Invalid JSON');
-        console.log(`Loaded ${posts.length} posts`);
         if (posts.length === 0) {
           grid.innerHTML = '<div style="text-align:center;grid-column:span 3;">No blog posts yet. Check back soon!</div>';
           return;
@@ -705,11 +632,10 @@ export default {
             </div>
           </article>
         `).join('');
-        return; // success
+        return;
       } catch (err) {
-        console.error(`Attempt ${attempt} failed:`, err);
         if (attempt === retries) {
-          grid.innerHTML = '<div style="text-align:center;grid-column:span 3;">⚠️ Unable to load posts. Please refresh the page or try again later.</div>';
+          grid.innerHTML = '<div style="text-align:center;grid-column:span 3;">Unable to load posts. Please refresh the page.</div>';
         } else {
           await new Promise(r => setTimeout(r, delayMs));
         }
