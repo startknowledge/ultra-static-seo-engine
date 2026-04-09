@@ -671,40 +671,48 @@ export default {
   }
   document.querySelectorAll('.lang-btn').forEach(btn => btn.addEventListener('click', () => setLanguage(btn.dataset.lang)));
   setLanguage('en');
-
+  
   // Dynamic blog loading from posts.json (fixed image fallback)
-  async function loadBlogPosts() {
+    // Improved blog loader with retry and timeout
+  async function loadBlogPosts(retries = 3, delayMs = 1000) {
     const grid = document.getElementById('blogGrid');
     if (!grid) {
       console.error('Blog grid element not found');
       return;
     }
-    try {
-      console.log('Fetching posts.json...');
-      const res = await fetch('posts.json');
-      console.log('Response status:', res.status);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const posts = await res.json();
-      console.log('Posts loaded:', posts.length);
-      if (!posts.length) {
-        grid.innerHTML = '<div style="text-align:center;grid-column:span 3;">No blog posts yet. Check back soon!</div>';
-        return;
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        console.log(`Fetching posts.json (attempt ${attempt})...`);
+        const res = await fetch('posts.json?v=' + Date.now()); // cache bust
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const posts = await res.json();
+        if (!Array.isArray(posts)) throw new Error('Invalid JSON');
+        console.log(`Loaded ${posts.length} posts`);
+        if (posts.length === 0) {
+          grid.innerHTML = '<div style="text-align:center;grid-column:span 3;">No blog posts yet. Check back soon!</div>';
+          return;
+        }
+        grid.innerHTML = posts.map(post => `
+          <article class="post-card">
+            <img class="card-img" src="${post.image}" alt="${escapeHtml(post.title)}" loading="lazy" onerror="this.src='https://picsum.photos/id/1/800/400'">
+            <div class="card-content">
+              <span class="post-category">Blog</span>
+              <h3>${escapeHtml(post.title)}</h3>
+              <div class="post-meta"><span><i class="far fa-calendar-alt"></i> ${post.date}</span></div>
+              <p>${escapeHtml(post.excerpt.substring(0,120))}...</p>
+              <a href="${post.url}" class="read-more">Read more →</a>
+            </div>
+          </article>
+        `).join('');
+        return; // success
+      } catch (err) {
+        console.error(`Attempt ${attempt} failed:`, err);
+        if (attempt === retries) {
+          grid.innerHTML = '<div style="text-align:center;grid-column:span 3;">⚠️ Unable to load posts. Please refresh the page or try again later.</div>';
+        } else {
+          await new Promise(r => setTimeout(r, delayMs));
+        }
       }
-      grid.innerHTML = posts.map(post => `
-        <article class="post-card">
-          <img class="card-img" src="${post.image}" alt="${escapeHtml(post.title)}" loading="lazy" onerror="this.src='https://picsum.photos/id/1/800/400'">
-          <div class="card-content">
-            <span class="post-category">Blog</span>
-            <h3>${escapeHtml(post.title)}</h3>
-            <div class="post-meta"><span><i class="far fa-calendar-alt"></i> ${post.date}</span></div>
-            <p>${escapeHtml(post.excerpt.substring(0,120))}...</p>
-            <a href="${post.url}" class="read-more">Read more →</a>
-          </div>
-        </article>
-      `).join('');
-    } catch (err) {
-      console.error('Error loading posts:', err);
-      grid.innerHTML = '<div style="text-align:center;grid-column:span 3;">Unable to load posts. Please try again later.</div>';
     }
   }
   function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }

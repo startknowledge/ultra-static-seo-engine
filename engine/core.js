@@ -705,26 +705,30 @@ function ensureStaticPages(repoPath, repoName) {
 }
 
 // ========== UPDATE BLOG INDEX (posts.json + navigation) ==========
+// ========== UPDATE BLOG INDEX (posts.json + navigation) ==========
 async function updatePostsJsonAndIndex(repoPath, repoName, newBlogs = []) {
   const blogDir = path.join(repoPath, 'blog');
+  // Ensure blog directory exists
+  fs.ensureDirSync(blogDir);
+  
   const postsJsonPath = path.join(blogDir, 'posts.json');
   const indexPath = path.join(blogDir, 'index.html');
   const templatePath = path.join(__dirname, '..', 'templates', 'blog-index.html');
 
-  // 1. Always scan the blog folder and rebuild posts.json from all HTML files
+  // 1. Always scan blog folder and rebuild posts.json from all HTML files
   const files = fs.readdirSync(blogDir);
   const htmlFiles = files.filter(f => f.endsWith('.html') && f !== 'index.html');
   const postsMap = new Map();
 
-  // Read existing posts.json if present (to preserve any extra fields)
+  // Read existing posts.json only to preserve extra fields (but we will overwrite anyway)
   if (fs.existsSync(postsJsonPath)) {
     try {
       const existing = JSON.parse(fs.readFileSync(postsJsonPath, 'utf8'));
       existing.forEach(post => postsMap.set(post.url, post));
-    } catch(e) {}
+    } catch(e) { /* ignore invalid JSON */ }
   }
 
-  // Scan all HTML blog files and extract metadata
+  // Scan each blog HTML file and extract metadata
   for (const file of htmlFiles) {
     const filePath = path.join(blogDir, file);
     const content = fs.readFileSync(filePath, 'utf8');
@@ -741,16 +745,17 @@ async function updatePostsJsonAndIndex(repoPath, repoName, newBlogs = []) {
     }
   }
 
-  // Add any newly generated blogs (they are already in newBlogs)
+  // Add newly generated blogs (they are already in newBlogs)
   for (const blog of newBlogs) {
     if (!postsMap.has(blog.url)) postsMap.set(blog.url, blog);
   }
 
   const allPosts = Array.from(postsMap.values());
+  // Write posts.json – always overwrite to ensure clean state
   fs.writeFileSync(postsJsonPath, JSON.stringify(allPosts, null, 2));
-  console.log(`📄 Updated posts.json (${allPosts.length} total posts)`);
+  console.log(`📄 Updated posts.json (${allPosts.length} total posts) in ${blogDir}`);
 
-  // 2. Ensure blog/index.html exists (copy template only if missing)
+  // 2. Ensure blog/index.html exists (copy template if missing)
   if (!fs.existsSync(indexPath) && fs.existsSync(templatePath)) {
     fs.copyFileSync(templatePath, indexPath);
     console.log(`📄 Copied blog index template to ${indexPath}`);
@@ -760,7 +765,7 @@ async function updatePostsJsonAndIndex(repoPath, repoName, newBlogs = []) {
     return;
   }
 
-  // 3. Update navigation links inside blog/index.html (safe, even if file already existed)
+  // 3. Update navigation links inside blog/index.html
   let indexContent = fs.readFileSync(indexPath, 'utf8');
   const newNavLinks = generateNavLinks();
   const navRegex = /(<ul class="nav-links">)([\s\S]*?)(<\/ul>)/;
