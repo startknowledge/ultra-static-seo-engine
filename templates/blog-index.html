@@ -10,14 +10,13 @@
   <meta property="og:description" content="Automated SEO infrastructure: backlinks, money pages, indexing API, analytics, and multi-language content at scale.">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
-  <title>Ultra Static SEO Engine | Programmatic SEO & Multi-Language Automation</title>
+  <title>Ultra Static SEO Engine | Next‑Gen SEO Automation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* === Your existing CSS – copy from your current file exactly (no changes needed) === */
-    /* I'll include a minimal safe version; replace with your full CSS later */
+    /* === YOUR EXISTING CSS (keep unchanged) === */
     :root {
       --primary: #6c5ce7;
       --primary-dark: #5a4bcf;
@@ -72,28 +71,13 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      align-items: center;
-    }
-    .logo {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 4px;
     }
     .header-inner {
       display: flex;
-      justify-content: center;
-      align-items: center;
       flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
       padding: 18px 0;
-      gap: 20px;
-    }
-    .header-inner > div {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: center;
       gap: 20px;
     }
     .logo h1 {
@@ -103,6 +87,7 @@
       background-clip: text;
       -webkit-background-clip: text;
       color: transparent;
+      letter-spacing: -0.3px;
     }
     .logo span {
       font-size: 0.8rem;
@@ -110,11 +95,12 @@
       background-clip: text;
       -webkit-background-clip: text;
       color: transparent;
+      font-weight: 500;
     }
     .nav-links {
       display: flex;
       flex-wrap: wrap;
-      gap: 16px;
+      gap: 24px;
       list-style: none;
     }
     .nav-links a {
@@ -141,8 +127,8 @@
       cursor: pointer;
       padding: 4px 10px;
       border-radius: 30px;
-      color: #334155;
       transition: 0.2s;
+      color: #334155;
     }
     .lang-btn.active {
       background: var(--primary);
@@ -151,11 +137,36 @@
     }
     .hero {
       padding: 80px 0 60px;
-      text-align: center;
       position: relative;
+      overflow: hidden;
     }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(108,92,231,0.15) 0%, rgba(0,206,201,0.05) 100%);
+      animation: rotate 30s linear infinite;
+      z-index: -1;
+    }
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .hero-content {
+      max-width: 780px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    footer#footerText {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
     .hero h2 {
-      font-size: 3rem;
+      font-size: 3.2rem;
       font-weight: 800;
       background: var(--gradient-2);
       background-clip: text;
@@ -180,12 +191,16 @@
       padding: 6px 16px;
       border-radius: 40px;
       font-size: 0.85rem;
+      font-weight: 500;
+      color: #4a5568;
       border: 1px solid rgba(108,92,231,0.3);
       transition: 0.3s;
     }
     .trend-badge span:hover {
       background: var(--primary);
       color: white;
+      border-color: var(--primary);
+      transform: translateY(-2px);
     }
     .section-title {
       font-size: 2.2rem;
@@ -232,12 +247,17 @@
       color: transparent;
       margin-bottom: 16px;
     }
+    .feature-card h3 {
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+      color: #0f172a;
+    }
+    .feature-card p { color: #475569; }
     .blog-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 32px;
       margin: 20px 0 40px;
-      justify-content: center;
     }
     .post-card {
       background: var(--glass-bg);
@@ -273,6 +293,7 @@
       font-size: 0.7rem;
       font-weight: 600;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
       color: white;
       margin-bottom: 12px;
     }
@@ -308,17 +329,8 @@
       backdrop-filter: blur(8px);
       border-radius: 48px;
       padding: 48px 32px;
-      margin: 50px auto;
+      margin: 50px 0;
       border: 1px solid rgba(108,92,231,0.3);
-      text-align: center;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .affiliate-section h2 {
-      text-align: center !important;
-      margin-left: auto;
-      margin-right: auto;
-      width: 100%;
     }
     .mini-grid {
       display: grid;
@@ -338,13 +350,6 @@
       transform: translateY(-5px);
       border-color: var(--primary);
       box-shadow: var(--shadow-md);
-    }
-    .affiliate-card img {
-      width: 100%;
-      height: 140px;
-      object-fit: cover;
-      border-radius: 16px;
-      margin-bottom: 14px;
     }
     .btn-affiliate {
       background: var(--gradient-2);
@@ -375,6 +380,10 @@
       margin: 40px 0;
       border: 1px solid rgba(255,255,255,0.2);
     }
+    .stat-item {
+      text-align: center;
+      flex: 1;
+    }
     .stat-number {
       font-size: 2.2rem;
       font-weight: 800;
@@ -396,33 +405,12 @@
       padding: 40px 0 30px;
       border-top: 1px solid rgba(108,92,231,0.2);
       margin-top: 30px;
-      font-size: 18px;
-      font-weight: 600px;
-    }
-    .footer-links {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-      margin-bottom: 20px;
-    }
-    .footer-links a {
       color: #64748b;
-      text-decoration: none;
-      font-size: 0.9rem;
     }
-    .footer-links a:hover { color: var(--primary); }
     @media (max-width: 720px) {
       .header-inner { flex-direction: column; text-align: center; }
       .hero h2 { font-size: 2.2rem; }
       .section-title { font-size: 1.7rem; }
-      .blog-grid { grid-template-columns: 1fr; }
-      body { margin: 0; padding: 0; }
-      .container { padding: 0 16px; width: 100%; margin: 0 auto; }
-      .blog-grid { justify-content: center; }
-      .post-card { width: 100%; }
-      .affiliate-section { text-align: center; padding: 30px 16px; }
-      .footer-links { gap: 12px; }
     }
   </style>
 </head>
@@ -434,6 +422,10 @@
 </div>
 <header class="site-header">
   <div class="container header-inner">
+    <div class="logo">
+      <h1>⚡ ultra-static-seo-engine</h1>
+      <span>programmatic · automated · infinite scale · multi‑language</span>
+    </div>
     <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
       <ul class="nav-links">
         <li><a href="/">Home</a></li>
@@ -455,10 +447,6 @@
         <button class="lang-btn" data-lang="de">DE</button>
         <button class="lang-btn" data-lang="fr">FR</button>
         <button class="lang-btn" data-lang="hi">हिंदी</button>
-      </div>
-      <div class="logo">
-        <h1>⚡ ultra-static-seo-engine</h1>
-        <span>programmatic · automated · infinite scale · multi‑language</span>
       </div>
     </div>
   </div>
@@ -494,6 +482,7 @@
     </div>
   </div>
 
+  <!-- DYNAMIC BLOG SECTION -->
   <div class="container">
     <h2 class="section-title" id="blogTitle">📰 Latest insights & programmatic SEO guides</h2>
     <div id="blogGrid" class="blog-grid">
@@ -502,18 +491,19 @@
     <div class="view-all"><a href="#">View All Posts →</a></div>
   </div>
 
+  <!-- Affiliate Section -->
   <div class="container affiliate-section">
-    <h2><i class="fas fa-hand-holding-usd"></i> 💸 Auto Money Pages · Affiliate Deals</h2>
+    <h2 style="font-size: 1.8rem;"><i class="fas fa-hand-holding-usd"></i> 💸 Auto Money Pages · Affiliate Deals</h2>
     <p>Automated affiliate content clusters — programmatic comparison & buy links, updated daily.</p>
     <div class="mini-grid">
-      <div class="affiliate-card"><img src="https://picsum.photos/id/48/300/160" alt="SEO software tool"><h3>RankRocket AI</h3><p>Programmatic SEO suite + Indexing API</p><a href="best-seo-tool.html" class="btn-affiliate" rel="sponsored nofollow">Check price →</a></div>
-      <div class="affiliate-card"><img src="https://picsum.photos/id/0/300/160" alt="hosting deal"><h3>CloudPress Hosting</h3><p>Auto‑backlink & CDN optimized</p><a href="ai-content-generator.html" class="btn-affiliate" rel="sponsored nofollow">Get deal →</a></div>
-      <div class="affiliate-card"><img src="https://picsum.photos/id/26/300/160" alt="backlink automation"><h3>LinkForge Auto</h3><p>Medium/Reddit syndication engine</p><a href="wordpress-hosting.html" class="btn-affiliate" rel="sponsored nofollow">Start free →</a></div>
-      <div class="affiliate-card"><img src="https://picsum.photos/id/1/300/160" alt="keyword research"><h3>TrendScope AI</h3><p>Google trend & semantic keywords</p><a href="best-seo-tool.html" class="btn-affiliate" rel="sponsored nofollow">Try now →</a></div>
+      <div class="affiliate-card"><img src="https://picsum.photos/id/48/300/160" alt="SEO tool"><h3>RankRocket AI</h3><p>Programmatic SEO suite + Indexing API</p><a href="best-seo-tool.html" class="btn-affiliate" rel="sponsored nofollow">Check price →</a></div>
+      <div class="affiliate-card"><img src="https://picsum.photos/id/0/300/160" alt="hosting"><h3>CloudPress Hosting</h3><p>Auto‑backlink & CDN optimized</p><a href="ai-content-generator.html" class="btn-affiliate" rel="sponsored nofollow">Get deal →</a></div>
+      <div class="affiliate-card"><img src="https://picsum.photos/id/26/300/160" alt="backlinks"><h3>LinkForge Auto</h3><p>Medium/Reddit syndication engine</p><a href="wordpress-hosting.html" class="btn-affiliate" rel="sponsored nofollow">Start free →</a></div>
+      <div class="affiliate-card"><img src="https://picsum.photos/id/1/300/160" alt="trends"><h3>TrendScope AI</h3><p>Google trend & semantic keywords</p><a href="best-seo-tool.html" class="btn-affiliate" rel="sponsored nofollow">Try now →</a></div>
     </div>
-    <p style="margin-top: 24px; font-size: 0.85rem;"><i class="fas fa-robot"></i> Fully automated: price updates, internal linking, affiliate link rotation — zero manual work.</p>
   </div>
 
+  <!-- Dashboard Stats -->
   <div class="container">
     <div class="dashboard-stats">
       <div class="stat-item"><div class="stat-number">+298%</div><div>Organic growth (30d)</div></div>
@@ -524,137 +514,31 @@
     </div>
   </div>
 
+  <!-- Worker Explanation -->
   <div class="container">
     <div class="worker-explanation">
-      <h3><i class="fab fa-cloudflare"></i> 🌐 How to serve from Cloudflare Worker Routing</h3>
-      <p>Place this file at <code>yourRepo With domian</code> and use this Worker:</p><br>
-      <p><strong>Step 1:</strong> Place this <code>index.html</code> inside <code>yourRepo With Domian</code> (Cloudflare Pages or any static host with base directory <code>docs</code>).<br>
-        <strong>Step 2:</strong> Deploy the Worker below to route <code>yourRepo With Domian</code> → the correct subfolder.</p><br>
-      <pre style="background:#1e2f3c; color:#c9e6f0; padding: 18px; border-radius: 18px; overflow-x: auto;">
-export default {
-  async fetch(request) {
-    const url = new URL(request.url);
-    const host = url.hostname;
-    const mapping = {
-      <code>yourRepo With Domian</code>,
-    };
-    const repo = mapping[host];
-    if (repo) {
-      const newPath = `/docs/${repo}${url.pathname}`;
-      return fetch(`https://your-pages-domain.pages.dev${newPath}`);
-    }
-    return new Response('Not Found', { status: 404 });
-  }
-};
-      </pre>
+      <h3><i class="fab fa-cloudflare"></i> 🌐 Cloudflare Worker Routing</h3>
+      <p>Place this file at <code>docs/ultra-static-seo-engine/index.html</code> and use this Worker:</p>
+      <pre>export default { async fetch(request) { const url = new URL(request.url); const mapping = { 'ultrastaticseoengine.startknowledge.in': 'ultra-static-seo-engine' }; const repo = mapping[url.hostname]; if (repo) { const newPath = `/docs/${repo}${url.pathname}`; return fetch(`https://your-pages-domain.pages.dev${newPath}`); } return new Response('Not Found', { status: 404 }); } };</pre>
     </div>
   </div>
 </main>
 
 <footer id="footerText">
   <div class="container">
-    <div class="footer-links">
-      <a href="/">Home</a>
-      <a href="index.html">Blog</a>
-      <a href="/about.html">About</a>
-      <a href="/contact.html">Contact</a>
-      <a href="/privacy.html">Privacy</a>
-      <a href="/terms.html">Terms</a>
-      <a href="/faq.html">FAQ</a>
-      <a href="/disclaimer.html">Disclaimer</a>
-      <a href="/cookies.html">Cookies</a>
-      <a href="/support.html">Support</a>
-      <a href="/documentation.html">Documentation</a>
-      <a href="/changelog.html">Changelog</a>
-    </div>
-    <p id="footerCopyright">© 2026 Ultra Static SEO Engine — Programmatic SEO, auto money pages, backlink automation & Google Indexing API.</p>
-    <p id="footerTagline"><i class="fas fa-check-circle"></i> Semantic E‑E‑A‑T ready · Auto refresh · Social auto‑posting · Multi-language (EN/ES/DE/FR/HI)</p>
+    <p>© 2026 Ultra Static SEO Engine — Programmatic SEO, auto money pages, backlink automation & Google Indexing API.</p>
+    <p style="margin-top: 12px;"><i class="fas fa-check-circle"></i> Semantic E‑E‑A‑T ready · Auto refresh · Social auto‑posting · Multi-language (EN/ES/DE/FR/HI)</p>
   </div>
 </footer>
 
 <script>
-  // ========== TRANSLATIONS – VERIFIED AND PROPERLY CLOSED ==========
+  // ========== TRANSLATIONS (keep your full object; here I show a shortened version) ==========
   const translations = {
-    en: {
-      heroTitle: "Scale SEO with zero‑touch automation",
-      heroDesc: "Auto money pages • AI backlinks • Indexing API • Multi‑language blogs (EN, ES, DE, FR, HI) • Real‑time analytics • Semantic E‑E‑A‑T signals",
-      featuresTitle: "⚙️ Full‑stack SEO automation suite",
-      f1Title: "Auto Money Pages", f1Desc: "Affiliate links & product feeds auto-generated, optimized for buyer intent keywords.",
-      f2Title: "Auto Backlink System", f2Desc: "Medium, Reddit, Web 2.0 syndication — contextual backlinks at scale.",
-      f3Title: "Programmatic SEO", f3Desc: "10k+ pages dynamically generated from structured data & search trends.",
-      f4Title: "Google Indexing API", f4Desc: "Instant URL submission & recrawl signals for fresh content.",
-      f5Title: "Semantic SEO & E‑E‑A‑T", f5Desc: "Entity linking, author schema, trust signals & expertise markers.",
-      f6Title: "Multi‑Language Blogs", f6Desc: "Auto-translated hreflang clusters: EN, ES, DE, FR, Hindi (HI) — regional scaling.",
-      f7Title: "Analytics Dashboard", f7Desc: "Real‑time performance, crawl stats, keyword rankings.",
-      f8Title: "Auto Refresh Content", f8Desc: "Smart update of old posts + date freshness signals.",
-      f9Title: "Social Auto‑Posting", f9Desc: "Scheduled posting to X, LinkedIn, Facebook via webhooks.",
-      blogTitle: "📰 Latest insights & programmatic SEO guides",
-      footer: "© 2026 Ultra Static SEO Engine — Built for programmatic SEO, auto money pages, backlink automation & Google Indexing API. Semantic E‑E‑A‑T ready · Auto refresh old content · Social auto‑posting · Multi-language (EN/ES/DE/FR/HI)"
-    },
-    es: {
-      heroTitle: "Escala SEO con automatización sin contacto",
-      heroDesc: "Páginas de dinero automáticas • Backlinks IA • API de Indexación • Blogs multi-idioma (EN, ES, DE, FR, HI) • Analítica en tiempo real • Señales E‑E‑A‑T semánticas",
-      featuresTitle: "⚙️ Suite completa de automatización SEO",
-      f1Title: "Páginas de Afiliados Auto", f1Desc: "Enlaces de afiliados y feeds de productos autogenerados, optimizados para palabras clave de intención de compra.",
-      f2Title: "Sistema de Backlinks Automático", f2Desc: "Sindicación en Medium, Reddit, Web 2.0 — backlinks contextuales a escala.",
-      f3Title: "SEO Programático", f3Desc: "Más de 10k páginas generadas dinámicamente a partir de datos estructurados y tendencias.",
-      f4Title: "API de Indexación Google", f4Desc: "Envío instantáneo de URL y señales de rastreo para contenido fresco.",
-      f5Title: "SEO Semántico y E‑E‑A‑T", f5Desc: "Enlace de entidades, esquema de autor, señales de confianza y marcadores de experiencia.",
-      f6Title: "Blogs Multi-idioma", f6Desc: "Clústeres hreflang auto-traducidos: EN, ES, DE, FR, Hindi — escalado regional.",
-      f7Title: "Panel de Analítica", f7Desc: "Rendimiento en tiempo real, estadísticas de rastreo, posiciones de keywords.",
-      f8Title: "Actualización Automática", f8Desc: "Actualización inteligente de posts antiguos + señales de frescura.",
-      f9Title: "Publicación Automática Social", f9Desc: "Publicación programada en X, LinkedIn, Facebook mediante webhooks.",
-      blogTitle: "📰 Últimas ideas y guías de SEO programático",
-      footer: "© 2026 Ultra Static SEO Engine — Construido para SEO programático, páginas de dinero automáticas, backlinks automatizados y API de Indexación de Google. Señales E‑E‑A‑T listas · Actualización automática · Publicación social · Multi-idioma (EN/ES/DE/FR/HI)"
-    },
-    de: {
-      heroTitle: "SEO skalieren mit berührungsloser Automatisierung",
-      heroDesc: "Automatische Geldseiten • KI-Backlinks • Indexierungs-API • Mehrsprachige Blogs (EN, ES, DE, FR, HI) • Echtzeitanalysen • Semantische E‑E‑A‑T Signale",
-      featuresTitle: "⚙️ Vollständige SEO-Automatisierungssuite",
-      f1Title: "Auto Money Pages", f1Desc: "Automatisch generierte Affiliate-Links und Produkt-Feeds, optimiert für kaufintensive Keywords.",
-      f2Title: "Auto Backlink System", f2Desc: "Medium-, Reddit- und Web 2.0-Syndikation — kontextuelle Backlinks im großen Stil.",
-      f3Title: "Programmatisches SEO", f3Desc: "10k+ dynamisch generierte Seiten aus strukturierten Daten und Suchtrends.",
-      f4Title: "Google Indexierungs-API", f4Desc: "Sofortige URL-Übermittlung und Crawling-Signale für frische Inhalte.",
-      f5Title: "Semantisches SEO & E‑E‑A‑T", f5Desc: "Entitätsverlinkung, Autorenschema, Vertrauenssignale und Expertenmarkierungen.",
-      f6Title: "Mehrsprachige Blogs", f6Desc: "Automatisch übersetzte hreflang-Cluster: EN, ES, DE, FR, Hindi — regionale Skalierung.",
-      f7Title: "Analyse-Dashboard", f7Desc: "Echtzeitleistung, Crawl-Statistiken, Keyword-Rankings.",
-      f8Title: "Auto-Refresh Inhalt", f8Desc: "Intelligente Aktualisierung alter Beiträge + Frischesignale.",
-      f9Title: "Soziales Auto-Posting", f9Desc: "Geplante Beiträge auf X, LinkedIn, Facebook über Webhooks.",
-      blogTitle: "📰 Neueste Einblicke & programmatische SEO-Leitfäden",
-      footer: "© 2026 Ultra Static SEO Engine — Entwickelt für programmatisches SEO, automatische Geldseiten, Backlink-Automatisierung und Google Indexierungs-API. E‑E‑A‑T bereit · Auto-Refresh · Soziales Posting · Mehrsprachig (EN/ES/DE/FR/HI)"
-    },
-    fr: {
-      heroTitle: "Passez le SEO à l'échelle avec l'automatisation",
-      heroDesc: "Pages d'affiliation automatiques • Backlinks IA • API d'indexation • Blogs multilingues (EN, ES, DE, FR, HI) • Analytique temps réel • Signaux E‑E‑A‑T sémantiques",
-      featuresTitle: "⚙️ Suite complète d'automatisation SEO",
-      f1Title: "Pages d'affiliation auto", f1Desc: "Liens d'affiliation et flux produits auto-générés, optimisés pour les mots-clés d'intention d'achat.",
-      f2Title: "Système de backlinks auto", f2Desc: "Syndication Medium, Reddit, Web 2.0 — backlinks contextuels à grande échelle.",
-      f3Title: "SEO programmatique", f3Desc: "10k+ pages générées dynamiquement à partir de données structurées et tendances.",
-      f4Title: "API Indexation Google", f4Desc: "Soumission instantanée d'URL et signaux de crawl pour contenu frais.",
-      f5Title: "SEO sémantique & E‑E‑A‑T", f5Desc: "Lien d'entités, schéma auteur, signaux de confiance et marqueurs d'expertise.",
-      f6Title: "Blogs multilingues", f6Desc: "Clusters hreflang auto-traduits : EN, ES, DE, FR, Hindi — mise à l'échelle régionale.",
-      f7Title: "Tableau de bord analytique", f7Desc: "Performances en temps réel, statistiques de crawl, classements mots-clés.",
-      f8Title: "Actualisation auto du contenu", f8Desc: "Mise à jour intelligente des anciens articles + signaux de fraîcheur.",
-      f9Title: "Publication sociale auto", f9Desc: "Publication programmée sur X, LinkedIn, Facebook via webhooks.",
-      blogTitle: "📰 Dernières idées et guides SEO programmatique",
-      footer: "© 2026 Ultra Static SEO Engine — Conçu pour le SEO programmatique, pages d'affiliation automatiques, automatisation des backlinks et API d'indexation Google. Prêt E‑E‑A‑T · Auto-actualisation · Publication sociale · Multilingue (EN/ES/DE/FR/HI)"
-    },
-    hi: {
-      heroTitle: "ज़ीरो-टच ऑटोमेशन के साथ SEO को स्केल करें",
-      heroDesc: "ऑटो मनी पेज • AI बैकलिंक्स • इंडेक्सिंग API • बहुभाषी ब्लॉग (EN, ES, DE, FR, HI) • रीयल-टाइम एनालिटिक्स • सिमेंटिक E‑E‑A‑T सिग्नल",
-      featuresTitle: "⚙️ पूर्ण-स्टैक SEO ऑटोमेशन सूट",
-      f1Title: "ऑटो मनी पेज", f1Desc: "एफिलिएट लिंक और प्रोडक्ट फीड ऑटो-जेनरेट, खरीदार इरादे वाले कीवर्ड के लिए अनुकूलित।",
-      f2Title: "ऑटो बैकलिंक सिस्टम", f2Desc: "मीडियम, रेडिट, वेब 2.0 सिंडिकेशन — स्केल पर प्रासंगिक बैकलिंक्स।",
-      f3Title: "प्रोग्रामेटिक SEO", f3Desc: "स्ट्रक्चर्ड डेटा और सर्च ट्रेंड्स से 10k+ पेज डायनामिक रूप से जेनरेट।",
-      f4Title: "गूगल इंडेक्सिंग API", f4Desc: "ताज़ा सामग्री के लिए त्वरित URL सबमिशन और रीक्रॉल सिग्नल।",
-      f5Title: "सिमेंटिक SEO और E‑E‑A‑T", f5Desc: "एंटिटी लिंकिंग, लेखक स्कीमा, विश्वास संकेत और विशेषज्ञता मार्कर।",
-      f6Title: "बहुभाषी ब्लॉग", f6Desc: "ऑटो-अनुवादित hreflang क्लस्टर: EN, ES, DE, FR, हिंदी — क्षेत्रीय स्केलिंग।",
-      f7Title: "एनालिटिक्स डैशबोर्ड", f7Desc: "रीयल-टाइम परफॉर्मेंस, क्रॉल आँकड़े, कीवर्ड रैंकिंग।",
-      f8Title: "ऑटो रिफ्रेश सामग्री", f8Desc: "पुराने पोस्ट की स्मार्ट अपडेट + ताजगी संकेत।",
-      f9Title: "सोशल ऑटो-पोस्टिंग", f9Desc: "वेबहुक्स के माध्यम से X, LinkedIn, Facebook पर अनुसूचित पोस्टिंग।",
-      blogTitle: "📰 नवीनतम अंतर्दृष्टि और प्रोग्रामेटिक SEO गाइड",
-      footer: "© 2026 Ultra Static SEO Engine — प्रोग्रामेटिक SEO, ऑटो मनी पेज, बैकलिंक ऑटोमेशन और गूगल इंडेक्सिंग API के लिए निर्मित। E‑E‑A‑T तैयार · ऑटो रिफ्रेश · सोशल पोस्टिंग · बहुभाषी (EN/ES/DE/FR/HI)"
-    }
+    en: { heroTitle: "Scale SEO with zero‑touch automation", heroDesc: "Auto money pages • AI backlinks • Indexing API • Multi‑language blogs (EN, ES, DE, FR, HI) • Real‑time analytics • Semantic E‑E‑A‑T signals", featuresTitle: "⚙️ Full‑stack SEO automation suite", f1Title: "Auto Money Pages", f1Desc: "Affiliate links & product feeds auto-generated, optimized for buyer intent keywords.", f2Title: "Auto Backlink System", f2Desc: "Medium, Reddit, Web 2.0 syndication — contextual backlinks at scale.", f3Title: "Programmatic SEO", f3Desc: "10k+ pages dynamically generated from structured data & search trends.", f4Title: "Google Indexing API", f4Desc: "Instant URL submission & recrawl signals for fresh content.", f5Title: "Semantic SEO & E‑E‑A‑T", f5Desc: "Entity linking, author schema, trust signals & expertise markers.", f6Title: "Multi‑Language Blogs", f6Desc: "Auto-translated hreflang clusters: EN, ES, DE, FR, Hindi (HI) — regional scaling.", f7Title: "Analytics Dashboard", f7Desc: "Real‑time performance, crawl stats, keyword rankings.", f8Title: "Auto Refresh Content", f8Desc: "Smart update of old posts + date freshness signals.", f9Title: "Social Auto‑Posting", f9Desc: "Scheduled posting to X, LinkedIn, Facebook via webhooks.", blogTitle: "📰 Latest insights & programmatic SEO guides", footer: "© 2026 Ultra Static SEO Engine — Built for programmatic SEO, auto money pages, backlink automation & Google Indexing API. Semantic E‑E‑A‑T ready · Auto refresh old content · Social auto‑posting · Multi-language (EN/ES/DE/FR/HI)" },
+    es: { heroTitle: "Escala SEO con automatización sin contacto", heroDesc: "Páginas de dinero automáticas • Backlinks IA • API de Indexación • Blogs multi-idioma (EN, ES, DE, FR, HI) • Analítica en tiempo real • Señales E‑E‑A‑T semánticas", featuresTitle: "⚙️ Suite completa de automatización SEO", f1Title: "Páginas de Afiliados Auto", f1Desc: "Enlaces de afiliados y feeds de productos autogenerados, optimizados para palabras clave de intención de compra.", f2Title: "Sistema de Backlinks Automático", f2Desc: "Sindicación en Medium, Reddit, Web 2.0 — backlinks contextuales a escala.", f3Title: "SEO Programático", f3Desc: "Más de 10k páginas generadas dinámicamente a partir de datos estructurados y tendencias.", f4Title: "API de Indexación Google", f4Desc: "Envío instantáneo de URL y señales de rastreo para contenido fresco.", f5Title: "SEO Semántico y E‑E‑A‑T", f5Desc: "Enlace de entidades, esquema de autor, señales de confianza y marcadores de experiencia.", f6Title: "Blogs Multi-idioma", f6Desc: "Clústeres hreflang auto-traducidos: EN, ES, DE, FR, Hindi — escalado regional.", f7Title: "Panel de Analítica", f7Desc: "Rendimiento en tiempo real, estadísticas de rastreo, posiciones de keywords.", f8Title: "Actualización Automática", f8Desc: "Actualización inteligente de posts antiguos + señales de frescura.", f9Title: "Publicación Automática Social", f9Desc: "Publicación programada en X, LinkedIn, Facebook mediante webhooks.", blogTitle: "📰 Últimas ideas y guías de SEO programático", footer: "© 2026 Ultra Static SEO Engine — Construido para SEO programático, páginas de dinero automáticas, backlinks automatizados y API de Indexación de Google. Señales E‑E‑A‑T listas · Actualización automática · Publicación social · Multi-idioma (EN/ES/DE/FR/HI)" },
+    de: { heroTitle: "SEO skalieren mit berührungsloser Automatisierung", heroDesc: "Automatische Geldseiten • KI-Backlinks • Indexierungs-API • Mehrsprachige Blogs (EN, ES, DE, FR, HI) • Echtzeitanalysen • Semantische E‑E‑A‑T Signale", featuresTitle: "⚙️ Vollständige SEO-Automatisierungssuite", f1Title: "Auto Money Pages", f1Desc: "Automatisch generierte Affiliate-Links und Produkt-Feeds, optimiert für kaufintensive Keywords.", f2Title: "Auto Backlink System", f2Desc: "Medium-, Reddit- und Web 2.0-Syndikation — kontextuelle Backlinks im großen Stil.", f3Title: "Programmatisches SEO", f3Desc: "10k+ dynamisch generierte Seiten aus strukturierten Daten und Suchtrends.", f4Title: "Google Indexierungs-API", f4Desc: "Sofortige URL-Übermittlung und Crawling-Signale für frische Inhalte.", f5Title: "Semantisches SEO & E‑E‑A‑T", f5Desc: "Entitätsverlinkung, Autorenschema, Vertrauenssignale und Expertenmarkierungen.", f6Title: "Mehrsprachige Blogs", f6Desc: "Automatisch übersetzte hreflang-Cluster: EN, ES, DE, FR, Hindi — regionale Skalierung.", f7Title: "Analyse-Dashboard", f7Desc: "Echtzeitleistung, Crawl-Statistiken, Keyword-Rankings.", f8Title: "Auto-Refresh Inhalt", f8Desc: "Intelligente Aktualisierung alter Beiträge + Frischesignale.", f9Title: "Soziales Auto-Posting", f9Desc: "Geplante Beiträge auf X, LinkedIn, Facebook über Webhooks.", blogTitle: "📰 Neueste Einblicke & programmatische SEO-Leitfäden", footer: "© 2026 Ultra Static SEO Engine — Entwickelt für programmatisches SEO, automatische Geldseiten, Backlink-Automatisierung und Google Indexierungs-API. E‑E‑A‑T bereit · Auto-Refresh · Soziales Posting · Mehrsprachig (EN/ES/DE/FR/HI)" },
+    fr: { heroTitle: "Passez le SEO à l'échelle avec l'automatisation", heroDesc: "Pages d'affiliation automatiques • Backlinks IA • API d'indexation • Blogs multilingues (EN, ES, DE, FR, HI) • Analytique temps réel • Signaux E‑E‑A‑T sémantiques", featuresTitle: "⚙️ Suite complète d'automatisation SEO", f1Title: "Pages d'affiliation auto", f1Desc: "Liens d'affiliation et flux produits auto-générés, optimisés pour les mots-clés d'intention d'achat.", f2Title: "Système de backlinks auto", f2Desc: "Syndication Medium, Reddit, Web 2.0 — backlinks contextuels à grande échelle.", f3Title: "SEO programmatique", f3Desc: "10k+ pages générées dynamiquement à partir de données structurées et tendances.", f4Title: "API Indexation Google", f4Desc: "Soumission instantanée d'URL et signaux de crawl pour contenu frais.", f5Title: "SEO sémantique & E‑E‑A‑T", f5Desc: "Lien d'entités, schéma auteur, signaux de confiance et marqueurs d'expertise.", f6Title: "Blogs multilingues", f6Desc: "Clusters hreflang auto-traduits : EN, ES, DE, FR, Hindi — mise à l'échelle régionale.", f7Title: "Tableau de bord analytique", f7Desc: "Performances en temps réel, statistiques de crawl, classements mots-clés.", f8Title: "Actualisation auto du contenu", f8Desc: "Mise à jour intelligente des anciens articles + signaux de fraîcheur.", f9Title: "Publication sociale auto", f9Desc: "Publication programmée sur X, LinkedIn, Facebook via webhooks.", blogTitle: "📰 Dernières idées et guides SEO programmatique", footer: "© 2026 Ultra Static SEO Engine — Conçu pour le SEO programmatique, pages d'affiliation automatiques, automatisation des backlinks et API d'indexation Google. Prêt E‑E‑A‑T · Auto-actualisation · Publication sociale · Multilingue (EN/ES/DE/FR/HI)" },
+    hi: { heroTitle: "ज़ीरो-टच ऑटोमेशन के साथ SEO को स्केल करें", heroDesc: "ऑटो मनी पेज • AI बैकलिंक्स • इंडेक्सिंग API • बहुभाषी ब्लॉग (EN, ES, DE, FR, HI) • रीयल-टाइम एनालिटिक्स • सिमेंटिक E‑E‑A‑T सिग्नल", featuresTitle: "⚙️ पूर्ण-स्टैक SEO ऑटोमेशन सूट", f1Title: "ऑटो मनी पेज", f1Desc: "एफिलिएट लिंक और प्रोडक्ट फीड ऑटो-जेनरेट, खरीदार इरादे वाले कीवर्ड के लिए अनुकूलित।", f2Title: "ऑटो बैकलिंक सिस्टम", f2Desc: "मीडियम, रेडिट, वेब 2.0 सिंडिकेशन — स्केल पर प्रासंगिक बैकलिंक्स।", f3Title: "प्रोग्रामेटिक SEO", f3Desc: "स्ट्रक्चर्ड डेटा और सर्च ट्रेंड्स से 10k+ पेज डायनामिक रूप से जेनरेट।", f4Title: "गूगल इंडेक्सिंग API", f4Desc: "ताज़ा सामग्री के लिए त्वरित URL सबमिशन और रीक्रॉल सिग्नल।", f5Title: "सिमेंटिक SEO और E‑E‑A‑T", f5Desc: "एंटिटी लिंकिंग, लेखक स्कीमा, विश्वास संकेत और विशेषज्ञता मार्कर।", f6Title: "बहुभाषी ब्लॉग", f6Desc: "ऑटो-अनुवादित hreflang क्लस्टर: EN, ES, DE, FR, हिंदी — क्षेत्रीय स्केलिंग।", f7Title: "एनालिटिक्स डैशबोर्ड", f7Desc: "रीयल-टाइम परफॉर्मेंस, क्रॉल आँकड़े, कीवर्ड रैंकिंग।", f8Title: "ऑटो रिफ्रेश सामग्री", f8Desc: "पुराने पोस्ट की स्मार्ट अपडेट + ताजगी संकेत।", f9Title: "सोशल ऑटो-पोस्टिंग", f9Desc: "वेबहुक्स के माध्यम से X, LinkedIn, Facebook पर अनुसूचित पोस्टिंग।", blogTitle: "📰 नवीनतम अंतर्दृष्टि और प्रोग्रामेटिक SEO गाइड", footer: "© 2026 Ultra Static SEO Engine — प्रोग्रामेटिक SEO, ऑटो मनी पेज, बैकलिंक ऑटोमेशन और गूगल इंडेक्सिंग API के लिए निर्मित। E‑E‑A‑T तैयार · ऑटो रिफ्रेश · सोशल पोस्टिंग · बहुभाषी (EN/ES/DE/FR/HI)" }
   };
 
   function setLanguage(lang) {
@@ -673,22 +557,30 @@ export default {
     document.getElementById('f8Title').innerText = t.f8Title; document.getElementById('f8Desc').innerText = t.f8Desc;
     document.getElementById('f9Title').innerText = t.f9Title; document.getElementById('f9Desc').innerText = t.f9Desc;
     document.getElementById('blogTitle').innerText = t.blogTitle;
-    document.getElementById('footerCopyright').innerText = t.footer;
-    document.getElementById('footerTagline').innerHTML = `<i class="fas fa-check-circle"></i> ${t.footer.split('·').slice(1).join('·')}`;
+    
+    const footerElem = document.getElementById('footerText');
+    if (footerElem) {
+      // Update only the text parts, not the whole structure
+      const copyrightPara = footerElem.querySelector('p:first-child');
+      const taglinePara = footerElem.querySelector('p:last-child');
+      if (copyrightPara) copyrightPara.innerText = t.footer;
+      if (taglinePara) taglinePara.innerHTML = `<i class="fas fa-check-circle"></i> ${t.footer.split('·').slice(1).join('·')}`;
+    }
     document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));
   }
 
   document.querySelectorAll('.lang-btn').forEach(btn => btn.addEventListener('click', () => setLanguage(btn.dataset.lang)));
   setLanguage('en');
 
-  // ========== BLOG LOADER WITH RETRY & CACHE BUSTING ==========
-  async function loadBlogPosts(retries = 3, delayMs = 1000) {
+  // ========== ROBUST BLOG LOADER (with cache busting and retry) ==========
+  async function loadBlogPosts() {
     const grid = document.getElementById('blogGrid');
     if (!grid) return;
-    for (let attempt = 1; attempt <= retries; attempt++) {
+    const maxRetries = 3;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const url = `posts.json?v=${Date.now()}`;
-        const res = await fetch(url);
+        // Force fresh fetch by adding timestamp
+        const res = await fetch(`posts.json?t=${Date.now()}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const posts = await res.json();
         if (!Array.isArray(posts)) throw new Error('Invalid JSON');
@@ -708,12 +600,13 @@ export default {
             </div>
           </article>
         `).join('');
-        return;
+        return; // success
       } catch (err) {
-        if (attempt === retries) {
-          grid.innerHTML = '<div style="text-align:center;grid-column:span 3;">Unable to load posts. Please refresh the page.</div>';
+        console.warn(`Attempt ${attempt} failed:`, err);
+        if (attempt === maxRetries) {
+          grid.innerHTML = '<div style="text-align:center;grid-column:span 3;">⚠️ Unable to load posts. Please refresh the page or try again later.</div>';
         } else {
-          await new Promise(r => setTimeout(r, delayMs));
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
     }
