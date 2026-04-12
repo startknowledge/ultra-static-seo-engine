@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* ========== YOUR FULL MODERN CSS (keep as is) ========== */
+    /* Your full modern CSS (gradients, glassmorphism, shapes, etc.) - same as before */
     :root {
       --primary: #6c5ce7;
       --primary-dark: #5a4bcf;
@@ -487,10 +487,11 @@
     </div>
   </div>
 
+  <!-- STATIC BLOG SECTION – posts will be injected here -->
   <div class="container">
     <h2 class="section-title" id="blogTitle">📰 Latest insights & programmatic SEO guides</h2>
     <div id="blogGrid" class="blog-grid">
-      <div style="text-align: center; grid-column: span 3;">Loading posts...</div>
+      <!-- BLOG_POSTS_PLACEHOLDER -->
     </div>
     <div class="view-all"><a href="#">View All Posts →</a></div>
   </div>
@@ -548,7 +549,7 @@
 </footer>
 
 <script>
-  // ========== TRANSLATIONS (only for hero, features, etc. – footer is static) ==========
+  // ========== TRANSLATIONS (only for hero, features, etc.) ==========
   const translations = {
     en: { heroTitle: "Scale SEO with zero‑touch automation", heroDesc: "Auto money pages • AI backlinks • Indexing API • Multi‑language blogs (EN, ES, DE, FR, HI) • Real‑time analytics • Semantic E‑E‑A‑T signals", featuresTitle: "⚙️ Full‑stack SEO automation suite", f1Title: "Auto Money Pages", f1Desc: "Affiliate links & product feeds auto-generated, optimized for buyer intent keywords.", f2Title: "Auto Backlink System", f2Desc: "Medium, Reddit, Web 2.0 syndication — contextual backlinks at scale.", f3Title: "Programmatic SEO", f3Desc: "10k+ pages dynamically generated from structured data & search trends.", f4Title: "Google Indexing API", f4Desc: "Instant URL submission & recrawl signals for fresh content.", f5Title: "Semantic SEO & E‑E‑A‑T", f5Desc: "Entity linking, author schema, trust signals & expertise markers.", f6Title: "Multi‑Language Blogs", f6Desc: "Auto-translated hreflang clusters: EN, ES, DE, FR, Hindi (HI) — regional scaling.", f7Title: "Analytics Dashboard", f7Desc: "Real‑time performance, crawl stats, keyword rankings.", f8Title: "Auto Refresh Content", f8Desc: "Smart update of old posts + date freshness signals.", f9Title: "Social Auto‑Posting", f9Desc: "Scheduled posting to X, LinkedIn, Facebook via webhooks.", blogTitle: "📰 Latest insights & programmatic SEO guides", footer: "© 2026 Ultra Static SEO Engine — Built for programmatic SEO, auto money pages, backlink automation & Google Indexing API. Semantic E‑E‑A‑T ready · Auto refresh old content · Social auto‑posting · Multi-language (EN/ES/DE/FR/HI)" },
     es: { heroTitle: "Escala SEO con automatización sin contacto", heroDesc: "Páginas de dinero automáticas • Backlinks IA • API de Indexación • Blogs multi-idioma (EN, ES, DE, FR, HI) • Analítica en tiempo real • Señales E‑E‑A‑T semánticas", featuresTitle: "⚙️ Suite completa de automatización SEO", f1Title: "Páginas de Afiliados Auto", f1Desc: "Enlaces de afiliados y feeds de productos autogenerados, optimizados para palabras clave de intención de compra.", f2Title: "Sistema de Backlinks Automático", f2Desc: "Sindicación en Medium, Reddit, Web 2.0 — backlinks contextuales a escala.", f3Title: "SEO Programático", f3Desc: "Más de 10k páginas generadas dinámicamente a partir de datos estructurados y tendencias.", f4Title: "API de Indexación Google", f4Desc: "Envío instantáneo de URL y señales de rastreo para contenido fresco.", f5Title: "SEO Semántico y E‑E‑A‑T", f5Desc: "Enlace de entidades, esquema de autor, señales de confianza y marcadores de experiencia.", f6Title: "Blogs Multi-idioma", f6Desc: "Clústeres hreflang auto-traducidos: EN, ES, DE, FR, Hindi — escalado regional.", f7Title: "Panel de Analítica", f7Desc: "Rendimiento en tiempo real, estadísticas de rastreo, posiciones de keywords.", f8Title: "Actualización Automática", f8Desc: "Actualización inteligente de posts antiguos + señales de frescura.", f9Title: "Publicación Automática Social", f9Desc: "Publicación programada en X, LinkedIn, Facebook mediante webhooks.", blogTitle: "📰 Últimas ideas y guías de SEO programático", footer: "© 2026 Ultra Static SEO Engine — Construido para SEO programático, páginas de dinero automáticas, backlinks automatizados y API de Indexación de Google. Señales E‑E‑A‑T listas · Actualización automática · Publicación social · Multi-idioma (EN/ES/DE/FR/HI)" },
@@ -579,54 +580,6 @@
 
   document.querySelectorAll('.lang-btn').forEach(btn => btn.addEventListener('click', () => setLanguage(btn.dataset.lang)));
   setLanguage('en');
-
-  // ========== ROBUST BLOG LOADER (with visible error message) ==========
-  (async function loadBlogPosts() {
-    const grid = document.getElementById('blogGrid');
-    if (!grid) return;
-    let errorMsg = '';
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const url = `posts.json?t=${Date.now()}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const posts = await res.json();
-        if (!Array.isArray(posts)) throw new Error('Invalid JSON');
-        if (posts.length === 0) {
-          grid.innerHTML = '<div style="text-align:center;grid-column:span 3;">No blog posts yet. Check back soon!</div>';
-          return;
-        }
-        grid.innerHTML = posts.map(post => `
-          <article class="post-card">
-            <img class="card-img" src="${post.image || 'https://picsum.photos/id/1/800/400'}" alt="${escapeHtml(post.title)}" loading="lazy" onerror="this.src='https://picsum.photos/id/1/800/400'">
-            <div class="card-content">
-              <span class="post-category">Blog</span>
-              <h3>${escapeHtml(post.title)}</h3>
-              <div class="post-meta"><span><i class="far fa-calendar-alt"></i> ${escapeHtml(post.date)}</span></div>
-              <p>${escapeHtml(post.excerpt ? post.excerpt.substring(0,120) : '')}...</p>
-              <a href="${escapeHtml(post.url)}" class="read-more">Read more →</a>
-            </div>
-          </article>
-        `).join('');
-        return;
-      } catch (err) {
-        errorMsg = err.message;
-        if (attempt === 3) {
-          grid.innerHTML = `<div style="text-align:center;grid-column:span 3; color:#e74c3c; background:#fff; padding:20px; border-radius:12px;">
-            ⚠️ Failed to load posts: ${errorMsg}<br>
-            Please refresh the page or try again later.
-          </div>`;
-        } else {
-          await new Promise(r => setTimeout(r, 1000));
-        }
-      }
-    }
-  })();
-
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
-  }
 </script>
 </body>
 </html>
