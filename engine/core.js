@@ -45,7 +45,7 @@ const GTM_ID = 'GTM-K435LPQQ';
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// ========== MULTI-AI FALLBACK ENGINE (same as before) ==========
+// ========== MULTI-AI FALLBACK ENGINE ==========
 const AI_PROVIDERS = [
   {
     name: 'Groq',
@@ -316,7 +316,35 @@ async function prepareRepo(repoName, repoUrl) {
 }
 
 // ========== ENHANCED KEYWORD FETCHING ==========
-const MOTIONIX_KEYWORDS = [ /* ... keep your existing large array ... */ ];
+const MOTIONIX_KEYWORDS = [
+  "web animation tool", "css animation generator", "motion UI", "interactive animation", "frontend animation",
+  "GSAP animation", "javascript animation library", "timeline animation", "scroll animation", "high performance animation",
+  "react animation library", "framer motion effects", "ui animation react", "spring animation", "gesture animation",
+  "lottie animations", "json animation", "after effects export", "lightweight animation", "mobile animation",
+  "3d web animation", "three.js animation", "webgl motion", "interactive 3d", "3d ui animation",
+  "scroll animation library", "parallax scrolling", "scroll trigger animation", "interactive scroll", "web storytelling",
+  "anime.js animation", "javascript motion library", "lightweight animation js", "timeline animation js", "svg animation",
+  "motion graphics library", "burst animation", "shape animation", "creative animation js", "interactive effects",
+  "rive animation tool", "interactive animation design", "real time animation", "ui animation engine", "cross platform animation",
+  "velocity animation", "fast dom animation", "jquery animation alternative", "high performance js animation", "ui transitions",
+  "functional animation library", "physics based animation", "motion engine", "gesture driven animation", "react animation base",
+  "page transition library", "smooth navigation animation", "spa transitions", "ajax page animation", "seamless ux",
+  "smooth scroll library", "scroll animation effects", "parallax engine", "scroll ux enhancement", "web interaction",
+  "motion one library", "web animations api wrapper", "lightweight motion library", "fast animation js", "modern animation",
+  "svg drawing animation", "line animation svg", "stroke animation", "svg interaction", "path animation",
+  "hover animation effects", "css hover library", "interactive hover ui", "button hover animation", "micro interactions",
+  "3d tilt effect", "mouse interaction ui", "parallax tilt", "card hover effect", "interactive perspective",
+  "particles animation", "background animation", "canvas particles", "interactive particles", "visual effects js",
+  "2d web rendering", "webgl animation engine", "high performance graphics", "game animation js", "canvas rendering",
+  "scroll reveal animation", "fade in on scroll", "viewport animation", "simple scroll effects", "ui animation",
+  "scroll animation wow", "css animation trigger", "animate on scroll", "frontend animation helper", "ux animation",
+  "animate on scroll library", "scroll animation css", "fade animation scroll", "lightweight animation", "frontend effects",
+  "slider animation library", "carousel motion", "touch slider", "responsive slider", "ui animation component",
+  "slider library", "carousel animation", "lightweight slider", "touch interaction", "ui component animation",
+  "swiper js slider", "touch slider animation", "mobile carousel", "interactive slider", "frontend motion",
+  "full page scroll animation", "section scroll effect", "landing page animation", "smooth navigation", "ux scrolling",
+  "typing animation", "text animation effect", "typewriter effect js", "interactive text", "ui micro animation"
+];
 
 async function getTrendingKeywords(seed, repoName) {
   if (repoName === 'ultra-static-seo-engine') {
@@ -468,7 +496,7 @@ function ensureStaticPages(repoPath, repoName) {
   });
 }
 
-// ========== CRITICAL: GENERATE STATIC BLOG INDEX WITH EMBEDDED POSTS ==========
+// ========== GENERATE STATIC BLOG INDEX (no JavaScript loading) ==========
 async function generateStaticBlogIndex(repoPath, repoName) {
   const blogDir = path.join(repoPath, 'blog');
   fs.ensureDirSync(blogDir);
@@ -598,7 +626,7 @@ ${schema}
     await delay(2000);
   }
 
-  // Always regenerate static blog index (even if no new blogs, to keep it updated)
+  // ALWAYS regenerate static blog index (even if no new blogs, to keep it updated)
   await generateStaticBlogIndex(repoPath, repo.name);
   await fixBrokenLinks(repoPath, repo.name);
 
