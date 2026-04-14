@@ -16,7 +16,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* Your full modern CSS (gradients, glassmorphism, shapes, etc.) - same as before */
     :root {
       --primary: #6c5ce7;
       --primary-dark: #5a4bcf;
@@ -299,12 +298,7 @@
       width: 100%;
       box-sizing: border-box;
     }
-    .affiliate-section h2 {
-      text-align: center !important;
-      margin-left: auto;
-      margin-right: auto;
-      width: 100%;
-    }
+    .affiliate-section h2 { text-align: center !important; margin: 0 auto; width: 100%; }
     .mini-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
@@ -408,7 +402,7 @@
       .footer-links { gap: 12px; }
     }
   </style>
-  <!-- Google Analytics (single instance) -->
+  <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y97JEBHZLV"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -497,7 +491,7 @@ gtag('config', 'G-Y97JEBHZLV');
     </div>
   </div>
 
-  <!-- STATIC BLOG SECTION – posts will be injected here -->
+  <!-- STATIC BLOG SECTION – posts will be injected here by core.js -->
   <div class="container">
     <h2 class="section-title" id="blogTitle">📰 Latest insights & programmatic SEO guides</h2>
     <div id="blogGrid" class="blog-grid">
@@ -535,7 +529,7 @@ gtag('config', 'G-Y97JEBHZLV');
     </article>
   
     <article class="post-card">
-      <img class="card-img" src="https://picsum.photos/id/21/1200/630" alt="Revolutionizing Content Creation: The Power of AI Content Generation" loading="lazy" onerror="this.src='https://picsum.photos/id/1/800/400'">
+      <img class="card-img" src="https://picsum.photos/id/8/1200/630" alt="Revolutionizing Content Creation: The Power of AI Content Generation" loading="lazy" onerror="this.src='https://picsum.photos/id/1/800/400'">
       <div class="card-content">
         <span class="post-category">Blog</span>
         <h3>Revolutionizing Content Creation: The Power of AI Content Generation</h3>
@@ -853,7 +847,7 @@ AI content generation | ultra-static-seo-engine
     </article>
   
     <article class="post-card">
-      <img class="card-img" src="https://picsum.photos/id/81/1200/630" alt="e e a t signals for ranking" loading="lazy" onerror="this.src='https://picsum.photos/id/1/800/400'">
+      <img class="card-img" src="https://picsum.photos/id/23/1200/630" alt="e e a t signals for ranking" loading="lazy" onerror="this.src='https://picsum.photos/id/1/800/400'">
       <div class="card-content">
         <span class="post-category">Blog</span>
         <h3>e e a t signals for ranking</h3>
@@ -899,7 +893,7 @@ E-E-A-T signals for ranking | ultra-static-seo-engine
     </article>
   
     <article class="post-card">
-      <img class="card-img" src="https://picsum.photos/id/96/1200/630" alt="google indexing api tutorial" loading="lazy" onerror="this.src='https://picsum.photos/id/1/800/400'">
+      <img class="card-img" src="https://picsum.photos/id/72/1200/630" alt="google indexing api tutorial" loading="lazy" onerror="this.src='https://picsum.photos/id/1/800/400'">
       <div class="card-content">
         <span class="post-category">Blog</span>
         <h3>google indexing api tutorial</h3>
@@ -1009,7 +1003,7 @@ Google Indexing API tutorial | ultra-static-seo-engine
     </article>
   
     <article class="post-card">
-      <img class="card-img" src="https://picsum.photos/id/34/1200/630" alt="multi language seo automation" loading="lazy" onerror="this.src='https://picsum.photos/id/1/800/400'">
+      <img class="card-img" src="https://picsum.photos/id/18/1200/630" alt="multi language seo automation" loading="lazy" onerror="this.src='https://picsum.photos/id/1/800/400'">
       <div class="card-content">
         <span class="post-category">Blog</span>
         <h3>multi language seo automation</h3>
@@ -1039,7 +1033,7 @@ multi-language SEO automation | ultra-static-seo-engine
     </article>
   
     <article class="post-card">
-      <img class="card-img" src="https://picsum.photos/id/53/1200/630" alt="programmatic seo best practices" loading="lazy" onerror="this.src='https://picsum.photos/id/1/800/400'">
+      <img class="card-img" src="https://picsum.photos/id/71/1200/630" alt="programmatic seo best practices" loading="lazy" onerror="this.src='https://picsum.photos/id/1/800/400'">
       <div class="card-content">
         <span class="post-category">Blog</span>
         <h3>programmatic seo best practices</h3>
@@ -1101,7 +1095,7 @@ programmatic SEO best practices | ultra-static-seo-engine
     </article>
   
     <article class="post-card">
-      <img class="card-img" src="https://picsum.photos/id/24/1200/630" alt="semantic seo strategies 2026" loading="lazy" onerror="this.src='https://picsum.photos/id/1/800/400'">
+      <img class="card-img" src="https://picsum.photos/id/36/1200/630" alt="semantic seo strategies 2026" loading="lazy" onerror="this.src='https://picsum.photos/id/1/800/400'">
       <div class="card-content">
         <span class="post-category">Blog</span>
         <h3>semantic seo strategies 2026</h3>
@@ -1363,7 +1357,7 @@ semantic SEO strategies 2026 | ultra-static-seo-engine
 </footer>
 
 <script>
-  // ========== TRANSLATIONS (only for hero, features, etc.) ==========
+  // ========== TRANSLATIONS (only for hero, features, etc. – footer is static) ==========
   const translations = {
     en: { heroTitle: "Scale SEO with zero‑touch automation", heroDesc: "Auto money pages • AI backlinks • Indexing API • Multi‑language blogs (EN, ES, DE, FR, HI) • Real‑time analytics • Semantic E‑E‑A‑T signals", featuresTitle: "⚙️ Full‑stack SEO automation suite", f1Title: "Auto Money Pages", f1Desc: "Affiliate links & product feeds auto-generated, optimized for buyer intent keywords.", f2Title: "Auto Backlink System", f2Desc: "Medium, Reddit, Web 2.0 syndication — contextual backlinks at scale.", f3Title: "Programmatic SEO", f3Desc: "10k+ pages dynamically generated from structured data & search trends.", f4Title: "Google Indexing API", f4Desc: "Instant URL submission & recrawl signals for fresh content.", f5Title: "Semantic SEO & E‑E‑A‑T", f5Desc: "Entity linking, author schema, trust signals & expertise markers.", f6Title: "Multi‑Language Blogs", f6Desc: "Auto-translated hreflang clusters: EN, ES, DE, FR, Hindi (HI) — regional scaling.", f7Title: "Analytics Dashboard", f7Desc: "Real‑time performance, crawl stats, keyword rankings.", f8Title: "Auto Refresh Content", f8Desc: "Smart update of old posts + date freshness signals.", f9Title: "Social Auto‑Posting", f9Desc: "Scheduled posting to X, LinkedIn, Facebook via webhooks.", blogTitle: "📰 Latest insights & programmatic SEO guides", footer: "© 2026 Ultra Static SEO Engine — Built for programmatic SEO, auto money pages, backlink automation & Google Indexing API. Semantic E‑E‑A‑T ready · Auto refresh old content · Social auto‑posting · Multi-language (EN/ES/DE/FR/HI)" },
     es: { heroTitle: "Escala SEO con automatización sin contacto", heroDesc: "Páginas de dinero automáticas • Backlinks IA • API de Indexación • Blogs multi-idioma (EN, ES, DE, FR, HI) • Analítica en tiempo real • Señales E‑E‑A‑T semánticas", featuresTitle: "⚙️ Suite completa de automatización SEO", f1Title: "Páginas de Afiliados Auto", f1Desc: "Enlaces de afiliados y feeds de productos autogenerados, optimizados para palabras clave de intención de compra.", f2Title: "Sistema de Backlinks Automático", f2Desc: "Sindicación en Medium, Reddit, Web 2.0 — backlinks contextuales a escala.", f3Title: "SEO Programático", f3Desc: "Más de 10k páginas generadas dinámicamente a partir de datos estructurados y tendencias.", f4Title: "API de Indexación Google", f4Desc: "Envío instantáneo de URL y señales de rastreo para contenido fresco.", f5Title: "SEO Semántico y E‑E‑A‑T", f5Desc: "Enlace de entidades, esquema de autor, señales de confianza y marcadores de experiencia.", f6Title: "Blogs Multi-idioma", f6Desc: "Clústeres hreflang auto-traducidos: EN, ES, DE, FR, Hindi — escalado regional.", f7Title: "Panel de Analítica", f7Desc: "Rendimiento en tiempo real, estadísticas de rastreo, posiciones de keywords.", f8Title: "Actualización Automática", f8Desc: "Actualización inteligente de posts antiguos + señales de frescura.", f9Title: "Publicación Automática Social", f9Desc: "Publicación programada en X, LinkedIn, Facebook mediante webhooks.", blogTitle: "📰 Últimas ideas y guías de SEO programático", footer: "© 2026 Ultra Static SEO Engine — Construido para SEO programático, páginas de dinero automáticas, backlinks automatizados y API de Indexación de Google. Señales E‑E‑A‑T listas · Actualización automática · Publicación social · Multi-idioma (EN/ES/DE/FR/HI)" },
@@ -1388,7 +1382,6 @@ semantic SEO strategies 2026 | ultra-static-seo-engine
     document.getElementById('f8Title').innerText = t.f8Title; document.getElementById('f8Desc').innerText = t.f8Desc;
     document.getElementById('f9Title').innerText = t.f9Title; document.getElementById('f9Desc').innerText = t.f9Desc;
     document.getElementById('blogTitle').innerText = t.blogTitle;
-    // Footer text is static – no update needed
     document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));
   }
 
