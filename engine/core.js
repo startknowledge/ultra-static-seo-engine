@@ -1,4 +1,4 @@
-// engine/core.js - Complete SEO automation with money pages, ads, 404 fix, offline AI
+// engine/core.js - Complete SEO automation with money pages, ads, 404 fix, offline AI, RSS feed
 const fs = require('fs-extra');
 const path = require('path');
 const axios = require('axios');
@@ -258,7 +258,7 @@ async function generateMoneyPages(repoPath, repoName) {
   }
 }
 
-// ========== AUTO 404 DETECTOR + FIXER ==========
+// ========== AUTO 404 DETECTOR + FIXER (fixed for relative links) ==========
 async function fixBrokenLinks(repoPath, repoName) {
   const allHtmlFiles = [];
   function walk(dir) {
@@ -278,8 +278,10 @@ async function fixBrokenLinks(repoPath, repoName) {
     let match;
     while ((match = linkRegex.exec(content)) !== null) {
       let href = match[1];
-      if (href.startsWith('http') || href.startsWith('#')) continue;
-      const targetPath = path.join(repoPath, href);
+      // Skip external links, anchors, and absolute paths (starting with /)
+      if (href.startsWith('http') || href.startsWith('#') || href.startsWith('/')) continue;
+      // Resolve relative link from the file's own directory
+      const targetPath = path.join(path.dirname(file), href);
       if (!fs.existsSync(targetPath)) {
         brokenLinks.push({ file, href, targetPath });
       }
@@ -554,6 +556,50 @@ async function generateStaticBlogIndex(repoPath, repoName) {
   // Also update posts.json for backward compatibility
   const postsJsonPath = path.join(blogDir, 'posts.json');
   fs.writeFileSync(postsJsonPath, JSON.stringify(posts, null, 2));
+  
+  return posts;
+}
+
+// ========== GENERATE RSS FEED ==========
+function escapeXml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>]/g, m => {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+
+async function generateRssFeed(repoPath, repoName, posts) {
+  const rssPath = path.join(repoPath, 'blog', 'rss.xml');
+  const now = new Date().toUTCString();
+  let items = '';
+  for (const post of posts) {
+    const pubDate = new Date(post.date).toUTCString();
+    items += `
+  <item>
+    <title>${escapeXml(post.title)}</title>
+    <link>https://${repoName}.startknowledge.in/blog/${post.url}</link>
+    <guid>https://${repoName}.startknowledge.in/blog/${post.url}</guid>
+    <pubDate>${pubDate}</pubDate>
+    <description>${escapeXml(post.excerpt)}</description>
+  </item>`;
+  }
+  const rss = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>${escapeXml(repoName)} Blog</title>
+    <link>https://${repoName}.startknowledge.in/blog/</link>
+    <description>Latest SEO automation blog posts</description>
+    <language>en</language>
+    <lastBuildDate>${now}</lastBuildDate>
+    <atom:link href="https://${repoName}.startknowledge.in/blog/rss.xml" rel="self" type="application/rss+xml"/>
+    ${items}
+  </channel>
+</rss>`;
+  fs.writeFileSync(rssPath, rss);
+  console.log(`📡 RSS feed generated: ${rssPath}`);
 }
 
 function escapeHtml(str) {
@@ -627,7 +673,8 @@ ${schema}
   }
 
   // ALWAYS regenerate static blog index (even if no new blogs, to keep it updated)
-  await generateStaticBlogIndex(repoPath, repo.name);
+  const posts = await generateStaticBlogIndex(repoPath, repo.name);
+  await generateRssFeed(repoPath, repo.name, posts);
   await fixBrokenLinks(repoPath, repo.name);
 
   const git = simpleGit(repoPath);
@@ -636,7 +683,7 @@ ${schema}
   await git.add('.');
   const status = await git.status();
   if (status.files.length > 0) {
-    await git.commit('🤖 Auto-generate SEO blogs + money pages + ads + 404 fix');
+    await git.commit('🤖 Auto-generate SEO blogs + money pages + ads + 404 fix + RSS');
     const branchSummary = await git.branch();
     await git.push('origin', branchSummary.current);
     console.log(`✅ Pushed updates to ${repo.name}`);
