@@ -9,8 +9,11 @@
   "dependencies": {
     "axios": "^1.14.0",
     "cheerio": "^1.0.0",
+    "dompurify": "^3.4.0",
     "fs-extra": "^11.3.4",
     "google-trends-api": "^4.9.2",
+    "jsdom": "^29.0.2",
+    "marked": "^18.0.0",
     "p-limit": "^7.3.0",
     "rss-parser": "^3.13.0",
     "simple-git": "^3.33.0",

@@ -1,10 +1,17 @@
-// engine/core.js - Complete SEO automation with money pages, ads, 404 fix, offline AI, RSS feed
+// engine/core.js - Complete SEO automation with money pages, ads, 404 fix, offline AI, RSS feed, Markdown conversion
 const fs = require('fs-extra');
 const path = require('path');
 const axios = require('axios');
 const Parser = require('rss-parser');
 const parser = new Parser();
 const simpleGit = require('simple-git');
+const { marked } = require('marked');
+const { JSDOM } = require('jsdom');
+const createDOMPurify = require('dompurify');
+
+// Setup DOMPurify with a virtual DOM (safe for Node.js)
+const window = new JSDOM('').window;
+const DOMPurify = createDOMPurify(window);
 
 // ========== CONFIG ==========
 const GITHUB_TOKEN = process.env.ALL_REPO || process.env.MY_GITHUB_TOKEN;
@@ -132,7 +139,7 @@ async function generateContentWithFallback(prompt, repoName) {
   return null;
 }
 
-// ========== GENERATE BLOG CONTENT ==========
+// ========== GENERATE BLOG CONTENT (with Markdown conversion) ==========
 async function generateBlogContent(keyword, repoName, allBlogsForRepo, blogPath, forceRegenerate = false) {
   if (!forceRegenerate && fs.existsSync(blogPath)) {
     const stats = fs.statSync(blogPath);
@@ -157,6 +164,19 @@ Use proper HTML structure: <h1>Title</h1>, <h2>Subheadings</h2>, <p>, <ul>, <li>
 Write naturally, use bold and italics where appropriate.`;
 
   let aiContent = await generateContentWithFallback(prompt, repoName);
+  
+  // --- Convert Markdown to HTML if the content is not already HTML (simple heuristic) ---
+  if (aiContent && !aiContent.includes('<p>') && !aiContent.includes('<h1>')) {
+    try {
+      aiContent = await marked.parse(aiContent);
+      // Sanitize to avoid XSS
+      aiContent = DOMPurify.sanitize(aiContent);
+      console.log(`🔄 Converted Markdown to HTML for ${keyword}`);
+    } catch (err) {
+      console.warn(`Markdown conversion failed for ${keyword}: ${err.message}`);
+    }
+  }
+  
   if (!aiContent) {
     aiContent = `<p>Complete guide to ${keyword}. Learn actionable strategies to master ${keyword} in 2026.</p>
 <h2>Why ${keyword} matters</h2><p>Understanding ${keyword} is crucial for success.</p>
@@ -164,7 +184,7 @@ Write naturally, use bold and italics where appropriate.`;
 <h2>FAQ</h2><p><strong>What is ${keyword}?</strong> It's a process to achieve goals.</p>`;
   }
 
-  // Internal + cross-repo + external links
+  // Internal + cross-repo + external links (unchanged)
   let internalLinksHtml = '';
   if (allBlogsForRepo.length > 1) {
     const otherBlogs = allBlogsForRepo.filter(b => b.title !== keyword);
@@ -278,9 +298,7 @@ async function fixBrokenLinks(repoPath, repoName) {
     let match;
     while ((match = linkRegex.exec(content)) !== null) {
       let href = match[1];
-      // Skip external links, anchors, and absolute paths (starting with /)
       if (href.startsWith('http') || href.startsWith('#') || href.startsWith('/')) continue;
-      // Resolve relative link from the file's own directory
       const targetPath = path.join(path.dirname(file), href);
       if (!fs.existsSync(targetPath)) {
         brokenLinks.push({ file, href, targetPath });
@@ -503,7 +521,6 @@ async function generateStaticBlogIndex(repoPath, repoName) {
   const blogDir = path.join(repoPath, 'blog');
   fs.ensureDirSync(blogDir);
   
-  // Scan all HTML blog files (excluding index.html)
   const files = fs.readdirSync(blogDir);
   const htmlFiles = files.filter(f => f.endsWith('.html') && f !== 'index.html');
   const posts = [];
@@ -519,10 +536,8 @@ async function generateStaticBlogIndex(repoPath, repoName) {
     let date = dateMatch ? dateMatch[0] : new Date().toLocaleDateString();
     posts.push({ title, url: file, image, excerpt: excerpt + '...', date });
   }
-  // Sort newest first
   posts.sort((a, b) => new Date(b.date) - new Date(a.date));
   
-  // Build HTML for posts
   const blogListHtml = posts.map(post => `
     <article class="post-card">
       <img class="card-img" src="${post.image}" alt="${escapeHtml(post.title)}" loading="lazy" onerror="this.src='https://picsum.photos/id/1/800/400'">
@@ -536,16 +551,13 @@ async function generateStaticBlogIndex(repoPath, repoName) {
     </article>
   `).join('');
   
-  // Load template
   const templatePath = path.join(__dirname, '..', 'templates', 'blog-index.html');
   if (!fs.existsSync(templatePath)) {
     console.error(`❌ Template not found: ${templatePath}`);
     return;
   }
   let templateHtml = fs.readFileSync(templatePath, 'utf8');
-  // Replace the placeholder with actual posts
   templateHtml = templateHtml.replace('<!-- BLOG_POSTS_PLACEHOLDER -->', blogListHtml);
-  // Also ensure the blog grid container exists
   if (!templateHtml.includes('id="blogGrid"')) {
     templateHtml = templateHtml.replace('<div class="blog-grid">', '<div id="blogGrid" class="blog-grid">');
   }
@@ -553,10 +565,8 @@ async function generateStaticBlogIndex(repoPath, repoName) {
   fs.writeFileSync(indexPath, injectAdsAndAnalytics(templateHtml));
   console.log(`📄 Generated static blog index with ${posts.length} posts`);
   
-  // Also update posts.json for backward compatibility
   const postsJsonPath = path.join(blogDir, 'posts.json');
   fs.writeFileSync(postsJsonPath, JSON.stringify(posts, null, 2));
-  
   return posts;
 }
 
@@ -672,7 +682,6 @@ ${schema}
     await delay(2000);
   }
 
-  // ALWAYS regenerate static blog index (even if no new blogs, to keep it updated)
   const posts = await generateStaticBlogIndex(repoPath, repo.name);
   await generateRssFeed(repoPath, repo.name, posts);
   await fixBrokenLinks(repoPath, repo.name);
