@@ -157,24 +157,32 @@ Use proper HTML structure: <h1>Title</h1>, <h2>Subheadings</h2>, <p>, <ul>, <li>
 - An engaging title with the keyword
 - Introduction with recent statistics (cite years)
 - 8–10 actionable strategies or tips
-- Real‑world examples
+- Real‑world examples (describe them, do NOT include any images)
 - Common mistakes and how to avoid them
 - FAQ section (5 questions) with schema markup (Question/Answer)
 - Conclusion with a strong call‑to‑action
-Write naturally, use bold and italics where appropriate.`;
+Write naturally, use bold and italics where appropriate.
+IMPORTANT: Do NOT include any images in your response. Use only text.`;
 
   let aiContent = await generateContentWithFallback(prompt, repoName);
   
-  // --- Convert Markdown to HTML if the content is not already HTML (simple heuristic) ---
+  // Convert Markdown to HTML
   if (aiContent && !aiContent.includes('<p>') && !aiContent.includes('<h1>')) {
     try {
       aiContent = await marked.parse(aiContent);
-      // Sanitize to avoid XSS
       aiContent = DOMPurify.sanitize(aiContent);
       console.log(`🔄 Converted Markdown to HTML for ${keyword}`);
     } catch (err) {
       console.warn(`Markdown conversion failed for ${keyword}: ${err.message}`);
     }
+  }
+  
+  // Remove any remaining images (just in case)
+  if (aiContent) {
+    // Remove markdown images ![...](...)
+    aiContent = aiContent.replace(/!\[.*?\]\(.*?\)/g, '');
+    // Remove HTML <img> tags
+    aiContent = aiContent.replace(/<img[^>]*>/g, '');
   }
   
   if (!aiContent) {
@@ -221,6 +229,12 @@ Write naturally, use bold and italics where appropriate.`;
   return aiContent + internalLinksHtml + crossRepoHtml + externalHtml;
 }
 
+
+
+
+
+
+
 // ========== ADS & ANALYTICS INJECTION ==========
 function injectAdsAndAnalytics(html) {
   const analytics = `<!-- Google Analytics -->
@@ -240,10 +254,16 @@ gtag('config', '${GA_ID}');
   const adBottom = `<div class="ads"><ins class="adsbygoogle" style="display:block" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${ADSENSE_SLOTS.bottom}" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div>`;
   const adFluid = `<div class="ads"><ins class="adsbygoogle" style="display:block" data-ad-format="fluid" data-ad-layout-key="-fw+7+28-5k+1k" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${ADSENSE_SLOTS.fluid}"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div>`;
 
+  // Insert analytics into <head> (only once)
   let newHtml = html.replace('</head>', `${analytics}</head>`);
+  
+  // Insert top ad after the first <p> (only once)
   newHtml = newHtml.replace('<p>', `<p>${adTop}`);
+  // Insert middle ad after the second </h2> (only once)
   newHtml = newHtml.replace('</h2>', `</h2>${adMiddle}`);
+  // Insert bottom ads before </article> (only once)
   newHtml = newHtml.replace('</article>', `${adBottom}${adFluid}</article>`);
+  
   return newHtml;
 }
 
