@@ -69,9 +69,12 @@ const AI_PROVIDERS = [
     name: 'Gemini',
     apiKeyEnv: ['GEMINI_API_KEY1', 'GEMINI_API_KEY2'],
     buildRequest: (prompt, key) => ({
-      url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+      url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
       headers: { 'Content-Type': 'application/json' },
-      data: { contents: [{ parts: [{ text: prompt }] }] }
+      data: {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 3500 }
+      }
     }),
     parseResponse: (res) => res.data.candidates[0].content.parts[0].text
   },
@@ -81,7 +84,7 @@ const AI_PROVIDERS = [
     buildRequest: (prompt, key) => ({
       url: 'https://openrouter.ai/api/v1/chat/completions',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      data: { model: 'mistralai/mistral-7b-instruct:free', messages: [{ role: 'user', content: prompt }], max_tokens: 3500 }
+      data: { model: 'meta-llama/llama-3.2-3b-instruct:free', messages: [{ role: 'user', content: prompt }], max_tokens: 3500 }
     }),
     parseResponse: (res) => res.data.choices[0].message.content
   },
@@ -99,9 +102,9 @@ const AI_PROVIDERS = [
     name: 'HuggingFace',
     apiKeyEnv: ['HUGGINGFACE_TOKEN1', 'HUGGINGFACE_TOKEN2'],
     buildRequest: (prompt, key) => ({
-      url: 'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3',
+      url: 'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      data: { inputs: prompt, parameters: { max_new_tokens: 3500 } }
+      data: { inputs: prompt, parameters: { max_new_tokens: 3500, temperature: 0.7 } }
     }),
     parseResponse: (res) => res.data[0].generated_text
   },

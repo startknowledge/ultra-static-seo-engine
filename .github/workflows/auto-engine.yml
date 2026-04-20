@@ -58,6 +58,12 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
+      - name: 🔑 Test API keys
+        env:
+          GROQ_API_KEY1: ${{ secrets.GROQ_API_KEY1 }}
+          GEMINI_API_KEY1: ${{ secrets.GEMINI_API_KEY1 }}
+        run: node test-api.js
+
       - name: 🧠 Run GOD-LEVEL SYSTEM
         run: node engine/core.js
 
