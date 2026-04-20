@@ -71,10 +71,11 @@ jobs:
         run: |
           git config --global user.name "seo-bot"
           git config --global user.email "bot@seo.com"
+          git pull --rebase origin main   # 👈 ADD THIS LINE
           git add .
           if git diff --cached --quiet; then
             echo "🟢 No changes to commit"
           else
             git commit -m "🚀 update [skip ci]"
-            git push
+            git push origin main
           fi

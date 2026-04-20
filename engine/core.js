@@ -69,7 +69,7 @@ const AI_PROVIDERS = [
     name: 'Gemini',
     apiKeyEnv: ['GEMINI_API_KEY1', 'GEMINI_API_KEY2'],
     buildRequest: (prompt, key) => ({
-      url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+      url: `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`,
       headers: { 'Content-Type': 'application/json' },
       data: {
         contents: [{ parts: [{ text: prompt }] }],
