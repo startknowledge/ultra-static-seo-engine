@@ -142,17 +142,7 @@ async function generateContentWithFallback(prompt, repoName) {
 
 // ========== GENERATE BLOG CONTENT (with Markdown conversion) ==========
 async function generateBlogContent(keyword, repoName, allBlogsForRepo, blogPath, forceRegenerate = false) {
-  if (!forceRegenerate && fs.existsSync(blogPath)) {
-    const stats = fs.statSync(blogPath);
-    const ageDays = (Date.now() - stats.mtimeMs) / (1000 * 60 * 60 * 24);
-    if (ageDays < 7) {
-      console.log(`⏩ Skipping ${keyword} – blog younger than 7 days.`);
-      const existingHtml = fs.readFileSync(blogPath, 'utf8');
-      const match = existingHtml.match(/<article>([\s\S]*?)<\/article>/);
-      return match ? match[1] : null;
-    }
-  }
-
+  // Age check removed – always regenerate
   const prompt = `Write a very detailed, SEO-optimized blog post (at least 3500 words) about "${keyword}" for the website "${repoName}". 
 Use proper HTML structure: <h1>Title</h1>, <h2>Subheadings</h2>, <p>, <ul>, <li>. Include:
 - An engaging title with the keyword
@@ -225,7 +215,7 @@ IMPORTANT: Do NOT include any images in your response. Use only text.`;
   return aiContent + internalLinksHtml + crossRepoHtml + externalHtml;
 }
 
-// ========== ADS & ANALYTICS INJECTION ==========
+// ========== ADSENSE & ANALYTICS INJECTION ==========
 function injectAdsAndAnalytics(html) {
   const analytics = `<!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_ID}"></script>
@@ -438,21 +428,18 @@ async function rebuildSitemap(repoPath, repoName) {
   const baseUrl = `https://${repoName}.startknowledge.in`;
   const now = new Date().toISOString();
 
-  // Collect all blog posts
   const blogDir = path.join(repoPath, 'blog');
   const blogFiles = fs.existsSync(blogDir) ? fs.readdirSync(blogDir) : [];
   const blogUrls = blogFiles
     .filter(f => f.endsWith('.html') && f !== 'index.html')
     .map(f => `${baseUrl}/blog/${f}`);
 
-  // Collect all money pages (root level HTML files that are not static pages)
   const staticPageNames = STATIC_PAGES.map(p => p.replace('.html', ''));
   const rootFiles = fs.readdirSync(repoPath);
   const moneyUrls = rootFiles
     .filter(f => f.endsWith('.html') && !staticPageNames.includes(f.replace('.html', '')) && f !== 'index.html')
     .map(f => `${baseUrl}/${f}`);
 
-  // Add the main pages
   const mainUrls = [
     `${baseUrl}/`,
     `${baseUrl}/blog/index.html`
@@ -460,7 +447,6 @@ async function rebuildSitemap(repoPath, repoName) {
 
   const allUrls = [...mainUrls, ...blogUrls, ...moneyUrls];
 
-  // Build sitemap XML
   let urlEntries = '';
   for (const url of allUrls) {
     urlEntries += `  <url>\n    <loc>${escapeXml(url)}</loc>\n    <lastmod>${now}</lastmod>\n  </url>\n`;
@@ -644,6 +630,144 @@ function escapeHtml(str) {
   return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
 }
 
+// ========== NEW: SMART AD PLACEMENT FUNCTIONS ==========
+const REPO_NICHE_MAP = {
+  'startknowledge': 'E-Business & E-Marketing',
+  'bn-ration-scale': 'Health & Fitness',
+  'pension-calculator': 'Finance',
+  'design-painting': 'Arts & Entertainment',
+  'ai-mosaic-studio': 'AI & Technology',
+  'Motionix': 'Animation & Design',
+  'Calculator-Library-Portal': 'Software & Services',
+  'ultra-static-seo-engine': 'E-Business & E-Marketing',
+  'universal-image-data-explorer-forge': 'Software & Services'
+};
+
+function getRandomAffiliateProducts(repoName, count = 3) {
+  const productsPath = path.join(__dirname, '..', 'data', 'clickbank-products.json');
+  if (!fs.existsSync(productsPath)) return [];
+  const allProducts = JSON.parse(fs.readFileSync(productsPath, 'utf8'));
+  const targetNiche = REPO_NICHE_MAP[repoName] || 'E-Business & E-Marketing';
+  let filtered = allProducts.filter(p => p.niche === targetNiche);
+  if (filtered.length === 0) filtered = allProducts;
+  for (let i = filtered.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [filtered[i], filtered[j]] = [filtered[j], filtered[i]];
+  }
+  return filtered.slice(0, count);
+}
+
+function injectSidebarWidget(html, products, pageType = 'blog') {
+  if (!products || products.length === 0) return html;
+  const sidebarHtml = `
+  <aside class="affiliate-sidebar" style="position: sticky; top: 100px; width: 280px; margin-left: 30px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-radius: 24px; padding: 20px; border: 1px solid rgba(108,92,231,0.3); box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+    <h4 style="font-size: 1.2rem; margin-bottom: 15px;">🔥 Recommended for you</h4>
+    ${products.map(p => `
+      <div style="margin-bottom: 20px; text-align: center;">
+        <img src="https://picsum.photos/id/${Math.floor(Math.random() * 100)}/200/120" style="width:100%; border-radius: 16px;">
+        <p style="font-weight: bold; margin: 8px 0;">${escapeHtml(p.product_name)}</p>
+        <a href="${escapeHtml(p.affiliate_link)}" rel="sponsored nofollow" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; padding: 8px 16px; border-radius: 40px; text-decoration: none; font-size: 0.8rem;">Check price →</a>
+      </div>
+    `).join('')}
+    <p style="font-size: 0.7rem; text-align: center; margin-top: 15px;">Affiliate disclosure</p>
+  </aside>`;
+
+  if (pageType === 'blog-index') {
+    const gridMatch = html.match(/<div\s+id="blogGrid"\s+class="blog-grid">/);
+    if (gridMatch) {
+      html = html.replace(gridMatch[0], `<div style="display: flex; gap: 30px; flex-wrap: wrap;"><div id="blogGrid" class="blog-grid" style="flex: 2;">`);
+      html = html.replace('</div>', `</div>${sidebarHtml}</div>`);
+    }
+  } else {
+    html = html.replace(/<\/article>/, `</article>${sidebarHtml}`);
+  }
+  return html;
+}
+
+function injectExitIntentPopup(html, products) {
+  if (!products || products.length === 0) return html;
+  const randomProduct = products[Math.floor(Math.random() * products.length)];
+  const popupScript = `
+  <script>
+    (function() {
+      let popupShown = false;
+      const popupHtml = \`
+        <div id="exitPopup" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; justify-content: center; align-items: center; visibility: hidden; opacity: 0; transition: 0.3s;">
+          <div style="background: white; max-width: 400px; border-radius: 32px; padding: 30px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+            <span style="float: right; cursor: pointer; font-size: 24px;" onclick="document.getElementById('exitPopup').style.visibility='hidden';">&times;</span>
+            <h3>Wait! Special offer just for you</h3>
+            <img src="https://picsum.photos/id/${Math.floor(Math.random() * 100)}/300/160" style="width:100%; border-radius: 20px; margin: 15px 0;">
+            <p><strong>${escapeHtml(randomProduct.product_name)}</strong><br>Limited time discount</p>
+            <a href="${escapeHtml(randomProduct.affiliate_link)}" rel="sponsored nofollow" target="_blank" style="background: #e67e22; color: white; padding: 12px 24px; border-radius: 40px; display: inline-block; text-decoration: none; margin-top: 10px;">Claim deal →</a>
+          </div>
+        </div>
+      \`;
+      document.body.insertAdjacentHTML('beforeend', popupHtml);
+      document.addEventListener('mouseleave', function(e) {
+        if (!popupShown && e.clientY <= 0) {
+          popupShown = true;
+          const pop = document.getElementById('exitPopup');
+          pop.style.visibility = 'visible';
+          pop.style.opacity = '1';
+        }
+      });
+    })();
+  </script>`;
+  return html.replace('</body>', popupScript + '</body>');
+}
+
+function injectFloatingAd(html, product) {
+  if (!product) return html;
+  const floatScript = `
+  <script>
+    setTimeout(() => {
+      const floatDiv = document.createElement('div');
+      floatDiv.innerHTML = \`
+        <div id="floatingAd" style="position: fixed; bottom: 20px; right: 20px; z-index: 9998; background: white; border-radius: 60px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px; padding: 8px 16px; cursor: pointer; transition: 0.3s;">
+          <img src="https://picsum.photos/id/${Math.floor(Math.random() * 100)}/40/40" style="border-radius: 50%; width: 40px;">
+          <span style="font-size: 0.8rem; font-weight: bold;">🔥 ${escapeHtml(product.product_name)}</span>
+          <span style="background: #e67e22; color: white; padding: 4px 12px; border-radius: 40px;">Buy</span>
+          <span style="margin-left: 5px; cursor: pointer;" onclick="this.parentElement.remove()">✖</span>
+        </div>
+      \`;
+      document.body.appendChild(floatDiv.firstChild);
+      document.getElementById('floatingAd').addEventListener('click', (e) => {
+        if(!e.target.closest('span')) window.open('${escapeHtml(product.affiliate_link)}', '_blank');
+      });
+    }, 5000);
+  </script>`;
+  return html.replace('</body>', floatScript + '</body>');
+}
+
+async function enhanceAllPagesWithSmartAds(repoPath, repoName) {
+  const products = getRandomAffiliateProducts(repoName, 4);
+  if (products.length === 0) return;
+
+  const indexPath = path.join(repoPath, 'blog', 'index.html');
+  if (fs.existsSync(indexPath)) {
+    let indexHtml = fs.readFileSync(indexPath, 'utf8');
+    indexHtml = injectSidebarWidget(indexHtml, products.slice(0, 3), 'blog-index');
+    indexHtml = injectExitIntentPopup(indexHtml, products);
+    indexHtml = injectFloatingAd(indexHtml, products[0]);
+    fs.writeFileSync(indexPath, indexHtml);
+    console.log(`✅ Sidebar + popup + floating ad added to blog index of ${repoName}`);
+  }
+
+  const blogDir = path.join(repoPath, 'blog');
+  const files = fs.readdirSync(blogDir);
+  for (const file of files) {
+    if (file.endsWith('.html') && file !== 'index.html') {
+      const postPath = path.join(blogDir, file);
+      let postHtml = fs.readFileSync(postPath, 'utf8');
+      postHtml = injectSidebarWidget(postHtml, products.slice(0, 2), 'post');
+      postHtml = injectExitIntentPopup(postHtml, products);
+      postHtml = injectFloatingAd(postHtml, products[1] || products[0]);
+      fs.writeFileSync(postPath, postHtml);
+    }
+  }
+  console.log(`📱 Enhanced ${files.length} blog posts with smart ads in ${repoName}`);
+}
+
 // ========== PROCESS SINGLE REPO ==========
 async function processRepo(repo) {
   console.log(`\n--- Processing ${repo.name} ---`);
@@ -653,7 +777,6 @@ async function processRepo(repo) {
   fs.ensureDirSync(path.join(repoPath, 'images'));
   ensureStaticPages(repoPath, repo.name);
   
-  // Rotate money pages based on repo niche
   await rotateMoneyPages(repo.name);
   await generateMoneyPages(repoPath, repo.name);
 
@@ -712,7 +835,8 @@ ${schema}
 
   const posts = await generateStaticBlogIndex(repoPath, repo.name);
   await generateRssFeed(repoPath, repo.name, posts);
-  await rebuildSitemap(repoPath, repo.name);   // <-- FULL SITEMAP REGENERATION
+  await rebuildSitemap(repoPath, repo.name);
+  await enhanceAllPagesWithSmartAds(repoPath, repo.name);  // <-- NEW: inject sidebar, popup, floating ad
   await fixBrokenLinks(repoPath, repo.name);
 
   const git = simpleGit(repoPath);
@@ -721,7 +845,7 @@ ${schema}
   await git.add('.');
   const status = await git.status();
   if (status.files.length > 0) {
-    await git.commit('🤖 Auto-generate SEO blogs + money pages + ads + 404 fix + RSS + full sitemap');
+    await git.commit('🤖 Auto-generate SEO blogs + money pages + ads + 404 fix + RSS + full sitemap + smart affiliate widgets');
     const branchSummary = await git.branch();
     await git.push('origin', branchSummary.current);
     console.log(`✅ Pushed updates to ${repo.name}`);

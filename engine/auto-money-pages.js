@@ -19,6 +19,10 @@ const REPO_NICHE_MAP = {
 };
 
 function getProductsForRepo(repoName) {
+  if (!fs.existsSync(PRODUCTS_FILE)) {
+    console.warn(`⚠️ Products file not found: ${PRODUCTS_FILE}`);
+    return [];
+  }
   const allProducts = JSON.parse(fs.readFileSync(PRODUCTS_FILE, 'utf8'));
   const targetNiche = REPO_NICHE_MAP[repoName] || 'E-Business & E-Marketing';
   
@@ -41,6 +45,10 @@ function getProductsForRepo(repoName) {
 
 async function rotateMoneyPages(repoName) {
   const selected = getProductsForRepo(repoName);
+  if (selected.length === 0) {
+    console.warn(`⚠️ No products found for ${repoName}, skipping money-keywords.csv update.`);
+    return;
+  }
   let csvContent = 'keyword,affiliate_link,product_name\n';
   selected.forEach(p => {
     // Escape commas in fields
