@@ -164,6 +164,38 @@ const AI_PROVIDERS = [
   }
 ];
 
+// Retry with exponential backoff and key rotation
+async function callWithRetry(provider, prompt, repoName, maxRetries = 3) {
+  const keys = provider.apiKeyEnv.map(env => process.env[env]).filter(Boolean);
+  if (keys.length === 0 && provider.apiKeyEnv.length > 0) return null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    for (const key of (keys.length ? keys : [null])) {
+      try {
+        const { url, headers, data } = provider.buildRequest(prompt, key);
+        const response = await axios.post(url, data, { headers, timeout: 60000 });
+        const content = provider.parseResponse(response);
+        if (content && content.length > 200) {
+          console.log(`✅ AI via ${provider.name} (attempt ${attempt}) for ${repoName}`);
+          return content;
+        }
+      } catch (err) {
+        const status = err.response?.status;
+        if (status === 429) {
+          const wait = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+          console.warn(`⚠️ ${provider.name} rate limit (429), retrying in ${wait}ms...`);
+          await delay(wait);
+          break; // Try same provider with different key (if any) after backoff
+        } else {
+          console.warn(`⚠️ ${provider.name} failed (${err.message})`);
+        }
+      }
+    }
+    await delay(5000);
+  }
+  return null;
+}
+
 async function generateContentWithFallback(prompt, repoName) {
   for (const provider of AI_PROVIDERS) {
     const keys = provider.apiKeyEnv.map(env => process.env[env]).filter(Boolean);
@@ -179,7 +211,7 @@ async function generateContentWithFallback(prompt, repoName) {
         }
       } catch (err) {
         console.warn(`⚠️ ${provider.name} failed: ${err.message}`);
-        await delay(1000);
+        await delay(5000);
       }
     }
   }
@@ -883,7 +915,7 @@ ${schema}
         html = injectAdsAndAnalytics(html);
         fs.writeFileSync(blogPath, html);
         blogs.push({ title: kw, url: `${slug}.html`, image: imageUrl, excerpt: metaDesc.substring(0, 120), date: publishDate });
-        await delay(2000);
+        await delay(5000);
       }
     }
   } else {
@@ -922,7 +954,7 @@ ${schema}
       html = injectAdsAndAnalytics(html);
       fs.writeFileSync(blogPath, html);
       blogs.push({ title: kw, url: `${slug}.html`, image: imageUrl, excerpt: metaDesc.substring(0, 120), date: publishDate });
-      await delay(2000);
+      await delay(5000);
     }
   }
 
