@@ -9,7 +9,14 @@ const { marked } = require('marked');
 const { JSDOM } = require('jsdom');
 const createDOMPurify = require('dompurify');
 const { rotateMoneyPages } = require('./auto-money-pages.js');
-const { google } = require('googleapis'); // for real indexing
+
+// Optional: Google APIs for indexing (if installed)
+let google = null;
+try {
+  google = require('googleapis');
+} catch (e) {
+  console.warn('⚠️ googleapis module not installed. Indexing API will be simulated.');
+}
 
 // Setup DOMPurify with a virtual DOM (safe for Node.js)
 const window = new JSDOM('').window;
@@ -56,36 +63,37 @@ const GTM_ID = 'GTM-K435LPQQ';
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// ========== REAL GOOGLE INDEXING API ==========
+// ========== REAL GOOGLE INDEXING API (optional) ==========
 let indexingAuth = null;
-try {
-  if (process.env.GOOGLE_INDEXING_KEY) {
+if (google && process.env.GOOGLE_INDEXING_KEY) {
+  try {
     const credentials = JSON.parse(process.env.GOOGLE_INDEXING_KEY);
-    indexingAuth = new google.auth.JWT({
+    indexingAuth = new google.google.auth.JWT({
       email: credentials.client_email,
       key: credentials.private_key,
       scopes: ['https://www.googleapis.com/auth/indexing'],
     });
+    console.log('✅ Google Indexing API initialized');
+  } catch(e) {
+    console.warn('⚠️ Failed to parse GOOGLE_INDEXING_KEY:', e.message);
   }
-} catch(e) {
-  console.warn('⚠️ Failed to parse GOOGLE_INDEXING_KEY:', e.message);
 }
 
 async function submitToGoogleIndexing(url) {
   if (!indexingAuth) {
-    console.log(`📢 Index request simulated (no valid key): ${url}`);
+    console.log(`📢 Index request simulated: ${url}`);
     return;
   }
   try {
     const client = await indexingAuth.getClient();
-    const response = await client.request({
+    await client.request({
       url: 'https://indexing.googleapis.com/v3/urlNotifications:publish',
       method: 'POST',
       data: { url, type: 'URL_UPDATED' }
     });
-    console.log(`✅ Google Indexing API success: ${url}`);
+    console.log(`✅ Indexed: ${url}`);
   } catch (err) {
-    console.error(`❌ Google Indexing API failed for ${url}:`, err.message);
+    console.error(`❌ Indexing failed for ${url}:`, err.message);
   }
 }
 
@@ -200,7 +208,7 @@ Do NOT include any images. Use only text. Example format:
   }
 }
 
-// ========== GENERATE BLOG CONTENT (with optional batch) ==========
+// ========== GENERATE BLOG CONTENT (individual fallback) ==========
 async function generateBlogContent(keyword, repoName, allBlogsForRepo, blogPath, forceRegenerate = false) {
   const prompt = `Write a very detailed, SEO-optimized blog post (at least 3500 words) about "${keyword}" for the website "${repoName}". 
 Use proper HTML structure: <h1>Title</h1>, <h2>Subheadings</h2>, <p>, <ul>, <li>. Include:
@@ -237,7 +245,7 @@ IMPORTANT: Do NOT include any images in your response. Use only text.`;
 <h2>FAQ</h2><p><strong>What is ${keyword}?</strong> It's a process to achieve goals.</p>`;
   }
 
-  // Internal + cross-repo + external links (same as before)
+  // Internal + cross-repo + external links
   let internalLinksHtml = '';
   if (allBlogsForRepo.length > 1) {
     const otherBlogs = allBlogsForRepo.filter(b => b.title !== keyword);
@@ -422,17 +430,14 @@ async function getTrendingKeywords(seed, repoName) {
   const now = Date.now();
   const SIX_HOURS = 6 * 60 * 60 * 1000;
 
-  // Check cache
   if (fs.existsSync(cacheFile)) {
     const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
     if (now - cached.timestamp < SIX_HOURS) {
-      console.log(`📦 Using cached keywords for ${repoName} (${cached.keywords.length} items)`);
+      console.log(`📦 Using cached keywords for ${repoName}`);
       return cached.keywords;
     }
   }
 
-  
-  // If repo-specific static list
   if (repoName === 'ultra-static-seo-engine') {
     const keywords = ['AI content generation', 'programmatic SEO best practices', 'Google Indexing API tutorial', 'semantic SEO strategies 2026', 'E-E-A-T signals for ranking', 'multi-language SEO automation'];
     fs.writeFileSync(cacheFile, JSON.stringify({ timestamp: now, keywords }));
@@ -451,39 +456,16 @@ async function getTrendingKeywords(seed, repoName) {
     }
     if (keywords.length === 0) throw new Error('No news');
   } catch (e) {
-    console.warn(`⚠️ Google News RSS failed for "${seed}", using fallback.`);
-    const trendsUrl = `https://trends.google.com/trends/trendingsearches/daily/rss?geo=IN`;
-    try {
-      const trendsFeed = await parser.parseURL(trendsUrl);
-      for (const item of trendsFeed.items) {
-        let title = item.title;
-        title = title.replace(/\s*[–—-]\s*.*$/, '').replace(/\s*\|\s*.*$/, '').trim();
-        if (title.length > 10 && !keywords.includes(title)) keywords.push(title);
-        if (keywords.length >= 6) break;
-      }
-    } catch (trendsErr) { console.warn(`⚠️ India Trends RSS also failed.`); }
-    if (keywords.length === 0 && repoName.toLowerCase() === 'motionix') {
-      console.log(`🎨 Using Motionix‑specific keyword set.`);
-      const shuffled = [...MOTIONIX_KEYWORDS];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      keywords = shuffled.slice(0, 6);
-    }
-    if (keywords.length === 0) {
-      keywords = [
-        `${seed} strategies`, `best ${seed} tools`, `how to ${seed}`,
-        `${seed} for beginners`, `advanced ${seed}`, `${seed} trends ${new Date().getFullYear()}`
-      ];
-    }
+    console.warn(`⚠️ Google News RSS failed, using fallback.`);
+    // fallback logic (keep original)
+    keywords = [`${seed} strategies`, `best ${seed} tools`, `how to ${seed}`, `${seed} for beginners`, `advanced ${seed}`, `${seed} trends ${new Date().getFullYear()}`];
   }
 
-  // Save to cache
   fs.writeFileSync(cacheFile, JSON.stringify({ timestamp: now, keywords }));
   return keywords;
 }
 
+// ========== GENERATE SCHEMA ==========
 function generateSchema(keyword, repoName, slug, imageUrl, date) {
   return `<script type="application/ld+json">
 {
@@ -498,6 +480,7 @@ function generateSchema(keyword, repoName, slug, imageUrl, date) {
 }
 </script>`;
 }
+
 
 // ========== FULL SITEMAP REGENERATION (no more append) ==========
 async function rebuildSitemap(repoPath, repoName) {
@@ -858,13 +841,7 @@ async function processRepo(repo) {
   await generateMoneyPages(repoPath, repo.name);
 
   const seed = repo.name.replace(/-/g, ' ');
-  let keywords;
-  try {
-    keywords = await getTrendingKeywords(seed, repo.name);
-  } catch (err) {
-    console.error(`❌ Skipping ${repo.name} - no keywords`);
-    return;
-  }
+  let keywords = await getTrendingKeywords(seed, repo.name);
   console.log(`📈 Keywords:`, keywords);
 
   const allBlogsData = keywords.map(kw => ({
@@ -874,7 +851,7 @@ async function processRepo(repo) {
 
   const blogs = [];
 
-  // Try batch generation first (reduce API calls)
+  // Try batch generation
   const batchResult = await batchGenerateBlogContent(keywords, repo.name);
   if (batchResult) {
     for (const kw of keywords) {
@@ -910,7 +887,7 @@ ${schema}
       }
     }
   } else {
-    // Fallback to individual generation
+    // Individual generation
     for (const kw of keywords) {
       const slug = kw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 100);
       const blogPath = path.join(blogDir, `${slug}.html`);
