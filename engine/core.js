@@ -219,28 +219,7 @@ async function generateContentWithFallback(prompt, repoName) {
   return null;
 }
 
-// ========== BATCH AI GENERATION (reduce API calls) ==========
-async function batchGenerateBlogContent(keywords, repoName) {
-  const prompt = `You are an SEO blog writer. Generate detailed blog posts (each 3500+ words) for these keywords: ${keywords.join(', ')}.
-Return a JSON object where each key is the keyword and value is the HTML content (with <h1>, <h2>, <p>, etc.). 
-Do NOT include any images. Use only text. Example format:
-{
-  "keyword1": "<h1>Title</h1><p>Content...</p>",
-  "keyword2": "<h1>Title2</h1><p>Content2...</p>"
-}`;
-  const response = await generateContentWithFallback(prompt, repoName);
-  if (!response) return null;
-  try {
-    const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/) || response.match(/({[\s\S]*})/);
-    const jsonStr = jsonMatch ? jsonMatch[1] : response;
-    return JSON.parse(jsonStr);
-  } catch(e) {
-    console.warn(`Batch JSON parsing failed: ${e.message}`);
-    return null;
-  }
-}
-
-// ========== GENERATE BLOG CONTENT (individual fallback) ==========
+// ========== GENERATE BLOG CONTENT (individual only – no batch) ==========
 async function generateBlogContent(keyword, repoName, allBlogsForRepo, blogPath, forceRegenerate = false) {
   const prompt = `Write a very detailed, SEO-optimized blog post (at least 3500 words) about "${keyword}" for the website "${repoName}". 
 Use proper HTML structure: <h1>Title</h1>, <h2>Subheadings</h2>, <p>, <ul>, <li>. Include:
@@ -489,8 +468,17 @@ async function getTrendingKeywords(seed, repoName) {
     if (keywords.length === 0) throw new Error('No news');
   } catch (e) {
     console.warn(`⚠️ Google News RSS failed, using fallback.`);
-    // fallback logic (keep original)
-    keywords = [`${seed} strategies`, `best ${seed} tools`, `how to ${seed}`, `${seed} for beginners`, `advanced ${seed}`, `${seed} trends ${new Date().getFullYear()}`];
+    if (repoName.toLowerCase() === 'motionix') {
+      console.log(`🎨 Using Motionix‑specific keyword set.`);
+      const shuffled = [...MOTIONIX_KEYWORDS];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      keywords = shuffled.slice(0, 6);
+    } else {
+      keywords = [`${seed} strategies`, `best ${seed} tools`, `how to ${seed}`, `${seed} for beginners`, `advanced ${seed}`, `${seed} trends ${new Date().getFullYear()}`];
+    }
   }
 
   fs.writeFileSync(cacheFile, JSON.stringify({ timestamp: now, keywords }));
@@ -514,7 +502,7 @@ function generateSchema(keyword, repoName, slug, imageUrl, date) {
 }
 
 
-// ========== FULL SITEMAP REGENERATION (no more append) ==========
+// ========== FULL SITEMAP REGENERATION ==========
 async function rebuildSitemap(repoPath, repoName) {
   const sitemapPath = path.join(repoPath, 'sitemap.xml');
   const baseUrl = `https://${repoName}.startknowledge.in`;
@@ -722,7 +710,7 @@ function escapeHtml(str) {
   return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
 }
 
-// ========== NEW: SMART AD PLACEMENT FUNCTIONS ==========
+// ========== SMART AD PLACEMENT FUNCTIONS ==========
 const REPO_NICHE_MAP = {
   'startknowledge': 'E-Business & E-Marketing',
   'bn-ration-scale': 'Health & Fitness',
@@ -883,19 +871,22 @@ async function processRepo(repo) {
 
   const blogs = [];
 
-  // Try batch generation
-  const batchResult = await batchGenerateBlogContent(keywords, repo.name);
-  if (batchResult) {
-    for (const kw of keywords) {
-      const content = batchResult[kw];
-      if (content) {
-        const slug = kw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 100);
-        const blogPath = path.join(blogDir, `${slug}.html`);
-        const imageUrl = `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/1200/630`;
-        const publishDate = new Date().toISOString().split('T')[0];
-        const schema = generateSchema(kw, repo.name, slug, imageUrl, publishDate);
-        const metaDesc = `Complete guide to ${kw}. Learn actionable strategies, avoid common mistakes, and master ${kw} in 2026.`;
-        let html = `<!DOCTYPE html>
+  // Individual generation only – no batch
+  for (const kw of keywords) {
+    const slug = kw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 100);
+    const blogPath = path.join(blogDir, `${slug}.html`);
+    let content;
+    if (repo.lowPriority) {
+      content = `<p>Complete guide to ${kw}. Learn actionable strategies to master ${kw} in 2026.</p>`;
+    } else {
+      content = await generateBlogContent(kw, repo.name, allBlogsData, blogPath, false);
+      if (!content) continue;
+    }
+    const imageUrl = `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/1200/630`;
+    const publishDate = new Date().toISOString().split('T')[0];
+    const schema = generateSchema(kw, repo.name, slug, imageUrl, publishDate);
+    const metaDesc = `Complete guide to ${kw}. Learn actionable strategies, avoid common mistakes, and master ${kw} in 2026.`;
+    let html = `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><title>${kw} | ${repo.name}</title>
 <meta name="description" content="${metaDesc}">
@@ -912,50 +903,10 @@ ${schema}
 </div>
 </body>
 </html>`;
-        html = injectAdsAndAnalytics(html);
-        fs.writeFileSync(blogPath, html);
-        blogs.push({ title: kw, url: `${slug}.html`, image: imageUrl, excerpt: metaDesc.substring(0, 120), date: publishDate });
-        await delay(5000);
-      }
-    }
-  } else {
-    // Individual generation
-    for (const kw of keywords) {
-      const slug = kw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 100);
-      const blogPath = path.join(blogDir, `${slug}.html`);
-      let content;
-      if (repo.lowPriority) {
-        content = `<p>Complete guide to ${kw}. Learn actionable strategies to master ${kw} in 2026.</p>`;
-      } else {
-        content = await generateBlogContent(kw, repo.name, allBlogsData, blogPath, false);
-        if (!content) continue;
-      }
-      const imageUrl = `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/1200/630`;
-      const publishDate = new Date().toISOString().split('T')[0];
-      const schema = generateSchema(kw, repo.name, slug, imageUrl, publishDate);
-      const metaDesc = `Complete guide to ${kw}. Learn actionable strategies, avoid common mistakes, and master ${kw} in 2026.`;
-      let html = `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><title>${kw} | ${repo.name}</title>
-<meta name="description" content="${metaDesc}">
-<link rel="canonical" href="https://${repo.name}.startknowledge.in/blog/${slug}.html">
-<meta property="og:title" content="${kw} | ${repo.name}">
-<meta property="og:image" content="${imageUrl}">
-${schema}
-<style>/* advanced CSS */</style>
-</head>
-<body>
-<div class="container">
-<article><img src="${imageUrl}" alt="${kw}" style="width:100%">${content}</article>
-<footer><p>© ${new Date().getFullYear()} ${repo.name} | <a href="/">Home</a> | <a href="index.html">Blog Index</a></p></footer>
-</div>
-</body>
-</html>`;
-      html = injectAdsAndAnalytics(html);
-      fs.writeFileSync(blogPath, html);
-      blogs.push({ title: kw, url: `${slug}.html`, image: imageUrl, excerpt: metaDesc.substring(0, 120), date: publishDate });
-      await delay(5000);
-    }
+    html = injectAdsAndAnalytics(html);
+    fs.writeFileSync(blogPath, html);
+    blogs.push({ title: kw, url: `${slug}.html`, image: imageUrl, excerpt: metaDesc.substring(0, 120), date: publishDate });
+    await delay(5000);
   }
 
   const posts = await generateStaticBlogIndex(repoPath, repo.name);
