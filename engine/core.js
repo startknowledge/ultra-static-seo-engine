@@ -112,6 +112,11 @@ async function fetchClickBankTopProducts() {
   const apiKey = process.env.CLICKBANK_API_KEY;
   if (!apiKey) {
     console.warn('⚠️ CLICKBANK_API_KEY not set – using fallback local products');
+    // Fallback to local file
+    const fallbackPath = path.join(__dirname, '..', 'data', 'clickbank-products.json');
+    if (fs.existsSync(fallbackPath)) {
+      return JSON.parse(fs.readFileSync(fallbackPath, 'utf8'));
+    }
     return [];
   }
 
@@ -128,7 +133,7 @@ async function fetchClickBankTopProducts() {
       affiliate_link: `https://${item.account}.hop.clickbank.net`,
       product_name: item.name,
       niche: item.category,
-      salesRank: item.gravity || 0,      // higher = more popular
+      salesRank: item.gravity || 0,
       commission: item.totalRebillAmt || 0
     }));
 
@@ -199,8 +204,14 @@ async function generateContentWithFallback(prompt, repoName) {
   return null;
 }
 
-// ========== GENERATE BLOG CONTENT ==========
-async function generateBlogContent(keyword, repoName, allBlogsForRepo, blogPath, forceRegenerate = false) {
+// ========== GENERATE BLOG CONTENT (only if file does not exist) ==========
+async function generateBlogContentIfNotExists(keyword, repoName, allBlogsForRepo, blogPath) {
+  // Check if blog already exists
+  if (fs.existsSync(blogPath)) {
+    console.log(`⏩ Skipping existing blog: ${keyword}`);
+    return null;
+  }
+
   const prompt = `Write a very detailed, SEO-optimized blog post (at least 3500 words) about "${keyword}" for the website "${repoName}". 
 Use proper HTML structure: <h1>Title</h1>, <h2>Subheadings</h2>, <p>, <ul>, <li>. Include:
 - An engaging title with the keyword
@@ -310,6 +321,10 @@ async function generateMoneyPages(repoPath, repoName) {
     if (!keyword || !affiliateLink) continue;
     const slug = keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const moneyPagePath = path.join(repoPath, `${slug}.html`);
+    if (fs.existsSync(moneyPagePath)) {
+      console.log(`⏩ Money page already exists: ${slug}.html`);
+      continue;
+    }
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><title>Buy ${productName || keyword} – Best Price</title>
@@ -410,13 +425,13 @@ async function archiveOldPosts(repoPath, repoName, retentionDays = 90) {
   if (archivedCount > 0) {
     console.log(`📦 Archived ${archivedCount} old posts from ${repoName}`);
     // Rebuild index, sitemap, RSS after archiving
-    const activePosts = await generateStaticBlogIndex(repoPath, repoName);
-    await generateRssFeed(repoPath, repoName, activePosts);
+    const posts = await generateStaticBlogIndex(repoPath, repoName);
+    await generateRssFeed(repoPath, repoName, posts);
     await rebuildSitemap(repoPath, repoName);
   }
 }
 
-// ========== FRESH KEYWORDS (1 hour cache, Google Trends) ==========
+// ========== FRESH KEYWORDS (1 hour cache) ==========
 async function fetchGoogleTrendsKeywords() {
   const url = 'https://trends.google.com/trends/trendingsearches/daily/rss?geo=IN';
   try {
@@ -441,7 +456,6 @@ async function getTrendingKeywords(seed, repoName) {
   const now = Date.now();
   const ONE_HOUR = 60 * 60 * 1000;
 
-  // Use cache only if younger than 1 hour
   if (fs.existsSync(cacheFile)) {
     const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
     if (now - cached.timestamp < ONE_HOUR) {
@@ -464,9 +478,6 @@ async function getTrendingKeywords(seed, repoName) {
   } catch (e) {
     console.warn(`⚠️ Google News RSS failed for ${seed}, falling back to Google Trends`);
     keywords = await fetchGoogleTrendsKeywords();
-    if (keywords.length === 0) {
-      keywords = [`${seed} strategies`, `best ${seed} tools`, `how to ${seed}`, `${seed} for beginners`, `advanced ${seed}`, `${seed} trends ${new Date().getFullYear()}`];
-    }
   }
 
   fs.writeFileSync(cacheFile, JSON.stringify({ timestamp: now, keywords }));
@@ -489,7 +500,7 @@ function generateSchema(keyword, repoName, slug, imageUrl, date) {
 </script>`;
 }
 
-// ========== FULL SITEMAP REGENERATION ==========
+// ========== SITEMAP, STATIC PAGES, RSS, SMART ADS ==========
 async function rebuildSitemap(repoPath, repoName) {
   const sitemapPath = path.join(repoPath, 'sitemap.xml');
   const baseUrl = `https://${repoName}.startknowledge.in`;
@@ -533,7 +544,6 @@ function escapeXml(str) {
   });
 }
 
-// ========== GENERATE NAVIGATION LINKS ==========
 function generateNavLinks() {
   let links = `<li><a href="/">Home</a></li><li><a href="blog/index.html">Blog</a></li>`;
   for (const page of STATIC_PAGES) {
@@ -554,7 +564,6 @@ function generateFooterLinks() {
   return links;
 }
 
-// ========== GENERATE RICH STATIC PAGE ==========
 function generateRichStaticPage(page, repoName) {
   const pageName = page.replace('.html', '');
   const displayTitle = pageName.charAt(0).toUpperCase() + pageName.slice(1);
@@ -600,13 +609,13 @@ function generateRichStaticPage(page, repoName) {
 function ensureStaticPages(repoPath, repoName) {
   STATIC_PAGES.forEach(page => {
     const pagePath = path.join(repoPath, page);
+    if (fs.existsSync(pagePath)) return; // don't overwrite existing static pages
     const richHtml = generateRichStaticPage(page, repoName);
     fs.writeFileSync(pagePath, injectAdsAndAnalytics(richHtml));
-    console.log(`📄 Generated/Updated rich static page: ${pagePath}`);
+    console.log(`📄 Generated rich static page: ${pagePath}`);
   });
 }
 
-// ========== GENERATE STATIC BLOG INDEX ==========
 async function generateStaticBlogIndex(repoPath, repoName) {
   const blogDir = path.join(repoPath, 'blog');
   fs.ensureDirSync(blogDir);
@@ -644,7 +653,7 @@ async function generateStaticBlogIndex(repoPath, repoName) {
   const templatePath = path.join(__dirname, '..', 'templates', 'blog-index.html');
   if (!fs.existsSync(templatePath)) {
     console.error(`❌ Template not found: ${templatePath}`);
-    return;
+    return [];
   }
   let templateHtml = fs.readFileSync(templatePath, 'utf8');
   templateHtml = templateHtml.replace('<!-- BLOG_POSTS_PLACEHOLDER -->', blogListHtml);
@@ -660,7 +669,6 @@ async function generateStaticBlogIndex(repoPath, repoName) {
   return posts;
 }
 
-// ========== GENERATE RSS FEED ==========
 async function generateRssFeed(repoPath, repoName, posts) {
   const rssPath = path.join(repoPath, 'blog', 'rss.xml');
   const now = new Date().toUTCString();
@@ -697,7 +705,7 @@ function escapeHtml(str) {
   return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
 }
 
-// ========== SMART AD PLACEMENT FUNCTIONS (using ClickBank API products) ==========
+// ========== SMART AD PLACEMENT (only for new posts) ==========
 const REPO_NICHE_MAP = {
   'startknowledge': 'E-Business & E-Marketing',
   'bn-ration-scale': 'Health & Fitness',
@@ -713,12 +721,9 @@ const REPO_NICHE_MAP = {
 async function getTopAffiliateProducts(repoName, count = 3) {
   const allProducts = await fetchClickBankTopProducts();
   if (allProducts.length === 0) return [];
-  
   const targetNiche = REPO_NICHE_MAP[repoName] || 'E-Business & E-Marketing';
   let filtered = allProducts.filter(p => p.niche === targetNiche);
   if (filtered.length === 0) filtered = allProducts;
-  
-  // Sort by salesRank (gravity) descending – top-selling first
   filtered.sort((a, b) => (b.salesRank || 0) - (a.salesRank || 0));
   return filtered.slice(0, count);
 }
@@ -805,33 +810,21 @@ function injectFloatingAd(html, product) {
   return html.replace('</body>', floatScript + '</body>');
 }
 
-async function enhanceAllPagesWithSmartAds(repoPath, repoName) {
+async function enhanceNewPostsWithSmartAds(repoPath, repoName, newBlogFiles) {
+  if (newBlogFiles.length === 0) return;
   const products = await getTopAffiliateProducts(repoName, 4);
   if (products.length === 0) return;
 
-  const indexPath = path.join(repoPath, 'blog', 'index.html');
-  if (fs.existsSync(indexPath)) {
-    let indexHtml = fs.readFileSync(indexPath, 'utf8');
-    indexHtml = injectSidebarWidget(indexHtml, products.slice(0, 3), 'blog-index');
-    indexHtml = injectExitIntentPopup(indexHtml, products);
-    indexHtml = injectFloatingAd(indexHtml, products[0]);
-    fs.writeFileSync(indexPath, indexHtml);
-    console.log(`✅ Sidebar + popup + floating ad added to blog index of ${repoName}`);
+  for (const file of newBlogFiles) {
+    const postPath = path.join(repoPath, 'blog', file);
+    if (!fs.existsSync(postPath)) continue;
+    let postHtml = fs.readFileSync(postPath, 'utf8');
+    postHtml = injectSidebarWidget(postHtml, products.slice(0, 2), 'post');
+    postHtml = injectExitIntentPopup(postHtml, products);
+    postHtml = injectFloatingAd(postHtml, products[1] || products[0]);
+    fs.writeFileSync(postPath, postHtml);
+    console.log(`✅ Added smart ads to new post: ${file}`);
   }
-
-  const blogDir = path.join(repoPath, 'blog');
-  const files = fs.readdirSync(blogDir);
-  for (const file of files) {
-    if (file.endsWith('.html') && file !== 'index.html') {
-      const postPath = path.join(blogDir, file);
-      let postHtml = fs.readFileSync(postPath, 'utf8');
-      postHtml = injectSidebarWidget(postHtml, products.slice(0, 2), 'post');
-      postHtml = injectExitIntentPopup(postHtml, products);
-      postHtml = injectFloatingAd(postHtml, products[1] || products[0]);
-      fs.writeFileSync(postPath, postHtml);
-    }
-  }
-  console.log(`📱 Enhanced ${files.length} blog posts with smart ads in ${repoName}`);
 }
 
 // ========== PROCESS SINGLE REPO ==========
@@ -843,11 +836,10 @@ async function processRepo(repo) {
   fs.ensureDirSync(path.join(repoPath, 'images'));
   ensureStaticPages(repoPath, repo.name);
   
-  // Rotate money pages using CSV (still uses local file, but you can also replace with API products)
   await rotateMoneyPages(repo.name);
   await generateMoneyPages(repoPath, repo.name);
 
-  // Get fresh keywords (cache 1 hour)
+  // Get fresh keywords
   const seed = repo.name.replace(/-/g, ' ');
   let keywords = await getTrendingKeywords(seed, repo.name);
   console.log(`📈 Keywords:`, keywords);
@@ -857,19 +849,27 @@ async function processRepo(repo) {
     url: `/${kw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 100)}.html`
   }));
 
+  const newBlogFiles = [];
   const blogs = [];
 
-  // Generate new blog content for each keyword
   for (const kw of keywords) {
     const slug = kw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 100);
     const blogPath = path.join(blogDir, `${slug}.html`);
+    
+    // Skip if already exists
+    if (fs.existsSync(blogPath)) {
+      console.log(`⏩ Skipping existing blog: ${kw}`);
+      continue;
+    }
+
     let content;
     if (repo.lowPriority) {
       content = `<p>Complete guide to ${kw}. Learn actionable strategies to master ${kw} in 2026.</p>`;
     } else {
-      content = await generateBlogContent(kw, repo.name, allBlogsData, blogPath, false);
+      content = await generateBlogContentIfNotExists(kw, repo.name, allBlogsData, blogPath);
       if (!content) continue;
     }
+
     const imageUrl = `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/1200/630`;
     const publishDate = new Date().toISOString().split('T')[0];
     const schema = generateSchema(kw, repo.name, slug, imageUrl, publishDate);
@@ -894,35 +894,39 @@ ${schema}
     html = injectAdsAndAnalytics(html);
     fs.writeFileSync(blogPath, html);
     blogs.push({ title: kw, url: `${slug}.html`, image: imageUrl, excerpt: metaDesc.substring(0, 120), date: publishDate });
+    newBlogFiles.push(`${slug}.html`);
     await delay(5000);
   }
 
-  // Archive posts older than 90 days (this also rebuilds index, sitemap, RSS)
+  // Apply smart ads only to newly created blog posts
+  await enhanceNewPostsWithSmartAds(repoPath, repo.name, newBlogFiles);
+
+  // Archive old posts (older than 90 days)
   await archiveOldPosts(repoPath, repo.name, 90);
 
-  // If archiveOldPosts already rebuilt everything, we still need to run sitemap and RSS again for new posts.
-  // But archiveOldPosts calls generateStaticBlogIndex and rebuildSitemap, which includes new posts.
-  // However, we still need to add smart ads and fix links after that.
+  // Rebuild index, sitemap, RSS (includes all existing + new - archived)
   const posts = await generateStaticBlogIndex(repoPath, repo.name);
   await generateRssFeed(repoPath, repo.name, posts);
   await rebuildSitemap(repoPath, repo.name);
-  await enhanceAllPagesWithSmartAds(repoPath, repo.name);
+  
+  // Fix broken links (only if needed)
   await fixBrokenLinks(repoPath, repo.name);
 
+  // Git commit and push
   const git = simpleGit(repoPath);
   await git.addConfig('user.name', 'seo-bot', false, 'local');
   await git.addConfig('user.email', 'bot@seo.com', false, 'local');
   await git.add('.');
   const status = await git.status();
   if (status.files.length > 0) {
-    await git.commit('🤖 Auto-generate SEO blogs + money pages + ads + 404 fix + RSS + full sitemap + smart affiliate widgets + real indexing + auto archive old posts');
+    await git.commit('🤖 Auto-generate new SEO blogs + archive old + smart affiliate widgets + real indexing');
     const branchSummary = await git.branch();
     await git.push('origin', branchSummary.current);
     console.log(`✅ Pushed updates to ${repo.name}`);
   } else {
     console.log(`📭 No changes to commit for ${repo.name}`);
   }
-  console.log(`✅ Completed ${repo.name} | ${blogs.length} blogs`);
+  console.log(`✅ Completed ${repo.name} | ${blogs.length} new blogs`);
 }
 
 // ========== MAIN ==========
@@ -933,7 +937,7 @@ async function main() {
   }
   fs.ensureDirSync(TEMP_DIR);
   fs.ensureDirSync(CACHE_DIR);
-  // Optionally clear cache to force fresh keywords every run (uncomment if you want always fresh)
+  // Clear cache to force fresh keywords every run (optional)
   // await fs.remove(CACHE_DIR);
   // fs.ensureDirSync(CACHE_DIR);
   for (const repo of REPOS_WITH_URL) await processRepo(repo);
