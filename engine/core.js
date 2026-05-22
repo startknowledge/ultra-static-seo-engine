@@ -63,7 +63,7 @@ const GTM_ID = 'GTM-K435LPQQ';
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// ========== REAL GOOGLE INDEXING API (optional) ==========
+// ========== REAL GOOGLE INDEXING API ==========
 let indexingAuth = null;
 if (google && process.env.GOOGLE_INDEXING_KEY) {
   try {
@@ -97,6 +97,51 @@ async function submitToGoogleIndexing(url) {
   }
 }
 
+// ========== CLICKBANK API – GET TOP‑SELLING PRODUCTS ==========
+let cachedClickbankProducts = null;
+let clickbankCacheTime = 0;
+const CLICKBANK_CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
+
+async function fetchClickBankTopProducts() {
+  const now = Date.now();
+  if (cachedClickbankProducts && (now - clickbankCacheTime) < CLICKBANK_CACHE_TTL) {
+    console.log(`📦 Using cached ClickBank products (${cachedClickbankProducts.length} items)`);
+    return cachedClickbankProducts;
+  }
+
+  const apiKey = process.env.CLICKBANK_API_KEY;
+  if (!apiKey) {
+    console.warn('⚠️ CLICKBANK_API_KEY not set – using fallback local products');
+    return [];
+  }
+
+  try {
+    // ClickBank API v2.0 – marketplace feed (top selling)
+    const url = 'https://api.clickbank.com/rest/1.3/marketplace/feed';
+    const response = await axios.get(url, {
+      headers: { 'Authorization': apiKey, 'Accept': 'application/json' },
+      params: { format: 'json', pageSize: 50, sortBy: 'gravity' } // gravity = popularity
+    });
+
+    const products = response.data.items.map(item => ({
+      keyword: item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      affiliate_link: `https://${item.account}.hop.clickbank.net`,
+      product_name: item.name,
+      niche: item.category,
+      salesRank: item.gravity || 0,      // higher = more popular
+      commission: item.totalRebillAmt || 0
+    }));
+
+    cachedClickbankProducts = products;
+    clickbankCacheTime = now;
+    console.log(`✅ Fetched ${products.length} top products from ClickBank API`);
+    return products;
+  } catch (err) {
+    console.error('❌ ClickBank API failed:', err.message);
+    return [];
+  }
+}
+
 // ========== MULTI-AI FALLBACK ENGINE ==========
 const AI_PROVIDERS = [
   {
@@ -106,29 +151,6 @@ const AI_PROVIDERS = [
       url: 'https://api.groq.com/openai/v1/chat/completions',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       data: { model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: prompt }], max_tokens: 3500, temperature: 0.7 }
-    }),
-    parseResponse: (res) => res.data.choices[0].message.content
-  },
-  {
-    name: 'Gemini',
-    apiKeyEnv: ['GEMINI_API_KEY1', 'GEMINI_API_KEY2'],
-    buildRequest: (prompt, key) => ({
-      url: `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`,
-      headers: { 'Content-Type': 'application/json' },
-      data: {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 3500 }
-      }
-    }),
-    parseResponse: (res) => res.data.candidates[0].content.parts[0].text
-  },
-  {
-    name: 'OpenRouter',
-    apiKeyEnv: ['OPENAI_OPENROUTER1', 'OPENAI_OPENROUTER2'],
-    buildRequest: (prompt, key) => ({
-      url: 'https://openrouter.ai/api/v1/chat/completions',
-      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      data: { model: 'meta-llama/llama-3.2-3b-instruct:free', messages: [{ role: 'user', content: prompt }], max_tokens: 3500 }
     }),
     parseResponse: (res) => res.data.choices[0].message.content
   },
@@ -143,16 +165,6 @@ const AI_PROVIDERS = [
     parseResponse: (res) => res.data.choices[0].message.content
   },
   {
-    name: 'HuggingFace',
-    apiKeyEnv: ['HUGGINGFACE_TOKEN1', 'HUGGINGFACE_TOKEN2'],
-    buildRequest: (prompt, key) => ({
-      url: 'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2',
-      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      data: { inputs: prompt, parameters: { max_new_tokens: 3500, temperature: 0.7 } }
-    }),
-    parseResponse: (res) => res.data[0].generated_text
-  },
-  {
     name: 'Ollama (Local)',
     apiKeyEnv: [],
     buildRequest: (prompt) => ({
@@ -163,38 +175,6 @@ const AI_PROVIDERS = [
     parseResponse: (res) => res.data.response
   }
 ];
-
-// Retry with exponential backoff and key rotation
-async function callWithRetry(provider, prompt, repoName, maxRetries = 3) {
-  const keys = provider.apiKeyEnv.map(env => process.env[env]).filter(Boolean);
-  if (keys.length === 0 && provider.apiKeyEnv.length > 0) return null;
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    for (const key of (keys.length ? keys : [null])) {
-      try {
-        const { url, headers, data } = provider.buildRequest(prompt, key);
-        const response = await axios.post(url, data, { headers, timeout: 60000 });
-        const content = provider.parseResponse(response);
-        if (content && content.length > 200) {
-          console.log(`✅ AI via ${provider.name} (attempt ${attempt}) for ${repoName}`);
-          return content;
-        }
-      } catch (err) {
-        const status = err.response?.status;
-        if (status === 429) {
-          const wait = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
-          console.warn(`⚠️ ${provider.name} rate limit (429), retrying in ${wait}ms...`);
-          await delay(wait);
-          break; // Try same provider with different key (if any) after backoff
-        } else {
-          console.warn(`⚠️ ${provider.name} failed (${err.message})`);
-        }
-      }
-    }
-    await delay(5000);
-  }
-  return null;
-}
 
 async function generateContentWithFallback(prompt, repoName) {
   for (const provider of AI_PROVIDERS) {
@@ -219,7 +199,7 @@ async function generateContentWithFallback(prompt, repoName) {
   return null;
 }
 
-// ========== GENERATE BLOG CONTENT (individual only – no batch) ==========
+// ========== GENERATE BLOG CONTENT ==========
 async function generateBlogContent(keyword, repoName, allBlogsForRepo, blogPath, forceRegenerate = false) {
   const prompt = `Write a very detailed, SEO-optimized blog post (at least 3500 words) about "${keyword}" for the website "${repoName}". 
 Use proper HTML structure: <h1>Title</h1>, <h2>Subheadings</h2>, <p>, <ul>, <li>. Include:
@@ -403,60 +383,75 @@ async function prepareRepo(repoName, repoUrl) {
   return repoPath;
 }
 
-// ========== ENHANCED KEYWORD FETCHING ==========
-const MOTIONIX_KEYWORDS = [
-  "web animation tool", "css animation generator", "motion UI", "interactive animation", "frontend animation",
-  "GSAP animation", "javascript animation library", "timeline animation", "scroll animation", "high performance animation",
-  "react animation library", "framer motion effects", "ui animation react", "spring animation", "gesture animation",
-  "lottie animations", "json animation", "after effects export", "lightweight animation", "mobile animation",
-  "3d web animation", "three.js animation", "webgl motion", "interactive 3d", "3d ui animation",
-  "scroll animation library", "parallax scrolling", "scroll trigger animation", "interactive scroll", "web storytelling",
-  "anime.js animation", "javascript motion library", "lightweight animation js", "timeline animation js", "svg animation",
-  "motion graphics library", "burst animation", "shape animation", "creative animation js", "interactive effects",
-  "rive animation tool", "interactive animation design", "real time animation", "ui animation engine", "cross platform animation",
-  "velocity animation", "fast dom animation", "jquery animation alternative", "high performance js animation", "ui transitions",
-  "functional animation library", "physics based animation", "motion engine", "gesture driven animation", "react animation base",
-  "page transition library", "smooth navigation animation", "spa transitions", "ajax page animation", "seamless ux",
-  "smooth scroll library", "scroll animation effects", "parallax engine", "scroll ux enhancement", "web interaction",
-  "motion one library", "web animations api wrapper", "lightweight motion library", "fast animation js", "modern animation",
-  "svg drawing animation", "line animation svg", "stroke animation", "svg interaction", "path animation",
-  "hover animation effects", "css hover library", "interactive hover ui", "button hover animation", "micro interactions",
-  "3d tilt effect", "mouse interaction ui", "parallax tilt", "card hover effect", "interactive perspective",
-  "particles animation", "background animation", "canvas particles", "interactive particles", "visual effects js",
-  "2d web rendering", "webgl animation engine", "high performance graphics", "game animation js", "canvas rendering",
-  "scroll reveal animation", "fade in on scroll", "viewport animation", "simple scroll effects", "ui animation",
-  "scroll animation wow", "css animation trigger", "animate on scroll", "frontend animation helper", "ux animation",
-  "animate on scroll library", "scroll animation css", "fade animation scroll", "lightweight animation", "frontend effects",
-  "slider animation library", "carousel motion", "touch slider", "responsive slider", "ui animation component",
-  "slider library", "carousel animation", "lightweight slider", "touch interaction", "ui component animation",
-  "swiper js slider", "touch slider animation", "mobile carousel", "interactive slider", "frontend motion",
-  "full page scroll animation", "section scroll effect", "landing page animation", "smooth navigation", "ux scrolling",
-  "typing animation", "text animation effect", "typewriter effect js", "interactive text", "ui micro animation"
-];
+// ========== AUTO ARCHIVE OLD POSTS (90 DAYS) ==========
+async function archiveOldPosts(repoPath, repoName, retentionDays = 90) {
+  const blogDir = path.join(repoPath, 'blog');
+  if (!fs.existsSync(blogDir)) return;
 
+  const archiveDir = path.join(repoPath, 'archive');
+  fs.ensureDirSync(archiveDir);
 
-// ========== KEYWORD CACHING (6 hours) ==========
+  const now = Date.now();
+  const files = fs.readdirSync(blogDir);
+  let archivedCount = 0;
+
+  for (const file of files) {
+    if (!file.endsWith('.html') || file === 'index.html') continue;
+    const filePath = path.join(blogDir, file);
+    const stats = fs.statSync(filePath);
+    const ageDays = (now - stats.mtimeMs) / (1000 * 60 * 60 * 24);
+    if (ageDays > retentionDays) {
+      await fs.move(filePath, path.join(archiveDir, file), { overwrite: true });
+      console.log(`📦 Archived old post: ${file} (${Math.floor(ageDays)} days old)`);
+      archivedCount++;
+    }
+  }
+
+  if (archivedCount > 0) {
+    console.log(`📦 Archived ${archivedCount} old posts from ${repoName}`);
+    // Rebuild index, sitemap, RSS after archiving
+    const activePosts = await generateStaticBlogIndex(repoPath, repoName);
+    await generateRssFeed(repoPath, repoName, activePosts);
+    await rebuildSitemap(repoPath, repoName);
+  }
+}
+
+// ========== FRESH KEYWORDS (1 hour cache, Google Trends) ==========
+async function fetchGoogleTrendsKeywords() {
+  const url = 'https://trends.google.com/trends/trendingsearches/daily/rss?geo=IN';
+  try {
+    const feed = await parser.parseURL(url);
+    const keywords = [];
+    for (const item of feed.items) {
+      let title = item.title;
+      title = title.replace(/\s*[–—-]\s*.*$/, '').trim();
+      if (title.length > 10 && !keywords.includes(title)) keywords.push(title);
+      if (keywords.length >= 6) break;
+    }
+    if (keywords.length === 0) throw new Error('No trends');
+    return keywords;
+  } catch (e) {
+    console.warn('⚠️ Google Trends RSS failed, using fallback');
+    return ['AI trends 2026', 'programmatic SEO', 'Google updates', 'semantic search', 'E-E-A-T signals', 'multi-language SEO'];
+  }
+}
+
 async function getTrendingKeywords(seed, repoName) {
   const cacheFile = path.join(CACHE_DIR, `keywords_${repoName}.json`);
   const now = Date.now();
-  const SIX_HOURS = 6 * 60 * 60 * 1000;
+  const ONE_HOUR = 60 * 60 * 1000;
 
+  // Use cache only if younger than 1 hour
   if (fs.existsSync(cacheFile)) {
     const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
-    if (now - cached.timestamp < SIX_HOURS) {
-      console.log(`📦 Using cached keywords for ${repoName}`);
+    if (now - cached.timestamp < ONE_HOUR) {
+      console.log(`📦 Using cached keywords for ${repoName} (fresh <1h)`);
       return cached.keywords;
     }
   }
 
-  if (repoName === 'ultra-static-seo-engine') {
-    const keywords = ['AI content generation', 'programmatic SEO best practices', 'Google Indexing API tutorial', 'semantic SEO strategies 2026', 'E-E-A-T signals for ranking', 'multi-language SEO automation'];
-    fs.writeFileSync(cacheFile, JSON.stringify({ timestamp: now, keywords }));
-    return keywords;
-  }
-
-  const url = `https://news.google.com/rss/search?q=${encodeURIComponent(seed)}&hl=en-US&gl=US&ceid=US:en`;
   let keywords = [];
+  const url = `https://news.google.com/rss/search?q=${encodeURIComponent(seed)}&hl=en-US&gl=US&ceid=US:en`;
   try {
     const feed = await parser.parseURL(url);
     for (const item of feed.items) {
@@ -467,16 +462,9 @@ async function getTrendingKeywords(seed, repoName) {
     }
     if (keywords.length === 0) throw new Error('No news');
   } catch (e) {
-    console.warn(`⚠️ Google News RSS failed, using fallback.`);
-    if (repoName.toLowerCase() === 'motionix') {
-      console.log(`🎨 Using Motionix‑specific keyword set.`);
-      const shuffled = [...MOTIONIX_KEYWORDS];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      keywords = shuffled.slice(0, 6);
-    } else {
+    console.warn(`⚠️ Google News RSS failed for ${seed}, falling back to Google Trends`);
+    keywords = await fetchGoogleTrendsKeywords();
+    if (keywords.length === 0) {
       keywords = [`${seed} strategies`, `best ${seed} tools`, `how to ${seed}`, `${seed} for beginners`, `advanced ${seed}`, `${seed} trends ${new Date().getFullYear()}`];
     }
   }
@@ -500,7 +488,6 @@ function generateSchema(keyword, repoName, slug, imageUrl, date) {
 }
 </script>`;
 }
-
 
 // ========== FULL SITEMAP REGENERATION ==========
 async function rebuildSitemap(repoPath, repoName) {
@@ -710,7 +697,7 @@ function escapeHtml(str) {
   return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
 }
 
-// ========== SMART AD PLACEMENT FUNCTIONS ==========
+// ========== SMART AD PLACEMENT FUNCTIONS (using ClickBank API products) ==========
 const REPO_NICHE_MAP = {
   'startknowledge': 'E-Business & E-Marketing',
   'bn-ration-scale': 'Health & Fitness',
@@ -723,17 +710,16 @@ const REPO_NICHE_MAP = {
   'universal-image-data-explorer-forge': 'Software & Services'
 };
 
-function getRandomAffiliateProducts(repoName, count = 3) {
-  const productsPath = path.join(__dirname, '..', 'data', 'clickbank-products.json');
-  if (!fs.existsSync(productsPath)) return [];
-  const allProducts = JSON.parse(fs.readFileSync(productsPath, 'utf8'));
+async function getTopAffiliateProducts(repoName, count = 3) {
+  const allProducts = await fetchClickBankTopProducts();
+  if (allProducts.length === 0) return [];
+  
   const targetNiche = REPO_NICHE_MAP[repoName] || 'E-Business & E-Marketing';
   let filtered = allProducts.filter(p => p.niche === targetNiche);
   if (filtered.length === 0) filtered = allProducts;
-  for (let i = filtered.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [filtered[i], filtered[j]] = [filtered[j], filtered[i]];
-  }
+  
+  // Sort by salesRank (gravity) descending – top-selling first
+  filtered.sort((a, b) => (b.salesRank || 0) - (a.salesRank || 0));
   return filtered.slice(0, count);
 }
 
@@ -741,7 +727,7 @@ function injectSidebarWidget(html, products, pageType = 'blog') {
   if (!products || products.length === 0) return html;
   const sidebarHtml = `
   <aside class="affiliate-sidebar" style="position: sticky; top: 100px; width: 280px; margin-left: 30px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-radius: 24px; padding: 20px; border: 1px solid rgba(108,92,231,0.3); box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
-    <h4 style="font-size: 1.2rem; margin-bottom: 15px;">🔥 Recommended for you</h4>
+    <h4 style="font-size: 1.2rem; margin-bottom: 15px;">🔥 Top Selling</h4>
     ${products.map(p => `
       <div style="margin-bottom: 20px; text-align: center;">
         <img src="https://picsum.photos/id/${Math.floor(Math.random() * 100)}/200/120" style="width:100%; border-radius: 16px;">
@@ -820,7 +806,7 @@ function injectFloatingAd(html, product) {
 }
 
 async function enhanceAllPagesWithSmartAds(repoPath, repoName) {
-  const products = getRandomAffiliateProducts(repoName, 4);
+  const products = await getTopAffiliateProducts(repoName, 4);
   if (products.length === 0) return;
 
   const indexPath = path.join(repoPath, 'blog', 'index.html');
@@ -857,9 +843,11 @@ async function processRepo(repo) {
   fs.ensureDirSync(path.join(repoPath, 'images'));
   ensureStaticPages(repoPath, repo.name);
   
+  // Rotate money pages using CSV (still uses local file, but you can also replace with API products)
   await rotateMoneyPages(repo.name);
   await generateMoneyPages(repoPath, repo.name);
 
+  // Get fresh keywords (cache 1 hour)
   const seed = repo.name.replace(/-/g, ' ');
   let keywords = await getTrendingKeywords(seed, repo.name);
   console.log(`📈 Keywords:`, keywords);
@@ -871,7 +859,7 @@ async function processRepo(repo) {
 
   const blogs = [];
 
-  // Individual generation only – no batch
+  // Generate new blog content for each keyword
   for (const kw of keywords) {
     const slug = kw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 100);
     const blogPath = path.join(blogDir, `${slug}.html`);
@@ -909,6 +897,12 @@ ${schema}
     await delay(5000);
   }
 
+  // Archive posts older than 90 days (this also rebuilds index, sitemap, RSS)
+  await archiveOldPosts(repoPath, repo.name, 90);
+
+  // If archiveOldPosts already rebuilt everything, we still need to run sitemap and RSS again for new posts.
+  // But archiveOldPosts calls generateStaticBlogIndex and rebuildSitemap, which includes new posts.
+  // However, we still need to add smart ads and fix links after that.
   const posts = await generateStaticBlogIndex(repoPath, repo.name);
   await generateRssFeed(repoPath, repo.name, posts);
   await rebuildSitemap(repoPath, repo.name);
@@ -921,7 +915,7 @@ ${schema}
   await git.add('.');
   const status = await git.status();
   if (status.files.length > 0) {
-    await git.commit('🤖 Auto-generate SEO blogs + money pages + ads + 404 fix + RSS + full sitemap + smart affiliate widgets + real indexing');
+    await git.commit('🤖 Auto-generate SEO blogs + money pages + ads + 404 fix + RSS + full sitemap + smart affiliate widgets + real indexing + auto archive old posts');
     const branchSummary = await git.branch();
     await git.push('origin', branchSummary.current);
     console.log(`✅ Pushed updates to ${repo.name}`);
@@ -939,6 +933,9 @@ async function main() {
   }
   fs.ensureDirSync(TEMP_DIR);
   fs.ensureDirSync(CACHE_DIR);
+  // Optionally clear cache to force fresh keywords every run (uncomment if you want always fresh)
+  // await fs.remove(CACHE_DIR);
+  // fs.ensureDirSync(CACHE_DIR);
   for (const repo of REPOS_WITH_URL) await processRepo(repo);
   console.log('🔥 SYSTEM COMPLETE');
 }
