@@ -1,205 +1,882 @@
 import fs from 'fs';
-import { CONFIG } from '../config.js';
-import { sanitizeSlug, cleanMarkdown, generateImage } from './utils.js';
-import { generateAIContent } from './strategy-engine.js';
-import { getTrendsForKeyword } from './trends-widget.js';
+import path from 'path';
 
-async function generateBlogPost(keyword, repoName, domain, strategy) {
-  const prompt = `Write a detailed, SEO-optimized blog post about "${keyword}" for a website about ${strategy.niche}. Use headings (h2, h3), paragraphs, and a conclusion. Minimum 800 words. Return plain HTML without markdown or backticks.`;
-  let content = await generateAIContent(prompt);
-  content = cleanMarkdown(content);
-  if (!content || content.length < CONFIG.MIN_CONTENT_LENGTH) {
-    console.log(`⚠️ AI failed for "${keyword}" – using fallback template`);
-    content = `<h2>What is ${keyword}?</h2>
-<p>${keyword} is an important topic in the field of ${strategy.niche}. This guide will help you understand the key aspects and how to leverage them.</p>
-<h2>Key Benefits</h2>
-<ul><li>Improve your understanding of ${keyword}</li><li>Apply best practices</li><li>Stay ahead with the latest trends</li></ul>
-<h2>Getting Started</h2>
-<p>Begin by exploring the resources and tools available on our site. Check back regularly for updates and in-depth articles.</p>
-<p>For more information, visit our <a href="/${repoName}/pages/contact.html">contact page</a>.</p>`;
+import { CONFIG } from '../config.js';
+
+import {
+  sanitizeSlug,
+  cleanMarkdown,
+  generateImage
+} from './utils.js';
+
+import {
+  generateAIContent
+} from './strategy-engine.js';
+
+import {
+  getTrendsForKeyword
+} from './trends-widget.js';
+
+function ensureDirectory(directory) {
+  if (!fs.existsSync(directory)) {
+    fs.mkdirSync(directory, {
+      recursive: true
+    });
   }
+}
+
+function escapeHtml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function injectAds(
+  html,
+  contentLength
+) {
+  const client =
+    CONFIG?.ADSENSE_CLIENT;
+
+  const slots =
+    Array.isArray(
+      CONFIG?.ADSENSE_SLOTS
+    )
+      ? CONFIG.ADSENSE_SLOTS
+      : [];
+
+  if (
+    !client ||
+    slots.length === 0
+  ) {
+    return html;
+  }
+
+  const adCount =
+    contentLength > 8000
+      ? 4
+      : contentLength > 4000
+        ? 3
+        : 2;
+
+  const scripts = `
+<script
+  async
+  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}"
+  crossorigin="anonymous">
+</script>
+`;
+
+  if (
+    html.includes('</head>')
+  ) {
+    html =
+      html.replace(
+        '</head>',
+        `${scripts}</head>`
+      );
+  }
+
+  const parts =
+    html.split('</p>');
+
+  const step =
+    Math.max(
+      1,
+      Math.floor(
+        parts.length / adCount
+      )
+    );
+
+  let result = '';
+
+  for (
+    let i = 0;
+    i < parts.length;
+    i++
+  ) {
+    result +=
+      parts[i] + '</p>';
+
+    if (
+      i > 0 &&
+      i % step === 0 &&
+      i < parts.length - 1
+    ) {
+      const slot =
+        slots[
+          Math.floor(
+            Math.random() *
+            slots.length
+          )
+        ];
+
+      result += `
+<ins
+  class="adsbygoogle"
+  style="display:block"
+  data-ad-format="fluid"
+  data-ad-client="${client}"
+  data-ad-slot="${slot}">
+</ins>
+
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+`;
+    }
+  }
+
+  return result;
+}
+
+async function generateBlogPost(
+  keyword,
+  strategy
+) {
+  const prompt = `
+Write a detailed, original and useful SEO article
+about:
+
+"${keyword}"
+
+Website context:
+${strategy?.niche || 'the website subject'}
+
+Requirements:
+
+- Minimum 1000 words.
+- Use H2 and H3 headings.
+- Use readable paragraphs.
+- Include practical information.
+- Explain the topic clearly.
+- Include useful examples where appropriate.
+- Include a conclusion.
+- Avoid keyword stuffing.
+- Do not invent statistics.
+- Do not make unsupported claims.
+- Do not mention AI.
+- Return HTML only.
+- Do not use markdown fences.
+`;
+
+  let content = '';
+
+  try {
+    content =
+      await generateAIContent(
+        prompt
+      );
+  } catch (error) {
+    console.warn(
+      `⚠️ AI generation failed for ${keyword}: ${error.message}`
+    );
+  }
+
+  content =
+    cleanMarkdown(
+      content || ''
+    );
+
+  const minLength =
+    Number(
+      CONFIG?.MIN_CONTENT_LENGTH || 1200
+    );
+
+  if (
+    !content ||
+    content.length < minLength
+  ) {
+    content = `
+<h2>What Is ${escapeHtml(keyword)}?</h2>
+
+<p>
+${escapeHtml(keyword)} is a topic that can
+benefit from a clear and practical explanation.
+Understanding its basic concepts helps readers
+make better-informed decisions and find more
+reliable information.
+</p>
+
+<h2>Important Points</h2>
+
+<ul>
+
+<li>
+Understand the basic concepts related to
+${escapeHtml(keyword)}.
+</li>
+
+<li>
+Compare information from reliable sources.
+</li>
+
+<li>
+Keep information updated as the subject changes.
+</li>
+
+<li>
+Use practical examples whenever possible.
+</li>
+
+</ul>
+
+<h2>How to Learn More</h2>
+
+<p>
+Start with the fundamentals, review trustworthy
+resources and gradually explore more advanced
+aspects of the subject.
+</p>
+
+<h2>Conclusion</h2>
+
+<p>
+A good understanding of ${escapeHtml(keyword)}
+can help readers identify useful information
+and make more informed decisions.
+</p>
+`;
+  }
+
   return content;
 }
 
-// Generate 10+ FAQ for static pages
-function generateFAQ(repoName, niche) {
-  const faqs = [
-    { q: `What is ${repoName}?`, a: `${repoName} is a comprehensive platform dedicated to ${niche}, providing expert insights, tools, and resources.` },
-    { q: `How can I get started with ${repoName}?`, a: `Simply explore our blog posts and tools. All content is free and updated regularly.` },
-    { q: `Is the information on ${repoName} free?`, a: `Yes, 100% free. No registration required.` },
-    { q: `How often is new content added?`, a: `New blog posts and resources are added automatically every few hours.` },
-    { q: `Can I contribute or suggest a topic?`, a: `Absolutely! Contact us via the contact page.` },
-    { q: `Does ${repoName} have a mobile app?`, a: `Not yet, but the website is fully responsive on all devices.` },
-    { q: `How do I report an issue?`, a: `Use the contact form or email us directly.` },
-    { q: `Are the tools on ${repoName} reliable?`, a: `Yes, we use up‑to‑date algorithms and data sources.` },
-    { q: `Can I use content from ${repoName} for my own site?`, a: `Please see our terms of service. Short excerpts with attribution are allowed.` },
-    { q: `How can I stay updated?`, a: `Subscribe to our RSS feed or check the blog regularly.` },
-  ];
-  return faqs.map(f => `<div class="faq-item"><h3>${f.q}</h3><p>${f.a}</p></div>`).join('');
-}
+async function generateSidebar(
+  currentKeyword,
+  blogs
+) {
+  let trendsHtml =
+    '<p>Trend data unavailable.</p>';
 
-// Inject ads (same as before)
-function injectAds(html, contentLength) {
-  let adCount = contentLength > 8000 ? 4 : contentLength > 4000 ? 3 : 2;
-  const allScripts = `
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${CONFIG.ADSENSE_CLIENT}" crossorigin="anonymous"></script>
-    ${CONFIG.PROPELLER_SCRIPT}
-    ${CONFIG.ADSTERRA_SCRIPT}
-    ${CONFIG.MEDIANET_SCRIPT}
-  `;
-  html = html.replace('</head>', `${allScripts}</head>`);
-  const parts = html.split('</p>');
-  const step = Math.max(1, Math.floor(parts.length / adCount));
-  let newHtml = '';
-  for (let i = 0; i < parts.length; i++) {
-    newHtml += parts[i] + '</p>';
-    if (i > 0 && i % step === 0 && i < parts.length - 1) {
-      const slot = CONFIG.ADSENSE_SLOTS[Math.floor(Math.random() * CONFIG.ADSENSE_SLOTS.length)];
-      newHtml += `<ins class="adsbygoogle" style="display:block" data-ad-format="fluid" data-ad-client="${CONFIG.ADSENSE_CLIENT}" data-ad-slot="${slot}"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script>`;
-    }
-  }
-  return newHtml;
-}
-
-// Build navigation (includes Blog link)
-function buildNav(repoName) {
-  return `<nav>
-    <a href="/${repoName}/">Home</a>
-    <a href="/${repoName}/blog/">Blog</a>
-    <a href="/${repoName}/pages/about.html">About</a>
-    <a href="/${repoName}/pages/contact.html">Contact</a>
-    <a href="/${repoName}/pages/privacy.html">Privacy</a>
-    <a href="/${repoName}/pages/faq.html">FAQ</a>
-    <a href="/${repoName}/pages/disclaimer.html">Disclaimer</a>
-    <a href="/${repoName}/pages/terms.html">Terms</a>
-  </nav>`;
-}
-
-function buildFooter(repoName) {
-  return `<footer><p>&copy; ${new Date().getFullYear()} ${repoName} | <a href="/${repoName}/pages/privacy.html">Privacy</a> | <a href="/${repoName}/pages/faq.html">FAQ</a> | <a href="/${repoName}/pages/disclaimer.html">Disclaimer</a> | <a href="/${repoName}/pages/terms.html">Terms</a></p></footer>`;
-}
-
-// Generate sidebar HTML (recent posts, trends, newsletter)
-async function generateSidebar(repoName, currentKeyword, allBlogs) {
-  // Recent posts (last 5)
-  const recent = allBlogs.slice(-5).reverse().map(b => `<li><a href="${b.url}">${b.keyword}</a></li>`).join('');
-  // Google Trends for the current keyword
-  let trendsHtml = '<p>Loading trends...</p>';
   try {
-    const trends = await getTrendsForKeyword(currentKeyword);
-    trendsHtml = `<ul class="trends-list">${trends.map(t => `<li>🔥 ${t}</li>`).join('')}</ul>`;
-  } catch { trendsHtml = '<p>Trend data unavailable.</p>'; }
-  
+    const trends =
+      await getTrendsForKeyword(
+        currentKeyword
+      );
+
+    if (
+      Array.isArray(trends) &&
+      trends.length
+    ) {
+      trendsHtml = `
+<ul>
+${trends
+  .map(
+    trend =>
+      `<li>🔥 ${escapeHtml(trend)}</li>`
+  )
+  .join('')}
+</ul>
+`;
+    }
+  } catch {
+    // Keep fallback.
+  }
+
+  const recent =
+    blogs
+      .slice(-5)
+      .reverse()
+      .map(
+        blog => `
+<li>
+<a href="${escapeHtml(blog.url)}">
+${escapeHtml(blog.keyword)}
+</a>
+</li>
+`
+      )
+      .join('');
+
   return `
-    <aside class="sidebar">
-      <div class="widget">
-        <h3>📈 Google Trends</h3>
-        ${trendsHtml}
-      </div>
-      <div class="widget">
-        <h3>📝 Recent Posts</h3>
-        <ul class="recent-posts">${recent}</ul>
-      </div>
-      <div class="widget newsletter">
-        <h3>✉️ Newsletter</h3>
-        <form action="#" method="post">
-          <input type="email" placeholder="Your email" required>
-          <button type="submit">Subscribe</button>
-        </form>
-      </div>
-    </aside>
-  `;
+<aside class="sidebar">
+
+<div class="widget">
+
+<h3>📈 Google Trends</h3>
+
+${trendsHtml}
+
+</div>
+
+<div class="widget">
+
+<h3>📝 Recent Posts</h3>
+
+<ul>
+${
+  recent ||
+  '<li>No recent posts.</li>'
+}
+</ul>
+
+</div>
+
+</aside>
+`;
 }
 
-// Generate static pages (about, contact, etc.)
-async function generateStaticPages(repoName, domain, niche) {
-  const pagesDir = `./docs/${repoName}/pages`;
-  if (!fs.existsSync(pagesDir)) fs.mkdirSync(pagesDir, { recursive: true });
+function createBlogIndex(
+  repoName,
+  blogs
+) {
+  const cards =
+    blogs
+      .map(blog => {
+        const slug =
+          sanitizeSlug(
+            blog.keyword
+          );
 
-  const faqContent = generateFAQ(repoName, niche);
-  const pages = [
-    { slug: 'about', title: 'About Us', content: `<p>${repoName} is your trusted source for ${niche}. Our mission is to provide accurate, up‑to‑date information and tools.</p>` },
-    { slug: 'contact', title: 'Contact', content: `<p>Email: contact@${repoName}.com</p><p>Phone: +91-XXXXXXXXXX</p>` },
-    { slug: 'privacy', title: 'Privacy Policy', content: `<p>We respect your privacy. This site uses cookies and third‑party ads.</p>` },
-    { slug: 'faq', title: 'Frequently Asked Questions', content: faqContent },
-    { slug: 'disclaimer', title: 'Disclaimer', content: `<p>The information provided is for general informational purposes only. We are not liable for any errors or omissions.</p>` },
-    { slug: 'terms', title: 'Terms of Service', content: `<p>By using this site, you agree to these terms. All content is property of ${repoName}.</p>` },
-  ];
+        return `
+<article class="blog-card">
 
-  const nav = buildNav(repoName);
-  const footer = buildFooter(repoName);
-  const styleLink = `<link rel="stylesheet" href="/${repoName}/style.css">`;
+<img
+  src="/blog/images/${slug}.jpg"
+  alt="${escapeHtml(blog.keyword)}"
+  loading="lazy"
+>
 
-  for (const page of pages) {
-    const html = `<!DOCTYPE html>
+<div>
+
+<h2>
+${escapeHtml(blog.keyword)}
+</h2>
+
+<p>
+Explore our latest information,
+guides and analysis about
+${escapeHtml(blog.keyword)}.
+</p>
+
+<a
+  href="${escapeHtml(blog.url)}"
+>
+Read more →
+</a>
+
+</div>
+
+</article>
+`;
+      })
+      .join('');
+
+  return `<!DOCTYPE html>
+
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${page.title} | ${repoName}</title><meta name="description" content="${page.title} page for ${repoName}">${styleLink}</head>
-<body><header>${nav}</header><div class="container"><div class="main-grid"><main class="content-area"><h1>${page.title}</h1>${page.content}</main><div class="sidebar">${await generateSidebar(repoName, page.title, [])}</div></div></div>${footer}</body>
-</html>`;
-    fs.writeFileSync(`${pagesDir}/${page.slug}.html`, html);
-  }
-  return pages.map(p => ({ slug: p.slug, url: `${domain}/pages/${p.slug}.html`, date: new Date().toISOString() }));
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1"
+>
+
+<title>
+Blog | ${escapeHtml(repoName)}
+</title>
+
+<meta
+  name="description"
+  content="${escapeHtml(
+    `Latest articles and guides from ${repoName}`
+  )}"
+>
+
+<style>
+
+* {
+  box-sizing: border-box;
 }
 
-// Main export: generate all content
-export async function generateContentForRepo(repoName, domain, strategy) {
-  console.log(`📝 Generating content for ${repoName}`);
-  const blogDir = `./docs/${repoName}/blog`;
-  const pagesDir = `./docs/${repoName}/pages`;
-  const imgDir = `./docs/${repoName}/blog/images`;
-  if (!fs.existsSync(blogDir)) fs.mkdirSync(blogDir, { recursive: true });
-  if (!fs.existsSync(pagesDir)) fs.mkdirSync(pagesDir, { recursive: true });
-  if (!fs.existsSync(imgDir)) fs.mkdirSync(imgDir, { recursive: true });
+body {
+  margin: 0;
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+  background: #f4f6f8;
+  color: #222;
+}
 
+header {
+  background: #111827;
+  padding: 18px;
+}
+
+nav {
+  max-width: 1100px;
+  margin: auto;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin-right: 20px;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+.blog-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(280px, 1fr)
+    );
+  gap: 25px;
+}
+
+.blog-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 4px 18px
+    rgba(0,0,0,.08);
+}
+
+.blog-card img {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+}
+
+.blog-card div {
+  padding: 20px;
+}
+
+.blog-card a {
+  text-decoration: none;
+  font-weight: 700;
+}
+
+footer {
+  margin-top: 50px;
+  padding: 25px;
+  background: #111827;
+  color: white;
+  text-align: center;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<nav>
+<a href="/">Home</a>
+<a href="/blog/">Blog</a>
+</nav>
+
+</header>
+
+<main class="container">
+
+<h1>Blog</h1>
+
+<div class="blog-grid">
+
+${
+  cards ||
+  '<p>No blog posts available.</p>'
+}
+
+</div>
+
+</main>
+
+<footer>
+© ${new Date().getFullYear()}
+${escapeHtml(repoName)}
+</footer>
+
+</body>
+
+</html>`;
+}
+
+export async function generateContentForRepo(
+  repoName,
+  domain,
+  strategy = {}
+) {
+  console.log(
+    `📝 Generating blogs for ${repoName}`
+  );
+
+  const repoRoot =
+    path.join(
+      './docs',
+      repoName
+    );
+
+  const blogDir =
+    path.join(
+      repoRoot,
+      'blog'
+    );
+
+  const imageDir =
+    path.join(
+      blogDir,
+      'images'
+    );
+
+  ensureDirectory(
+    blogDir
+  );
+
+  ensureDirectory(
+    imageDir
+  );
+
+  /*
+   * IMPORTANT:
+   *
+   * No pages directory is created here.
+   *
+   * Existing static pages remain completely
+   * outside this generator.
+   */
   const blogs = [];
-  const nav = buildNav(repoName);
-  const footer = buildFooter(repoName);
-  const styleLink = `<link rel="stylesheet" href="/${repoName}/style.css">`;
 
-  for (const keyword of strategy.cluster) {
-    const slug = sanitizeSlug(keyword);
-    const url = `${domain}/blog/${slug}.html`;
-    const imageFilename = `${slug}.jpg`;
-    const imagePath = `${imgDir}/${imageFilename}`;
-    const imageUrl = `/blog/images/${imageFilename}`;
+  const keywords =
+    Array.isArray(
+      strategy?.cluster
+    )
+      ? strategy.cluster
+      : [];
 
-    // Generate blog content
-    let body = await generateBlogPost(keyword, repoName, domain, strategy);
-    body = injectAds(body, body.length);
+  for (const keywordValue of keywords) {
+    const keyword =
+      String(
+        keywordValue || ''
+      ).trim();
 
-    // Generate image (fallback to placeholder)
-    await generateImage(keyword, imagePath);
+    if (!keyword) {
+      continue;
+    }
 
-    // Generate sidebar (pass all blogs for recent posts)
-    const sidebar = await generateSidebar(repoName, keyword, blogs);
+    const slug =
+      sanitizeSlug(keyword);
 
-    // Full page HTML
-    const fullHtml = `<!DOCTYPE html>
+    if (!slug) {
+      continue;
+    }
+
+    const filePath =
+      path.join(
+        blogDir,
+        `${slug}.html`
+      );
+
+    /*
+     * Never overwrite an existing blog.
+     */
+    if (fs.existsSync(filePath)) {
+      console.log(
+        `⏭️ Blog already exists: ${slug}`
+      );
+
+      continue;
+    }
+
+    const url =
+      `${domain}/blog/${slug}.html`;
+
+    const imageFilename =
+      `${slug}.jpg`;
+
+    const imagePath =
+      path.join(
+        imageDir,
+        imageFilename
+      );
+
+    let body =
+      await generateBlogPost(
+        keyword,
+        strategy
+      );
+
+    body =
+      injectAds(
+        body,
+        body.length
+      );
+
+    try {
+      await generateImage(
+        keyword,
+        imagePath
+      );
+    } catch (error) {
+      console.warn(
+        `⚠️ Image generation failed: ${error.message}`
+      );
+    }
+
+    const sidebar =
+      await generateSidebar(
+        keyword,
+        blogs
+      );
+
+    const generatedAt =
+      new Date().toISOString();
+
+    const html = `<!DOCTYPE html>
+
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${keyword}</title><meta name="description" content="Complete guide about ${keyword}"><link rel="canonical" href="${url}">${styleLink}</head>
-<body><header>${nav}</header><div class="container"><div class="main-grid"><main class="content-area"><img src="${imageUrl}" alt="${keyword}" class="featured-image"><h1>${keyword}</h1>${body}</main>${sidebar}</div></div>${footer}</body>
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1"
+>
+
+<title>
+${escapeHtml(keyword)}
+</title>
+
+<meta
+  name="description"
+  content="${escapeHtml(
+    `Complete guide about ${keyword}`
+  )}"
+>
+
+<link
+  rel="canonical"
+  href="${escapeHtml(url)}"
+>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+  line-height: 1.7;
+  background: #f4f6f8;
+  color: #222;
+}
+
+header {
+  background: #111827;
+  padding: 18px;
+}
+
+nav {
+  max-width: 1100px;
+  margin: auto;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin-right: 20px;
+  font-weight: 600;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+.main-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    300px;
+  gap: 30px;
+}
+
+.content-area,
+.sidebar .widget {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+}
+
+.featured-image {
+  width: 100%;
+  max-height: 500px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-size: 42px;
+  line-height: 1.2;
+}
+
+h2 {
+  margin-top: 32px;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sidebar ul {
+  padding-left: 20px;
+}
+
+.sidebar a {
+  text-decoration: none;
+}
+
+footer {
+  margin-top: 50px;
+  background: #111827;
+  color: white;
+  padding: 25px;
+  text-align: center;
+}
+
+@media (max-width: 800px) {
+
+.main-grid {
+  grid-template-columns: 1fr;
+}
+
+h1 {
+  font-size: 32px;
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<nav>
+<a href="/">Home</a>
+<a href="/blog/">Blog</a>
+</nav>
+
+</header>
+
+<div class="container">
+
+<div class="main-grid">
+
+<main class="content-area">
+
+<img
+  class="featured-image"
+  src="/blog/images/${imageFilename}"
+  alt="${escapeHtml(keyword)}"
+  loading="eager"
+>
+
+<h1>
+${escapeHtml(keyword)}
+</h1>
+
+${body}
+
+<p>
+<small>
+Published: ${generatedAt}
+</small>
+</p>
+
+</main>
+
+${sidebar}
+
+</div>
+
+</div>
+
+<footer>
+© ${new Date().getFullYear()}
+${escapeHtml(repoName)}
+</footer>
+
+</body>
+
 </html>`;
-    fs.writeFileSync(`${blogDir}/${slug}.html`, fullHtml);
-    blogs.push({ slug, keyword, url, date: new Date().toISOString() });
-    console.log(`✅ Blog: ${url}`);
+
+    fs.writeFileSync(
+      filePath,
+      html,
+      'utf8'
+    );
+
+    blogs.push({
+      slug,
+      keyword,
+      url,
+      date: generatedAt
+    });
+
+    console.log(
+      `✅ Blog created: ${url}`
+    );
   }
 
-  // Generate blog archive page (list all blogs)
-  const archiveHtml = `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Blog Archive | ${repoName}</title>${styleLink}</head>
-<body><header>${nav}</header><div class="container"><h1>All Blog Posts</h1><div class="blog-grid">${blogs.map(b => `
-  <div class="blog-card">
-    <img src="/${repoName}/blog/images/${sanitizeSlug(b.keyword)}.jpg" alt="${b.keyword}" onerror="this.src='https://placehold.co/600x400?text=Blog+Image'">
-    <div class="blog-card-content">
-      <h3>${b.keyword}</h3>
-      <p>Read our latest insights about ${b.keyword}.</p>
-      <a href="${b.url}" class="read-more">Read more →</a>
-    </div>
-  </div>`).join('')}</div></div>${footer}</body>
-</html>`;
-  fs.writeFileSync(`${blogDir}/index.html`, archiveHtml);
+  /*
+   * Blog index is dynamic and allowed.
+   */
+  const indexPath =
+    path.join(
+      blogDir,
+      'index.html'
+    );
 
-  const pages = await generateStaticPages(repoName, domain, strategy.niche);
-  return { blogs, pages };
+  fs.writeFileSync(
+    indexPath,
+    createBlogIndex(
+      repoName,
+      blogs
+    ),
+    'utf8'
+  );
+
+  console.log(
+    `📚 Blog index generated.`
+  );
+
+  /*
+   * Static pages intentionally return empty.
+   */
+  return {
+    blogs,
+    pages: []
+  };
 }

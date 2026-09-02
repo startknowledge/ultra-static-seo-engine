@@ -1,2 +1,1 @@
-import { runUltraCore } from './engine/core.js';
-runUltraCore();
+import './engine/core.js';
