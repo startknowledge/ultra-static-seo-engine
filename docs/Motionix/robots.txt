@@ -1,3 +1,0 @@
-User-agent: *
-Allow: /
-Sitemap: https://motionix.startknowledge.in/sitemap.xml
