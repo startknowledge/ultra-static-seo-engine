@@ -1,7 +1,7 @@
-import { generateAIContent } from './strategy-engine.js';
-import fs from 'fs';
-//dfgdfgd
-export async function refreshOldBlogs(repoName, maxAgeDays = 90) {
+const fs = require('fs');
+const { generateAIContent } = require('./strategy-engine.js');
+
+async function refreshOldBlogs(repoName, maxAgeDays = 90) {
   const blogDir = `./docs/${repoName}/blog`;
   if (!fs.existsSync(blogDir)) return;
   const now = Date.now();
@@ -19,3 +19,5 @@ export async function refreshOldBlogs(repoName, maxAgeDays = 90) {
     }
   }
 }
+
+module.exports = { refreshOldBlogs };
