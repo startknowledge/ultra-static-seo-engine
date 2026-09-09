@@ -9,15 +9,17 @@
     "clean-pages": "node clean-pages.js"
   },
   "dependencies": {
-    "axios": "^1.14.0",
+    "axios": "^1.20.0",
     "cheerio": "^1.0.0",
     "dompurify": "^3.4.0",
     "dotenv": "^17.4.2",
+    "express": "^5.2.1",
     "fs-extra": "^11.3.4",
     "google-trends-api": "^4.9.2",
     "googleapis": "^172.0.0",
     "jsdom": "^29.0.2",
     "marked": "^18.0.0",
+    "open": "^11.0.2",
     "p-limit": "^7.3.0",
     "rss-parser": "^3.13.0",
     "simple-git": "^3.33.0",
