@@ -1,7 +1,7 @@
-import { CONFIG } from '../config.js';
-import { sanitizeSlug } from './utils.js';
-import { generateAIContent } from './strategy-engine.js';
-import fs from 'fs';
+const fs = require('fs');
+const { CONFIG } = require('../config.js');
+const { sanitizeSlug } = require('./utils.js');
+const { generateAIContent } = require('./strategy-engine.js');
 
 // High CPC buyer intent keywords
 const BUYER_INTENT_KEYWORDS = [
@@ -9,11 +9,11 @@ const BUYER_INTENT_KEYWORDS = [
   "price", "cost", "compare", "alternative", "pros and cons"
 ];
 
-export async function detectBuyerIntent(keyword) {
+async function detectBuyerIntent(keyword) {
   return BUYER_INTENT_KEYWORDS.some(term => keyword.toLowerCase().includes(term));
 }
 
-export async function generateComparisonTable(product1, product2, features) {
+async function generateComparisonTable(product1, product2, features) {
   return `
 <div class="comparison-table">
   <table>
@@ -23,7 +23,7 @@ export async function generateComparisonTable(product1, product2, features) {
 </div>`;
 }
 
-export async function generateMoneyPage(repoName, domain, keyword) {
+async function generateMoneyPage(repoName, domain, keyword) {
   const prompt = `Write a detailed buyer's guide for "${keyword}". Include pros/cons, pricing, a comparison table of top 3 products, and affiliate-friendly recommendations. Use HTML for the comparison table.`;
   let content = await generateAIContent(prompt);
   // Insert affiliate links automatically (replace placeholder URLs)
@@ -33,7 +33,7 @@ export async function generateMoneyPage(repoName, domain, keyword) {
   return content;
 }
 
-export async function generateMoneyPagesForRepo(repoName, domain, keywords) {
+async function generateMoneyPagesForRepo(repoName, domain, keywords) {
   const moneyDir = `./docs/${repoName}/money`;
   if (!fs.existsSync(moneyDir)) fs.mkdirSync(moneyDir, { recursive: true });
   const pages = [];
@@ -47,3 +47,5 @@ export async function generateMoneyPagesForRepo(repoName, domain, keywords) {
   }
   return pages;
 }
+
+module.exports = { detectBuyerIntent, generateComparisonTable, generateMoneyPage, generateMoneyPagesForRepo };

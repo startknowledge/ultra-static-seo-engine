@@ -1,5 +1,5 @@
-import { CONFIG } from '../config.js';
-import { readJson, writeJson } from './utils.js';
+const { CONFIG } = require('../config.js');
+const { readJson, writeJson } = require('./utils.js');
 
 const STATE_FILE = './data/repos.json';
 
@@ -30,7 +30,7 @@ async function fetchReposFromGitHub() {
   return repos.map(r => r.name);
 }
 
-export async function getRepos(forceRefresh = false) {
+async function getRepos(forceRefresh = false) {
   let repos = readJson(STATE_FILE, []);
   if (forceRefresh || repos.length === 0) {
     console.log('🔄 Fetching repos from GitHub...');
@@ -40,7 +40,7 @@ export async function getRepos(forceRefresh = false) {
   return repos;
 }
 
-export async function detectNewRepos() {
+async function detectNewRepos() {
   const old = readJson(STATE_FILE, []);
   const fresh = await fetchReposFromGitHub();
   const newRepos = fresh.filter(r => !old.includes(r));
@@ -50,3 +50,5 @@ export async function detectNewRepos() {
   }
   return { all: fresh, new: newRepos };
 }
+
+module.exports = { getRepos, detectNewRepos };

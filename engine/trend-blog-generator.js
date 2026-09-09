@@ -1,24 +1,12 @@
-import fs from 'fs';
-import path from 'path';
-
-import {
-  getCombinedTrends
-} from './trend-engine.js';
-
-import {
-  generateAIContent
-} from './strategy-engine.js';
-
-import {
-  sanitizeSlug,
-  generateImage
-} from './utils.js';
+const fs = require('fs');
+const path = require('path');
+const { getCombinedTrends } = require('./trend-engine.js');
+const { generateAIContent } = require('./strategy-engine.js');
+const { sanitizeSlug, generateImage } = require('./utils.js');
 
 function ensureDirectory(directory) {
   if (!fs.existsSync(directory)) {
-    fs.mkdirSync(directory, {
-      recursive: true
-    });
+    fs.mkdirSync(directory, { recursive: true });
   }
 }
 
@@ -31,99 +19,45 @@ function escapeHtml(value = '') {
     .replace(/'/g, '&#039;');
 }
 
-export async function generateTrendBlogs(
-  repoName,
-  domain,
-  strategy = {}
-) {
-  console.log(
-    `📈 Checking Google Trends for ${repoName}`
-  );
+async function generateTrendBlogs(repoName, domain, strategy = {}) {
+  console.log(`📈 Checking Google Trends for ${repoName}`);
 
   let trends = [];
-
   try {
-    trends =
-      await getCombinedTrends();
+    trends = await getCombinedTrends();
   } catch (error) {
-    console.warn(
-      `⚠️ Google Trends unavailable: ${error.message}`
-    );
+    console.warn(`⚠️ Google Trends unavailable: ${error.message}`);
   }
 
-  if (
-    !Array.isArray(trends) ||
-    trends.length === 0
-  ) {
-    console.log(
-      `ℹ️ No trend topics found.`
-    );
-
+  if (!Array.isArray(trends) || trends.length === 0) {
+    console.log(`ℹ️ No trend topics found.`);
     return [];
   }
 
-  const topTrends =
-    trends
-      .filter(Boolean)
-      .map(
-        trend =>
-          String(trend).trim()
-      )
-      .filter(Boolean)
-      .slice(0, 3);
+  const topTrends = trends
+    .filter(Boolean)
+    .map(trend => String(trend).trim())
+    .filter(Boolean)
+    .slice(0, 3);
 
-  const blogDir =
-    path.join(
-      './docs',
-      repoName,
-      'blog'
-    );
-
-  const imageDir =
-    path.join(
-      blogDir,
-      'images'
-    );
-
-  ensureDirectory(
-    blogDir
-  );
-
-  ensureDirectory(
-    imageDir
-  );
+  const blogDir = path.join('./docs', repoName, 'blog');
+  const imageDir = path.join(blogDir, 'images');
+  ensureDirectory(blogDir);
+  ensureDirectory(imageDir);
 
   const newBlogs = [];
 
   for (const trend of topTrends) {
-    const slug =
-      sanitizeSlug(
-        `trend-${trend}`
-      );
+    const slug = sanitizeSlug(`trend-${trend}`);
+    if (!slug) continue;
 
-    if (!slug) {
-      continue;
-    }
-
-    const filePath =
-      path.join(
-        blogDir,
-        `${slug}.html`
-      );
-
-    /*
-     * Never overwrite an existing article.
-     */
+    const filePath = path.join(blogDir, `${slug}.html`);
     if (fs.existsSync(filePath)) {
-      console.log(
-        `⏭️ Existing trend blog: ${slug}`
-      );
-
+      console.log(`⏭️ Existing trend blog: ${slug}`);
       continue;
     }
 
-    const url =
-      `${domain}/blog/${slug}.html`;
+    const url = `${domain}/blog/${slug}.html`;
 
     const prompt = `
 Create a useful and fact-focused SEO article
@@ -151,22 +85,13 @@ Requirements:
 `;
 
     let content = '';
-
     try {
-      content =
-        await generateAIContent(
-          prompt
-        );
+      content = await generateAIContent(prompt);
     } catch (error) {
-      console.warn(
-        `⚠️ AI trend generation failed: ${error.message}`
-      );
+      console.warn(`⚠️ AI trend generation failed: ${error.message}`);
     }
 
-    if (
-      !content ||
-      content.trim().length < 300
-    ) {
+    if (!content || content.trim().length < 300) {
       content = `
 <h2>${escapeHtml(trend)}</h2>
 
@@ -218,28 +143,15 @@ becomes available.
 `;
     }
 
-    const imageFilename =
-      `${slug}.jpg`;
-
-    const imagePath =
-      path.join(
-        imageDir,
-        imageFilename
-      );
-
+    const imageFilename = `${slug}.jpg`;
+    const imagePath = path.join(imageDir, imageFilename);
     try {
-      await generateImage(
-        trend,
-        imagePath
-      );
+      await generateImage(trend, imagePath);
     } catch (error) {
-      console.warn(
-        `⚠️ Image generation failed for ${trend}: ${error.message}`
-      );
+      console.warn(`⚠️ Image generation failed for ${trend}: ${error.message}`);
     }
 
-    const generatedAt =
-      new Date().toISOString();
+    const generatedAt = new Date().toISOString();
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -257,9 +169,7 @@ becomes available.
 
 <meta
   name="description"
-  content="${escapeHtml(
-    `Latest information and useful analysis about ${trend}`
-  )}"
+  content="${escapeHtml(`Latest information and useful analysis about ${trend}`)}"
 >
 
 <link
@@ -396,11 +306,7 @@ ${content}
 
 </html>`;
 
-    fs.writeFileSync(
-      filePath,
-      html,
-      'utf8'
-    );
+    fs.writeFileSync(filePath, html, 'utf8');
 
     newBlogs.push({
       slug,
@@ -409,10 +315,10 @@ ${content}
       date: generatedAt
     });
 
-    console.log(
-      `✅ Trend blog created: ${url}`
-    );
+    console.log(`✅ Trend blog created: ${url}`);
   }
 
   return newBlogs;
 }
+
+module.exports = { generateTrendBlogs };

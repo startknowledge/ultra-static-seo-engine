@@ -1,5 +1,5 @@
 // No external API – returns relevant static trends based on keyword
-export async function getTrendsForKeyword(keyword) {
+async function getTrendsForKeyword(keyword) {
   // Return a set of related search queries (static, no HTTP errors)
   const base = keyword.toLowerCase();
   const trends = [
@@ -17,3 +17,5 @@ export async function getTrendsForKeyword(keyword) {
   // Return first 5 unique ones
   return [...new Set(trends)].slice(0, 5);
 }
+
+module.exports = { getTrendsForKeyword };

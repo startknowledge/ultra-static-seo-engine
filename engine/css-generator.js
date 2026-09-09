@@ -1,6 +1,6 @@
-import fs from 'fs';
+const fs = require('fs');
 
-export async function generateCSS(repoName) {
+async function generateCSS(repoName) {
   const css = `/* Modern CSS for ${repoName} – Google Material Inspired */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -194,3 +194,5 @@ footer a:hover { color: white; }
 `;
   fs.writeFileSync(`./docs/${repoName}/style.css`, css);
 }
+
+module.exports = { generateCSS };

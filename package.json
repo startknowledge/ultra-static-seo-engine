@@ -3,7 +3,6 @@
   "version": "4.0.0",
   "private": true,
   "description": "Autonomous multi-repository SEO content automation engine",
-  "type": "module",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

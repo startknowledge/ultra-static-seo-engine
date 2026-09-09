@@ -1,6 +1,6 @@
-import { CONFIG } from '../config.js';
+const { CONFIG } = require('../config.js');
 
-export function optimizeAds(html, contentLength, userCountry) {
+function optimizeAds(html, contentLength, userCountry) {
   // Already have injectAds function; we enhance it with RPM logic
   let adCount = 2;
   if (contentLength > 8000) adCount = 4;
@@ -18,3 +18,5 @@ function injectAdsWithCount(html, adCount) {
   // (reuse your existing injectAds logic)
   return html;
 }
+
+module.exports = { optimizeAds };

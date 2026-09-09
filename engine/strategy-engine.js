@@ -1,12 +1,12 @@
-import axios from 'axios';
-import { CONFIG } from '../config.js';
-import { readJson, writeJson, delay, retry } from './utils.js';
-import { getCombinedTrends } from './trend-engine.js'; // <-- import the working trends function
+const axios = require('axios');
+const { CONFIG } = require('../config.js');
+const { readJson, writeJson, delay, retry } = require('./utils.js');
+const { getCombinedTrends } = require('./trend-engine.js');
 
 const KEYWORD_DB = './data/keywords.json';
 const AI_CACHE = new Map();
 
-// Build API list from environment variables (all your keys)
+// Build API list from environment variables
 const API_CONFIG = [
   ...['GEMINI_API_KEY1','GEMINI_API_KEY2']
     .filter(k => process.env[k])
@@ -60,7 +60,7 @@ function getNextAvailableKey() {
 }
 
 // Generic AI content generator (with cache)
-export async function generateAIContent(prompt, forceFresh = false) {
+async function generateAIContent(prompt, forceFresh = false) {
   const cacheKey = prompt.slice(0, 200);
   if (!forceFresh && AI_CACHE.has(cacheKey)) {
     console.log("📦 Cache hit");
@@ -123,7 +123,7 @@ export async function generateAIContent(prompt, forceFresh = false) {
   return null;
 }
 
-// Keyword generation using the same API rotation (works for all types)
+// Keyword generation using the same API rotation
 async function generateKeywordsViaAPI(api, seed) {
   const prompt = `Generate 10 SEO keywords related to "${seed}". Return only a list, one per line, no numbers.`;
   if (api.type === 'gemini') {
@@ -164,7 +164,7 @@ function cleanKeywords(text) {
 // Use the reliable combined trends (with fallback) as the seed source
 async function getTrendingKeyword() {
   try {
-    const trends = await getCombinedTrends(); // this already includes fallback static list
+    const trends = await getCombinedTrends();
     if (trends && trends.length) {
       const selected = trends[Math.floor(Math.random() * trends.length)];
       console.log(`📈 Selected trend seed: "${selected}"`);
@@ -173,14 +173,14 @@ async function getTrendingKeyword() {
   } catch (err) {
     console.warn('Failed to fetch trends:', err.message);
   }
-  // Ultimate fallback (should never happen because getCombinedTrends has static fallback)
+  // Ultimate fallback
   return "latest technology trends";
 }
 
-export async function runStrategy(repoName) {
+async function runStrategy(repoName) {
   console.log(`🧠 Keywords for ${repoName}`);
 
-  // Get a trending keyword from the reliable combined trends source
+  // Get a trending keyword
   let seed = await getTrendingKeyword();
   console.log(`🌐 Seed: ${seed}`);
 
@@ -202,13 +202,13 @@ export async function runStrategy(repoName) {
     await delay(1000);
   }
 
-  // If AI fails to generate keywords, use only the seed itself
+  // If AI fails, use only the seed itself
   if (!newKeywords.length) {
     console.warn(`⚠️ No AI keywords generated, using only the trend seed: "${seed}"`);
     newKeywords = [seed];
   }
 
-  // Store keywords in DB for history (optional)
+  // Store keywords in DB for history
   let allKeywords = readJson(KEYWORD_DB, {});
   if (!allKeywords[repoName]) allKeywords[repoName] = [];
   for (const kw of newKeywords) {
@@ -220,3 +220,5 @@ export async function runStrategy(repoName) {
   const cluster = newKeywords.slice(0, CONFIG.BLOGS_PER_REPO);
   return { niche: seed, cluster };
 }
+
+module.exports = { generateAIContent, runStrategy };

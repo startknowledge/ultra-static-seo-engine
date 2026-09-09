@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+const fs = require('fs');
+const path = require('path');
 
 function escapeXml(value = '') {
   return String(value)
@@ -12,19 +12,15 @@ function escapeXml(value = '') {
 
 function safeDate(value) {
   const date = new Date(value);
-
   if (Number.isNaN(date.getTime())) {
     return new Date().toISOString();
   }
-
   return date.toISOString();
 }
 
 function ensureDirectory(directory) {
   if (!fs.existsSync(directory)) {
-    fs.mkdirSync(directory, {
-      recursive: true
-    });
+    fs.mkdirSync(directory, { recursive: true });
   }
 }
 
@@ -48,70 +44,37 @@ function ensureDirectory(directory) {
  * It also does NOT overwrite the project's
  * root sitemap.xml.
  */
-export async function generateSEO(
-  repoName,
-  domain,
-  blogs = [],
-  pages = []
-) {
-  const repoRoot = path.join(
-    './docs',
-    repoName
-  );
-
+async function generateSEO(repoName, domain, blogs = [], pages = []) {
+  const repoRoot = path.join('./docs', repoName);
   ensureDirectory(repoRoot);
 
   /*
    * Only generated blog posts are used.
-   *
    * The pages parameter is intentionally ignored.
    * This prevents any static-page system from
    * becoming part of the SEO generation pipeline.
    */
-  const generatedBlogs =
-    Array.isArray(blogs)
-      ? blogs.filter(blog => {
-          return (
-            blog &&
-            blog.url &&
-            blog.keyword
-          );
-        })
-      : [];
+  const generatedBlogs = Array.isArray(blogs)
+    ? blogs.filter(blog => blog && blog.url && blog.keyword)
+    : [];
 
   /*
    * Generate RSS.
-   *
-   * RSS is dynamic content infrastructure,
-   * not a fixed legal/information page.
    */
-  const rssItems =
-    generatedBlogs
-      .map(blog => {
-        const title =
-          escapeXml(
-            blog.keyword
-          );
-
-        const url =
-          escapeXml(
-            blog.url
-          );
-
-        const date =
-          safeDate(
-            blog.date
-          );
-
-        return `
+  const rssItems = generatedBlogs
+    .map(blog => {
+      const title = escapeXml(blog.keyword);
+      const url = escapeXml(blog.url);
+      const date = safeDate(blog.date);
+      return `
     <item>
       <title>${title}</title>
       <link>${url}</link>
       <guid>${url}</guid>
       <pubDate>${date}</pubDate>
     </item>`;
-      })
-      .join('');
+    })
+    .join('');
 
   const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
@@ -125,48 +88,24 @@ export async function generateSEO(
   </channel>
 </rss>`;
 
-  fs.writeFileSync(
-    path.join(
-      repoRoot,
-      'rss.xml'
-    ),
-    rss,
-    'utf8'
-  );
+  fs.writeFileSync(path.join(repoRoot, 'rss.xml'), rss, 'utf8');
 
   /*
    * Repository-level robots file.
-   *
    * Sitemap is intentionally not added here because
    * the root sitemap is user-managed.
    */
   const robots = `User-agent: *
 Allow: /
 `;
-
-  fs.writeFileSync(
-    path.join(
-      repoRoot,
-      'robots.txt'
-    ),
-    robots,
-    'utf8'
-  );
+  fs.writeFileSync(path.join(repoRoot, 'robots.txt'), robots, 'utf8');
 
   /*
    * JSON-LD schema.
    */
   const graph = [
-    {
-      '@type': 'WebSite',
-      name: repoName,
-      url: domain
-    },
-    {
-      '@type': 'Organization',
-      name: repoName,
-      url: domain
-    }
+    { '@type': 'WebSite', name: repoName, url: domain },
+    { '@type': 'Organization', name: repoName, url: domain }
   ];
 
   for (const blog of generatedBlogs) {
@@ -174,9 +113,7 @@ Allow: /
       '@type': 'BlogPosting',
       headline: blog.keyword,
       url: blog.url,
-      datePublished: safeDate(
-        blog.date
-      )
+      datePublished: safeDate(blog.date)
     });
   }
 
@@ -186,32 +123,16 @@ Allow: /
   };
 
   fs.writeFileSync(
-    path.join(
-      repoRoot,
-      'schema.json'
-    ),
-    JSON.stringify(
-      schema,
-      null,
-      2
-    ),
+    path.join(repoRoot, 'schema.json'),
+    JSON.stringify(schema, null, 2),
     'utf8'
   );
 
-  console.log(
-    `🔎 SEO metadata generated for ${repoName}`
-  );
+  console.log(`🔎 SEO metadata generated for ${repoName}`);
+  console.log(`🛡️ Static pages were not created or modified.`);
+  console.log(`🛡️ Root sitemap.xml was not modified.`);
 
-  console.log(
-    `🛡️ Static pages were not created or modified.`
-  );
-
-  console.log(
-    `🛡️ Root sitemap.xml was not modified.`
-  );
-
-  return {
-    blogs: generatedBlogs,
-    pages: []
-  };
+  return { blogs: generatedBlogs, pages: [] };
 }
+
+module.exports = { generateSEO };

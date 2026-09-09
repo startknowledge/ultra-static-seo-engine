@@ -1,17 +1,17 @@
-import fs from 'fs';
-import axios from 'axios';
-import { CONFIG } from '../config.js';
+const fs = require('fs');
+const axios = require('axios');
+const { CONFIG } = require('../config.js');
 
-export function sanitizeSlug(str) {
+function sanitizeSlug(str) {
   return str.toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 100);
 }
 
-export const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-export async function retry(fn, maxRetries = CONFIG.MAX_RETRIES, baseDelay = CONFIG.RETRY_DELAY_MS) {
+async function retry(fn, maxRetries = CONFIG.MAX_RETRIES, baseDelay = CONFIG.RETRY_DELAY_MS) {
   let lastError;
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -27,7 +27,7 @@ export async function retry(fn, maxRetries = CONFIG.MAX_RETRIES, baseDelay = CON
   throw lastError;
 }
 
-export function readJson(file, defaultValue = []) {
+function readJson(file, defaultValue = []) {
   try {
     if (fs.existsSync(file)) {
       const data = fs.readFileSync(file, 'utf-8');
@@ -39,13 +39,13 @@ export function readJson(file, defaultValue = []) {
   return defaultValue;
 }
 
-export function writeJson(file, data) {
+function writeJson(file, data) {
   const dir = file.substring(0, file.lastIndexOf('/'));
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
 
-export function cleanMarkdown(text) {
+function cleanMarkdown(text) {
   if (!text) return '';
   return text.replace(/```[\s\S]*?```/g, '')
              .replace(/`/g, '')
@@ -54,7 +54,7 @@ export function cleanMarkdown(text) {
 }
 
 // Generate image with multiple fallbacks
-export async function generateImage(prompt, outputPath) {
+async function generateImage(prompt, outputPath) {
   // 1. Try Unsplash (fast, no key)
   const query = encodeURIComponent(prompt.split(' ').slice(0, 5).join(' '));
   try {
@@ -79,3 +79,13 @@ export async function generateImage(prompt, outputPath) {
   console.log(`✅ Placeholder SVG: ${outputPath}`);
   return outputPath;
 }
+
+module.exports = {
+  sanitizeSlug,
+  delay,
+  retry,
+  readJson,
+  writeJson,
+  cleanMarkdown,
+  generateImage
+};

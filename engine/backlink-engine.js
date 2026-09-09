@@ -1,9 +1,9 @@
-import { generateAIContent } from './strategy-engine.js';
-import fs from 'fs';
-import axios from 'axios';
+const fs = require('fs');
+const axios = require('axios');
+const { generateAIContent } = require('./strategy-engine.js');
 
 // Medium integration (requires Medium integration token)
-export async function postToMedium(title, content, tags) {
+async function postToMedium(title, content, tags) {
   const token = process.env.MEDIUM_TOKEN;
   if (!token) return;
   const userId = await getMediumUserId(token);
@@ -14,15 +14,23 @@ export async function postToMedium(title, content, tags) {
 }
 
 // Reddit integration (requires Reddit API credentials)
-export async function postToReddit(subreddit, title, content) {
+async function postToReddit(subreddit, title, content) {
   // Use snoowrap or simple OAuth
   // For brevity, placeholder
   console.log(`Would post to r/${subreddit}: ${title}`);
 }
 
-export async function autoBacklink(blogTitle, blogContent, blogUrl) {
+async function autoBacklink(blogTitle, blogContent, blogUrl) {
   // Shorten content for social media
   const snippet = blogContent.substring(0, 200) + `... Read more: ${blogUrl}`;
   await postToMedium(blogTitle, snippet, ["SEO", "AI"]);
   await postToReddit("SEO", blogTitle, snippet);
 }
+
+// Helper (placeholder)
+async function getMediumUserId(token) {
+  // implement or return dummy
+  return 'dummy';
+}
+
+module.exports = { postToMedium, postToReddit, autoBacklink };

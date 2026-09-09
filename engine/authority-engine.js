@@ -1,7 +1,7 @@
-import { sanitizeSlug } from './utils.js';
-import fs from 'fs';
+const fs = require('fs');
+const { sanitizeSlug } = require('./utils.js');
 
-export async function buildTopicClusters(repoName, allBlogs) {
+async function buildTopicClusters(repoName, allBlogs) {
   // Group blogs by topic (simple keyword matching)
   const clusters = {};
   for (const blog of allBlogs) {
@@ -17,7 +17,7 @@ export async function buildTopicClusters(repoName, allBlogs) {
   }
 }
 
-export async function crossLinkRepos(allRepos) {
+async function crossLinkRepos(allRepos) {
   // Create a central hub page that links to all repos
   const hubHtml = `<h1>StartKnowledge Network</h1><ul>${allRepos.map(r => `<li><a href="/${r}/">${r}</a></li>`).join('')}</ul>`;
   fs.writeFileSync('./docs/network-hub.html', hubHtml);
@@ -31,3 +31,5 @@ export async function crossLinkRepos(allRepos) {
     }
   }
 }
+
+module.exports = { buildTopicClusters, crossLinkRepos };

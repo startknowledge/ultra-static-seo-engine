@@ -1,9 +1,9 @@
-import { CONFIG } from '../config.js';
-import { sanitizeSlug } from './utils.js';
-import fs from 'fs';
+const fs = require('fs');
+const { CONFIG } = require('../config.js');
+const { sanitizeSlug } = require('./utils.js');
 
 // Example: generate location pages for a service
-export async function generateLocationPages(repoName, domain, baseKeyword, locations) {
+async function generateLocationPages(repoName, domain, baseKeyword, locations) {
   const progDir = `./docs/${repoName}/programmatic`;
   if (!fs.existsSync(progDir)) fs.mkdirSync(progDir, { recursive: true });
   const pages = [];
@@ -17,3 +17,5 @@ export async function generateLocationPages(repoName, domain, baseKeyword, locat
   }
   return pages;
 }
+
+module.exports = { generateLocationPages };

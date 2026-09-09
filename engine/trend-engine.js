@@ -1,4 +1,4 @@
-import axios from 'axios';
+const axios = require('axios');
 
 async function getGoogleTrends() {
   try {
@@ -11,7 +11,7 @@ async function getGoogleTrends() {
   }
 }
 
-export async function getCombinedTrends() {
+async function getCombinedTrends() {
   console.log("📈 Fetching trends from Google Trends RSS...");
   const trends = await getGoogleTrends();
   if (!trends.length) {
@@ -21,3 +21,5 @@ export async function getCombinedTrends() {
   console.log(`✅ Found ${trends.length} unique trends`);
   return trends;
 }
+
+module.exports = { getCombinedTrends };
