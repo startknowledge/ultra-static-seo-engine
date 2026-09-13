@@ -5,7 +5,7 @@
 // Features:
 // - Multi-repository SEO automation
 // - Google News + Google Trends keywords
-// - Multi-AI fallback: Groq -> Mistral -> Ollama
+// - Multi-AI fallback: Groq -> Gemini -> OpenRouter -> Mistral
 // - Automatic SEO blog generation
 // - Blog index generation
 // - RSS feed generation
@@ -313,7 +313,39 @@ const AI_PROVIDERS = [
     buildRequest: (prompt, key) => ({
       url: 'https://api.groq.com/openai/v1/chat/completions',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      data: { model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: prompt }], max_tokens: 3500, temperature: 0.7 }
+      data: {
+        model: 'llama3-70b-8192',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 3500,
+        temperature: 0.7
+      }
+    }),
+    parseResponse: response => response?.data?.choices?.[0]?.message?.content
+  },
+  {
+    name: 'Gemini',
+    apiKeyEnv: ['GEMINI_API_KEY'],
+    buildRequest: (prompt, key) => ({
+      url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+      headers: { 'Content-Type': 'application/json' },
+      data: { contents: [{ parts: [{ text: prompt }] }] }
+    }),
+    parseResponse: response => response?.data?.candidates?.[0]?.content?.parts?.[0]?.text
+  },
+  {
+    name: 'OpenRouter',
+    apiKeyEnv: ['OPENROUTER_API_KEY'],
+    buildRequest: (prompt, key) => ({
+      url: 'https://openrouter.ai/api/v1/chat/completions',
+      headers: {
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        model: 'meta-llama/llama-3.2-3b-instruct:free',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 3500
+      }
     }),
     parseResponse: response => response?.data?.choices?.[0]?.message?.content
   },
@@ -323,19 +355,13 @@ const AI_PROVIDERS = [
     buildRequest: (prompt, key) => ({
       url: 'https://api.mistral.ai/v1/chat/completions',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      data: { model: 'mistral-tiny', messages: [{ role: 'user', content: prompt }], max_tokens: 3500 }
+      data: {
+        model: 'open-mistral-7b',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 3500
+      }
     }),
     parseResponse: response => response?.data?.choices?.[0]?.message?.content
-  },
-  {
-    name: 'Ollama (Local)',
-    apiKeyEnv: [],
-    buildRequest: prompt => ({
-      url: 'http://localhost:11434/api/generate',
-      headers: { 'Content-Type': 'application/json' },
-      data: { model: 'llama3', prompt, stream: false, options: { num_predict: 3500 } }
-    }),
-    parseResponse: response => response?.data?.response
   }
 ];
 
@@ -346,7 +372,10 @@ async function generateContentWithFallback(prompt, repoName) {
     for (const key of keyList) {
       try {
         const request = provider.buildRequest(prompt, key);
-        const response = await axios.post(request.url, request.data, { headers: request.headers, timeout: 60000 });
+        const response = await axios.post(request.url, request.data, {
+          headers: request.headers,
+          timeout: 60000
+        });
         const content = provider.parseResponse(response);
         if (content && String(content).trim().length > 200) {
           console.log(`✅ AI generated via ${provider.name} for ${repoName}`);
@@ -358,7 +387,7 @@ async function generateContentWithFallback(prompt, repoName) {
       }
     }
   }
-  console.log(`⚠️ All AI providers failed for ${repoName}.`);
+  console.log(`⚠️ All AI providers failed for ${repoName}. Skipping blog.`);
   return null;
 }
 
@@ -413,6 +442,11 @@ Return ONLY the article HTML.
 
   let aiContent = await generateContentWithFallback(prompt, repoName);
 
+  // If no AI content, return null (skip blog)
+  if (!aiContent) {
+    return null;
+  }
+
   // MARKDOWN -> HTML
   if (aiContent && !/<p[\s>]/i.test(aiContent) && !/<h1[\s>]/i.test(aiContent)) {
     try {
@@ -427,26 +461,6 @@ Return ONLY the article HTML.
   // REMOVE IMAGES
   if (aiContent) {
     aiContent = aiContent.replace(/!\[[^\]]*\]\([^)]+\)/g, '').replace(/<img\b[^>]*>/gi, '');
-  }
-
-  // FALLBACK
-  if (!aiContent) {
-    const safeKeyword = escapeHtml(keyword);
-    aiContent = `
-<h2>What is ${safeKeyword}?</h2>
-<p>This guide explains ${safeKeyword} in a simple, practical and useful way. It covers the important concepts, practical considerations and common mistakes that users should understand.</p>
-<h2>Why ${safeKeyword} matters</h2>
-<p>Understanding ${safeKeyword} can help users make better decisions, improve their workflow and avoid common problems.</p>
-<h2>Key strategies</h2>
-<ul><li>Research the topic carefully.</li><li>Start with the fundamentals.</li><li>Use reliable information.</li><li>Implement changes step by step.</li><li>Measure results.</li><li>Improve based on actual results.</li></ul>
-<h2>Common mistakes</h2>
-<p>Avoid making decisions based only on assumptions. Always verify important information and review results regularly.</p>
-<h2>FAQ</h2>
-<h3>What is ${safeKeyword}?</h3><p>${safeKeyword} refers to the subject explained throughout this guide.</p>
-<h3>Why is it important?</h3><p>It can help users understand the topic and make more informed decisions.</p>
-<h2>Conclusion</h2>
-<p>Use the information in this guide as a starting point and continue learning as the subject evolves.</p>
-`;
   }
 
   // INTERNAL LINKS
@@ -732,7 +746,7 @@ async function fetchGoogleTrendsKeywords() {
       if (title.length > 5 && !keywords.includes(title)) {
         keywords.push(title);
       }
-      if (keywords.length >= 8) break;
+      if (keywords.length >= 15) break;
     }
     if (keywords.length === 0) throw new Error('No Google Trends keywords');
     return keywords;
@@ -749,12 +763,12 @@ async function fetchGoogleTrendsKeywords() {
 async function getTrendingKeywords(seed, repoName) {
   const cacheFile = path.join(CACHE_DIR, `keywords_${sanitizeSlug(repoName)}.json`);
   const now = Date.now();
-  const ONE_HOUR = 60 * 60 * 1000;
+  const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
   if (fs.existsSync(cacheFile)) {
     try {
       const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
-      if (Array.isArray(cached.keywords) && now - Number(cached.timestamp || 0) < ONE_HOUR) {
+      if (Array.isArray(cached.keywords) && now - Number(cached.timestamp || 0) < CACHE_TTL) {
         console.log(`📦 Using cached keywords for ${repoName}`);
         return cached.keywords;
       }
@@ -771,7 +785,7 @@ async function getTrendingKeywords(seed, repoName) {
       if (title.length > 10 && !keywords.includes(title)) {
         keywords.push(title);
       }
-      if (keywords.length >= 6) break;
+      if (keywords.length >= 15) break;
     }
     if (keywords.length === 0) throw new Error('No Google News results');
   } catch (error) {
@@ -1086,7 +1100,7 @@ async function processRepo(repo) {
   // SMART AFFILIATE ADS
   await enhanceNewPostsWithSmartAds(repoPath, repo.name, newBlogFiles);
 
-  // ARCHIVE OLD POSTS (only if content-rewriter is not used; but we keep it for backup)
+  // ARCHIVE OLD POSTS
   await archiveOldPosts(repoPath, repo.name, 90);
 
   // BLOG INDEX
