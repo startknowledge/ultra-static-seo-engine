@@ -29,6 +29,11 @@ const { marked } = require('marked');
 const { JSDOM } = require('jsdom');
 const createDOMPurify = require('dompurify');
 
+const {
+  injectYandexBlogAds,
+  updateExistingBlogFiles
+} = require('./yandex-ads.js');
+
 let rotateMoneyPages = null;
 try {
   ({ rotateMoneyPages } = require('./auto-money-pages.js'));
@@ -1143,7 +1148,17 @@ ${post.image ? `<img class="card-img" src="${escapeHtml(post.image)}" alt="${esc
   }
 
   const indexPath = path.join(blogDir, 'index.html');
-  fs.writeFileSync(indexPath, injectAdsAndAnalytics(templateHtml), 'utf8');
+  let finalBlogIndexHtml = injectAdsAndAnalytics(templateHtml);
+
+// Yandex Ads ONLY for blog/index.html
+finalBlogIndexHtml = injectYandexBlogAds(finalBlogIndexHtml);
+
+fs.writeFileSync(
+  indexPath,
+  finalBlogIndexHtml,
+  'utf8'
+);
+
 
   const postsJsonPath = path.join(blogDir, 'posts.json');
   fs.writeFileSync(postsJsonPath, JSON.stringify(posts, null, 2), 'utf8');
@@ -1275,6 +1290,26 @@ async function processRepo(repo) {
   fs.ensureDirSync(blogDir);
   fs.ensureDirSync(path.join(repoPath, 'images'));
 
+  // ============================================================
+  // YANDEX ADS — BLOG DIRECTORY ONLY
+  // Updates existing blog pages without regenerating them
+  // ============================================================
+
+  try {
+    const updatedYandexBlogs = updateExistingBlogFiles(repoPath);
+
+    if (updatedYandexBlogs > 0) {
+      console.log(
+        `📢 ${updatedYandexBlogs} existing blog page(s) updated with Yandex Ads`
+      );
+    }
+  } catch (error) {
+    console.warn(
+      `⚠️ Existing blog Yandex update failed for ${repo.name}:`,
+      error.message
+    );
+  }
+
   if (typeof rotateMoneyPages === 'function') {
     try {
       await rotateMoneyPages(repo.name);
@@ -1349,6 +1384,9 @@ async function processRepo(repo) {
     let html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${escapeHtml(keyword)} | ${escapeHtml(repo.name)}</title><meta name="description" content="${escapeHtml(metaDescription)}"><meta name="robots" content="index, follow, max-image-preview:large"><link rel="canonical" href="${escapeHtml(canonical)}"><meta property="og:type" content="article"><meta property="og:title" content="${escapeHtml(keyword)}"><meta property="og:description" content="${escapeHtml(metaDescription)}"><meta property="og:url" content="${escapeHtml(canonical)}"><meta property="og:image" content="${escapeHtml(imageUrl)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escapeHtml(keyword)}"><meta name="twitter:description" content="${escapeHtml(metaDescription)}"><meta name="twitter:image" content="${escapeHtml(imageUrl)}">${schema}<style>*{box-sizing:border-box}body{margin:0;padding:20px;background:#f5f7fb;color:#1f2937;font-family:Arial,Helvetica,sans-serif;line-height:1.7}.container{max-width:1100px;margin:auto;background:#ffffff;border-radius:22px;overflow:hidden;box-shadow:0 15px 40px rgba(0,0,0,.08)}.article-header{padding:30px}.article-image{width:100%;display:block;max-height:630px;object-fit:cover}article{padding:30px}article h1{font-size:2.4rem;line-height:1.2}article h2{margin-top:40px}article h3{margin-top:30px}article p{margin:0 0 18px}article ul,article ol{padding-left:25px}.ads{margin:25px 0}footer{padding:25px;text-align:center;border-top:1px solid #e5e7eb}footer a{text-decoration:none}@media(max-width:700px){body{padding:0}.container{border-radius:0}article{padding:20px}article h1{font-size:1.8rem}}</style></head><body><div class="container"><header class="article-header"><h1>${escapeHtml(keyword)}</h1></header><article><img class="article-image" src="${escapeHtml(imageUrl)}" alt="${escapeHtml(keyword)}" loading="lazy">${content}</article><footer><p>© ${new Date().getFullYear()} ${escapeHtml(repo.name)}</p><p><a href="/">Home</a> &nbsp;|&nbsp; <a href="index.html">Blog</a></p></footer></div></body></html>`;
 
     html = injectAdsAndAnalytics(html);
+    // Yandex Ads ONLY for blog pages
+    html = injectYandexBlogAds(html);
+
     fs.writeFileSync(blogPath, html, 'utf8');
 
     newBlogFiles.push(`${slug}.html`);

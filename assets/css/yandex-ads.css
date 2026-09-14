@@ -1,0 +1,77 @@
+/* =========================================================
+   YANDEX ADS — BLOG ONLY
+========================================================= */
+
+.yandex-ad-container {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 10px;
+  margin: 25px auto;
+  max-width: 100%;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e9f2;
+  text-align: center;
+}
+
+.yandex-ad-label {
+  font-size: 10px;
+  color: #999999;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+[id^="yandex_rtb"] {
+  min-height: 90px;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.yandex-sidebar-ad {
+  position: fixed;
+  top: 120px;
+  width: 160px;
+  z-index: 100;
+  display: none;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e9f2;
+}
+
+.ad-sidebar-left {
+  left: 15px;
+}
+
+.ad-sidebar-right {
+  right: 15px;
+}
+
+.yandex-sidebar-ad .yandex-ad-label {
+  font-size: 9px;
+  margin-bottom: 6px;
+}
+
+@media (min-width: 1400px) {
+  .yandex-sidebar-ad {
+    display: block;
+  }
+}
+
+@media (max-width: 1399px) {
+  .yandex-sidebar-ad {
+    display: none !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .yandex-ad-container {
+    padding: 6px;
+    margin: 15px auto;
+    border-radius: 8px;
+  }
+}
