@@ -20,6 +20,9 @@ ${YANDEX_MARKER}
 
 <meta name="yandex-verification" content="${YANDEX_VERIFICATION}">
 
+<!-- Yandex Ads CSS -->
+<link rel="stylesheet" href="/assets/css/yandex-ads.css">
+
 <!-- Yandex Autoplacement -->
 <script src="https://yandex.ru/ads/system/context.js" async></script>
 <script data-page-id="${YANDEX_PAGE_ID}" src="https://yandex.ru/ads/system/ap-loader.js" async></script>
@@ -52,7 +55,7 @@ window.yaContextCb = window.yaContextCb || [];
 
 ym(${YANDEX_METRIKA_ID},'init',{
     ssr:true,
-    webvisor:true,
+    webvisor:false,
     trackHash:true,
     clickmap:true,
     ecommerce:"dataLayer",
@@ -92,6 +95,10 @@ function yandexTopAd() {
       });
   });
   </script>
+
+  <noscript>
+    <div class="ad-fallback">Ad blocked or JS disabled</div>
+  </noscript>
 </div>
 `;
 }
@@ -99,7 +106,6 @@ function yandexTopAd() {
 function yandexSidebarAds() {
   return `
 <!-- Yandex Blog Sidebar Ads -->
-<div class="ad-layout-wrapper">
 
   <aside class="yandex-sidebar-ad ad-sidebar-left">
     <div class="yandex-ad-label">Advertisement</div>
@@ -130,8 +136,6 @@ function yandexSidebarAds() {
     });
     </script>
   </aside>
-
-</div>
 <!-- End Yandex Blog Sidebar Ads -->
 `;
 }
