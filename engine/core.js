@@ -400,7 +400,7 @@ const AI_PROVIDERS = [
       'HuggingFaceH4/zephyr-7b-beta'
     ],
     buildRequest: (prompt, key, model) => ({
-      url: `https://api-inference.huggingface.co/models/${model || 'mistralai/Mistral-7B-Instruct-v0.3'}/v1/chat/completions`,
+      url: `https://router.huggingface.co/hf-inference/models/{model}/v1/chat/completions`,
       headers: {
         Authorization: `Bearer ${key}`,
         'Content-Type': 'application/json'
@@ -443,11 +443,38 @@ async function fetchLiveModels(provider) {
         });
         models = (res.data?.data || [])
           .map(m => m.id)
-          .filter(id =>
-            id.includes('llama') ||
-            id.includes('mixtral') ||
-            id.includes('gemma')
-          );
+          .filter(id => {
+            const lower = id.toLowerCase();
+            // ⛔ Exclude non-chat models
+            if (lower.includes('guard')) return false;
+            if (lower.includes('whisper')) return false;
+            if (lower.includes('tts')) return false;
+            if (lower.includes('embed')) return false;
+            if (lower.includes('audio')) return false;
+            if (lower.includes('moderation')) return false;
+            // ✅ Only known chat model families
+            return (
+              lower.includes('llama') ||
+              lower.includes('mixtral') ||
+              lower.includes('gemma') ||
+              lower.includes('qwen') ||
+              lower.includes('deepseek') ||
+              lower.includes('kimi') ||
+              lower.includes('gpt-oss') ||
+              lower.includes('mistral')
+            );
+          })
+          // Prefer bigger/faster chat models first
+          .sort((a, b) => {
+            const score = id => {
+              const l = id.toLowerCase();
+              if (l.includes('70b') || l.includes('versatile')) return 3;
+              if (l.includes('mixtral') || l.includes('qwen')) return 2;
+              if (l.includes('8b') || l.includes('instant')) return 1;
+              return 0;
+            };
+            return score(b) - score(a);
+          });
       }
     } else if (provider.name === 'Gemini') {
       const key = process.env.GEMINI_API_KEY1 || process.env.GEMINI_API_KEY2;
@@ -461,16 +488,64 @@ async function fetchLiveModels(provider) {
             (m.supportedGenerationMethods || []).includes('generateContent')
           )
           .map(m => m.name.replace('models/', ''))
-          .filter(id => id.includes('flash') || id.includes('pro'));
+          .filter(id => {
+            const lower = id.toLowerCase();
+            // Must be a gemini chat model
+            if (!lower.startsWith('gemini')) return false;
+            // ⛔ Exclude non-text / specialized models
+            if (lower.includes('tts')) return false;
+            if (lower.includes('vision')) return false;
+            if (lower.includes('embedding')) return false;
+            if (lower.includes('aqa')) return false;
+            if (lower.includes('image')) return false;
+            if (lower.includes('learnlm')) return false;
+            if (lower.includes('thinking')) return false;
+            // ✅ Only flash / pro families
+            return lower.includes('flash') || lower.includes('pro');
+          })
+          // Prefer 2.5 flash > 2.5 pro > 2.0 flash > others
+          .sort((a, b) => {
+            const score = id => {
+              const l = id.toLowerCase();
+              if (l.includes('2.5-flash') && !l.includes('preview')) return 10;
+              if (l.includes('2.5-flash')) return 9;
+              if (l.includes('2.5-pro') && !l.includes('preview')) return 8;
+              if (l.includes('2.5-pro')) return 7;
+              if (l.includes('2.0-flash')) return 5;
+              if (l.includes('1.5-flash')) return 3;
+              if (l.includes('1.5-pro')) return 2;
+              return 1;
+            };
+            return score(b) - score(a);
+          });
       }
     } else if (provider.name === 'OpenRouter') {
       const res = await axios.get('https://openrouter.ai/api/v1/models', {
         timeout: 15000
       });
       models = (res.data?.data || [])
-        .filter(m => m.id.endsWith(':free'))
+        .filter(m => {
+          if (!m.id.endsWith(':free')) return false;
+          // ⛔ Skip vision / specialized variants
+          const lower = m.id.toLowerCase();
+          if (lower.includes('-vl')) return false;
+          if (lower.includes('vision')) return false;
+          if (lower.includes('guard')) return false;
+          if (lower.includes('embed')) return false;
+          // ✅ Truly free (price = 0)
+          const promptPrice = Number(m.pricing?.prompt ?? 0);
+          const completionPrice = Number(m.pricing?.completion ?? 0);
+          if (promptPrice > 0 || completionPrice > 0) return false;
+          return true;
+        })
+        // Prefer larger context models first
+        .sort((a, b) => {
+          const ctxA = Number(a.context_length || 0);
+          const ctxB = Number(b.context_length || 0);
+          return ctxB - ctxA;
+        })
         .map(m => m.id)
-        .slice(0, 15);
+        .slice(0, 20);
     } else if (provider.name === 'Mistral') {
       const key = process.env.MISTRAL_API_KEY1 || process.env.MISTRAL_API_KEY2;
       if (key) {
@@ -478,16 +553,38 @@ async function fetchLiveModels(provider) {
           headers: { Authorization: `Bearer ${key}` },
           timeout: 15000
         });
-        models = (res.data?.data || []).map(m => m.id);
+        models = (res.data?.data || [])
+          .map(m => m.id)
+          .filter(id => {
+            const lower = id.toLowerCase();
+            if (lower.includes('embed')) return false;
+            if (lower.includes('moderation')) return false;
+            if (lower.includes('ocr')) return false;
+            if (lower.includes('codestral')) return false;
+            return true;
+          })
+          // Prefer latest > small > open models
+          .sort((a, b) => {
+            const score = id => {
+              const l = id.toLowerCase();
+              if (l.includes('large-latest')) return 10;
+              if (l.includes('medium-latest')) return 9;
+              if (l.includes('small-latest')) return 8;
+              if (l.includes('large')) return 7;
+              if (l.includes('small')) return 6;
+              if (l.includes('open-mixtral')) return 5;
+              if (l.includes('open-mistral')) return 4;
+              return 1;
+            };
+            return score(b) - score(a);
+          });
       }
     } else if (provider.name === 'HuggingFace') {
-      // HuggingFace doesn't have a simple list API for inference endpoints
-      // Use curated list of popular chat models that work with the inference API
+      // ⚠️ HF inference API has moved; kept for backward compat
+      // New endpoint: router.huggingface.co
       models = [
         'mistralai/Mistral-7B-Instruct-v0.3',
-        'meta-llama/Meta-Llama-3-8B-Instruct',
-        'HuggingFaceH4/zephyr-7b-beta',
-        'microsoft/Phi-3-mini-4k-instruct'
+        'meta-llama/Meta-Llama-3-8B-Instruct'
       ];
     }
   } catch (error) {
@@ -510,18 +607,19 @@ async function generateContentWithFallback(prompt, repoName) {
     const keys = provider.apiKeyEnv.map(env => process.env[env]).filter(Boolean);
     const keyList = keys.length > 0 ? keys : [null];
 
-    // ⭐ Live models fetch karo (auto-discovery)
+    // ⭐ Live models fetch (auto-discovery)
     const liveModels = await fetchLiveModels(provider);
 
-    // ⭐ Model rotation: pehle default model, phir available models
+    // ⭐ IMPORTANT: Live models को सबसे पहले try करें
+    // क्योंकि hardcoded defaultModel पुराने हो सकते हैं (deprecated)
     const modelsToTry = [
-      process.env[provider.modelEnv],
-      provider.defaultModel,
-      ...liveModels,
-      ...provider.availableModels
+      process.env[provider.modelEnv], // manual override
+      ...liveModels,                  // ⭐ fresh from API — पहले
+      provider.defaultModel,          // hardcoded fallback — बाद में
+      ...provider.availableModels     // legacy — सबसे आखिर में
     ].filter(Boolean);
 
-    // Duplicate hatao
+    // Duplicate hatao (order preserve करते हुए)
     const uniqueModels = [...new Set(modelsToTry)];
 
     for (const key of keyList) {
@@ -540,18 +638,29 @@ async function generateContentWithFallback(prompt, repoName) {
           }
         } catch (error) {
           const status = error.response?.status || 'N/A';
-          console.warn(`⚠️ ${provider.name} (${model}) failed [${status}]:`, error.message);
-          // 404 = model nahi hai, agla model try karo
-          // 429 = rate limit, agla provider try karo
-          // 401 = key invalid, agla key/provider try karo
+          const msg = error.response?.data?.error?.message || error.message;
+          console.warn(`⚠️ ${provider.name} (${model}) failed [${status}]:`, msg);
+
+          // 🎯 Smart error handling
           if (status === 429) {
-            await delay(5000);
-            break; // is provider ke liye aur try mat karo
+            // Rate limit — is provider को छोड़ो, अगले पर जाओ
+            console.warn(`⏸️ Rate limited on ${provider.name}, moving to next provider`);
+            await delay(3000);
+            break;
           }
-          if (status === 401 || status === 403) {
-            break; // key invalid hai, doosri key try karo
+          if (status === 401) {
+            // Key invalid — दूसरी key try करो
+            console.warn(`🔑 Key invalid for ${provider.name}, trying next key`);
+            break;
           }
-          await delay(2000);
+          if (status === 402) {
+            // Payment required — पूरा provider skip
+            console.warn(`💳 Payment required for ${provider.name}, skipping provider`);
+            break;
+          }
+          // 404 (model not found), 403 (model access denied), 400, 5xx
+          // → अगला model try करो, same key के साथ
+          // NO break, NO delay (fast fallback)
         }
       }
     }
