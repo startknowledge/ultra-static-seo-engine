@@ -301,7 +301,7 @@ const AI_PROVIDERS = [
       url: 'https://api.groq.com/openai/v1/chat/completions',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       data: {
-        model: 'llama3-70b-8192',
+        model: 'llama-3.1-8b-instant',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 3500,
         temperature: 0.7
@@ -313,7 +313,7 @@ const AI_PROVIDERS = [
     name: 'Gemini',
     apiKeyEnv: ['GEMINI_API_KEY1', 'GEMINI_API_KEY2'],
     buildRequest: (prompt, key) => ({
-      url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+      url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
       headers: { 'Content-Type': 'application/json' },
       data: { contents: [{ parts: [{ text: prompt }] }] }
     }),
@@ -329,7 +329,7 @@ const AI_PROVIDERS = [
         'Content-Type': 'application/json'
       },
       data: {
-        model: 'meta-llama/llama-3.2-3b-instruct:free',
+        model: 'meta-llama/llama-3.1-8b-instruct:free',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 3500
       }
@@ -1133,7 +1133,17 @@ async function processRepo(repo) {
   const newBlogFiles = [];
   const newBlogs = [];
 
+  // ⭐ हर रन में हर रेपो से सिर्फ 1 ब्लॉग बनेगा
+  const MAX_BLOGS_PER_REPO_PER_RUN = 1;
+  let blogsGeneratedThisRun = 0;
+
   for (const keyword of keywords) {
+    // अगर इस रन का कोटा पूरा हो गया, तो अगले रेपो पर जाओ
+    if (blogsGeneratedThisRun >= MAX_BLOGS_PER_REPO_PER_RUN) {
+      console.log(`⏸️ Reached ${MAX_BLOGS_PER_REPO_PER_RUN} blog limit for ${repo.name} this run. Moving to next repo.`);
+      break;
+    }
+
     const slug = getSafeFileName(keyword);
     const blogPath = path.join(blogDir, `${slug}.html`);
 
@@ -1183,8 +1193,9 @@ async function processRepo(repo) {
         console.warn('⚠️ Medium auto-post failed:', e.message);
       }
     }
-
+    blogsGeneratedThisRun++;
     await delay(5000);
+    
   }
 
   await enhanceNewPostsWithSmartAds(repoPath, repo.name, newBlogFiles);
