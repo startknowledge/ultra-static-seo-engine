@@ -297,11 +297,19 @@ const AI_PROVIDERS = [
   {
     name: 'Groq',
     apiKeyEnv: ['GROQ_API_KEY1', 'GROQ_API_KEY2'],
-    buildRequest: (prompt, key) => ({
+    modelEnv: 'GROQ_MODEL',
+    defaultModel: 'llama-3.1-8b-instant',
+    availableModels: [
+      'llama-3.1-8b-instant',
+      'llama-3.3-70b-versatile',
+      'llama-3.1-70b-versatile',
+      'mixtral-8x7b-32768'
+    ],
+    buildRequest: (prompt, key, model) => ({
       url: 'https://api.groq.com/openai/v1/chat/completions',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       data: {
-        model: 'llama-3.1-8b-instant',
+        model: model || 'llama-3.1-8b-instant',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 3500,
         temperature: 0.7
@@ -312,8 +320,16 @@ const AI_PROVIDERS = [
   {
     name: 'Gemini',
     apiKeyEnv: ['GEMINI_API_KEY1', 'GEMINI_API_KEY2'],
-    buildRequest: (prompt, key) => ({
-      url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+    modelEnv: 'GEMINI_MODEL',
+    defaultModel: 'gemini-2.0-flash',
+    availableModels: [
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
+      'gemini-2.5-flash'
+    ],
+    buildRequest: (prompt, key, model) => ({
+      url: `https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-2.0-flash'}:generateContent?key=${key}`,
       headers: { 'Content-Type': 'application/json' },
       data: { contents: [{ parts: [{ text: prompt }] }] }
     }),
@@ -322,14 +338,24 @@ const AI_PROVIDERS = [
   {
     name: 'OpenRouter',
     apiKeyEnv: ['OPENAI_OPENROUTER1', 'OPENAI_OPENROUTER2'],
-    buildRequest: (prompt, key) => ({
+    modelEnv: 'OPENROUTER_MODEL',
+    defaultModel: 'meta-llama/llama-3.3-70b-instruct:free',
+    availableModels: [
+      'meta-llama/llama-3.3-70b-instruct:free',
+      'google/gemma-4-26b-a4b-it:free',
+      'nvidia/nemotron-3-super-120b-a12b:free',
+      'qwen/qwen3-next-80b-a3b-instruct:free'
+    ],
+    buildRequest: (prompt, key, model) => ({
       url: 'https://openrouter.ai/api/v1/chat/completions',
       headers: {
         Authorization: `Bearer ${key}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://startknowledge.in',
+        'X-Title': 'StartKnowledge SEO Engine'
       },
       data: {
-        model: 'meta-llama/llama-3.1-8b-instruct:free',
+        model: model || 'meta-llama/llama-3.3-70b-instruct:free',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 3500
       }
@@ -339,11 +365,43 @@ const AI_PROVIDERS = [
   {
     name: 'Mistral',
     apiKeyEnv: ['MISTRAL_API_KEY1', 'MISTRAL_API_KEY2'],
-    buildRequest: (prompt, key) => ({
+    modelEnv: 'MISTRAL_MODEL',
+    defaultModel: 'open-mistral-7b',
+    availableModels: [
+      'open-mistral-7b',
+      'open-mixtral-8x7b',
+      'mistral-small-latest',
+      'mistral-tiny'
+    ],
+    buildRequest: (prompt, key, model) => ({
       url: 'https://api.mistral.ai/v1/chat/completions',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       data: {
-        model: 'open-mistral-7b',
+        model: model || 'open-mistral-7b',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 3500
+      }
+    }),
+    parseResponse: response => response?.data?.choices?.[0]?.message?.content
+  },
+  {
+    name: 'HuggingFace',
+    apiKeyEnv: ['HUGGINGFACE_TOKEN1', 'HUGGINGFACE_TOKEN2'],
+    modelEnv: 'HUGGINGFACE_MODEL',
+    defaultModel: 'mistralai/Mistral-7B-Instruct-v0.3',
+    availableModels: [
+      'mistralai/Mistral-7B-Instruct-v0.3',
+      'meta-llama/Meta-Llama-3-8B-Instruct',
+      'HuggingFaceH4/zephyr-7b-beta'
+    ],
+    buildRequest: (prompt, key, model) => ({
+      url: `https://api-inference.huggingface.co/models/${model || 'mistralai/Mistral-7B-Instruct-v0.3'}/v1/chat/completions`,
+      headers: {
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        model: model || 'mistralai/Mistral-7B-Instruct-v0.3',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 3500
       }
@@ -352,25 +410,144 @@ const AI_PROVIDERS = [
   }
 ];
 
+// ============================================================
+// AUTO-MODEL DISCOVERY (Future-Proof)
+// Fetch live models from each provider's API, cache for 24h
+// ============================================================
+
+const liveModelsCache = {};
+const LIVE_MODEL_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+async function fetchLiveModels(provider) {
+  // Cache check
+  if (
+    liveModelsCache[provider.name] &&
+    Date.now() - liveModelsCache[provider.name].timestamp < LIVE_MODEL_CACHE_TTL
+  ) {
+    return liveModelsCache[provider.name].models;
+  }
+
+  let models = [];
+  try {
+    if (provider.name === 'Groq') {
+      const key = process.env.GROQ_API_KEY1 || process.env.GROQ_API_KEY2;
+      if (key) {
+        const res = await axios.get('https://api.groq.com/openai/v1/models', {
+          headers: { Authorization: `Bearer ${key}` },
+          timeout: 15000
+        });
+        models = (res.data?.data || [])
+          .map(m => m.id)
+          .filter(id =>
+            id.includes('llama') ||
+            id.includes('mixtral') ||
+            id.includes('gemma')
+          );
+      }
+    } else if (provider.name === 'Gemini') {
+      const key = process.env.GEMINI_API_KEY1 || process.env.GEMINI_API_KEY2;
+      if (key) {
+        const res = await axios.get(
+          `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`,
+          { timeout: 15000 }
+        );
+        models = (res.data?.models || [])
+          .filter(m =>
+            (m.supportedGenerationMethods || []).includes('generateContent')
+          )
+          .map(m => m.name.replace('models/', ''))
+          .filter(id => id.includes('flash') || id.includes('pro'));
+      }
+    } else if (provider.name === 'OpenRouter') {
+      const res = await axios.get('https://openrouter.ai/api/v1/models', {
+        timeout: 15000
+      });
+      models = (res.data?.data || [])
+        .filter(m => m.id.endsWith(':free'))
+        .map(m => m.id)
+        .slice(0, 15);
+    } else if (provider.name === 'Mistral') {
+      const key = process.env.MISTRAL_API_KEY1 || process.env.MISTRAL_API_KEY2;
+      if (key) {
+        const res = await axios.get('https://api.mistral.ai/v1/models', {
+          headers: { Authorization: `Bearer ${key}` },
+          timeout: 15000
+        });
+        models = (res.data?.data || []).map(m => m.id);
+      }
+    } else if (provider.name === 'HuggingFace') {
+      // HuggingFace doesn't have a simple list API for inference endpoints
+      // Use curated list of popular chat models that work with the inference API
+      models = [
+        'mistralai/Mistral-7B-Instruct-v0.3',
+        'meta-llama/Meta-Llama-3-8B-Instruct',
+        'HuggingFaceH4/zephyr-7b-beta',
+        'microsoft/Phi-3-mini-4k-instruct'
+      ];
+    }
+  } catch (error) {
+    console.warn(`⚠️ Could not fetch live models for ${provider.name}:`, error.message);
+  }
+
+  // Fallback to hardcoded list
+  if (models.length === 0) {
+    models = provider.availableModels || [provider.defaultModel];
+  }
+
+  liveModelsCache[provider.name] = { models, timestamp: Date.now() };
+  console.log(`🔄 Fetched ${models.length} live models for ${provider.name}`);
+  return models;
+}
+
+
 async function generateContentWithFallback(prompt, repoName) {
   for (const provider of AI_PROVIDERS) {
     const keys = provider.apiKeyEnv.map(env => process.env[env]).filter(Boolean);
     const keyList = keys.length > 0 ? keys : [null];
+
+    // ⭐ Live models fetch karo (auto-discovery)
+    const liveModels = await fetchLiveModels(provider);
+
+    // ⭐ Model rotation: pehle default model, phir available models
+    const modelsToTry = [
+      process.env[provider.modelEnv],
+      provider.defaultModel,
+      ...liveModels,
+      ...provider.availableModels
+    ].filter(Boolean);
+
+    // Duplicate hatao
+    const uniqueModels = [...new Set(modelsToTry)];
+
     for (const key of keyList) {
-      try {
-        const request = provider.buildRequest(prompt, key);
-        const response = await axios.post(request.url, request.data, {
-          headers: request.headers,
-          timeout: 60000
-        });
-        const content = provider.parseResponse(response);
-        if (content && String(content).trim().length > 200) {
-          console.log(`✅ AI generated via ${provider.name} for ${repoName}`);
-          return String(content).trim();
+      for (const model of uniqueModels) {
+        try {
+          console.log(`🔍 Trying ${provider.name} with model: ${model}`);
+          const request = provider.buildRequest(prompt, key, model);
+          const response = await axios.post(request.url, request.data, {
+            headers: request.headers,
+            timeout: 90000
+          });
+          const content = provider.parseResponse(response);
+          if (content && String(content).trim().length > 200) {
+            console.log(`✅ AI generated via ${provider.name} (model: ${model}) for ${repoName}`);
+            return String(content).trim();
+          }
+        } catch (error) {
+          const status = error.response?.status || 'N/A';
+          console.warn(`⚠️ ${provider.name} (${model}) failed [${status}]:`, error.message);
+          // 404 = model nahi hai, agla model try karo
+          // 429 = rate limit, agla provider try karo
+          // 401 = key invalid, agla key/provider try karo
+          if (status === 429) {
+            await delay(5000);
+            break; // is provider ke liye aur try mat karo
+          }
+          if (status === 401 || status === 403) {
+            break; // key invalid hai, doosri key try karo
+          }
+          await delay(2000);
         }
-      } catch (error) {
-        console.warn(`⚠️ ${provider.name} failed:`, error.message);
-        await delay(3000);
       }
     }
   }

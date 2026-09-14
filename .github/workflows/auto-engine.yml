@@ -2,7 +2,7 @@ name: 🚀 GOD-LEVEL-SYSTEM AUTONOMOUS SEO SYSTEM
 
 on:
   schedule:
-    - cron: "0 */7 * * *"
+    - cron: "0 */20 * * *"
   workflow_dispatch:
 
 permissions:
