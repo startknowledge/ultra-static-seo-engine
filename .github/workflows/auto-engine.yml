@@ -27,18 +27,23 @@ jobs:
       # Groq
       GROQ_API_KEY1: ${{ secrets.GROQ_API_KEY1 }}
       GROQ_API_KEY2: ${{ secrets.GROQ_API_KEY2 }}
+
       # OpenRouter
       OPENAI_OPENROUTER1: ${{ secrets.OPENAI_OPENROUTER1 }}
       OPENAI_OPENROUTER2: ${{ secrets.OPENAI_OPENROUTER2 }}
+
       # Hugging Face
       HUGGINGFACE_TOKEN1: ${{ secrets.HUGGINGFACE_TOKEN1 }}
       HUGGINGFACE_TOKEN2: ${{ secrets.HUGGINGFACE_TOKEN2 }}
+
       # Mistral
       MISTRAL_API_KEY1: ${{ secrets.MISTRAL_API_KEY1 }}
       MISTRAL_API_KEY2: ${{ secrets.MISTRAL_API_KEY2 }}
+
       # Cloudflare
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
       # GitHub token for repo detection
       ALL_REPO: ${{ secrets.ALL_REPO }}
       GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
@@ -58,6 +63,9 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
+      - name: 🧹 Clean .cache folder
+        run: rm -rf .cache || true
+        
       - name: 🔑 Test API keys
         env:
           GROQ_API_KEY1: ${{ secrets.GROQ_API_KEY1 }}
@@ -71,11 +79,12 @@ jobs:
         run: |
           git config --global user.name "seo-bot"
           git config --global user.email "bot@seo.com"
-          git add .
+          git add blog/ data/ *.html
+          git rm -r --cached .cache 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "🟢 No changes to commit"
           else
             git commit -m "🚀 update [skip ci]"
-            git pull --rebase --autostash origin main   # ✅ Automatically stashes local changes
+            git pull --rebase --autostash origin main
             git push origin main
           fi
