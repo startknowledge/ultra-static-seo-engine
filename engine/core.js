@@ -6,7 +6,9 @@
 // - Multi-repository SEO automation
 // - Keywords sourced primarily from data/keywords.json
 // - Fallback to Google News + Google Trends
-// - Multi-AI fallback: Groq -> Gemini -> OpenRouter -> Mistral
+// - Multi-AI fallback: Mistral -> Groq -> OpenRouter -> Gemini -> HuggingFace
+// - Pre-test providers once per run to eliminate wasted requests
+// - 1 repository per run (hour-based rotation)
 // - Automatic SEO blog generation
 // - Blog index + RSS + sitemap-safe
 // - Money/affiliate pages
@@ -29,10 +31,7 @@ const { marked } = require('marked');
 const { JSDOM } = require('jsdom');
 const createDOMPurify = require('dompurify');
 
-const {
-  injectYandexBlogAds,
-  updateExistingBlogFiles
-} = require('./yandex-ads.js');
+const { injectYandexBlogAds } = require('./yandex-ads.js');
 
 let rotateMoneyPages = null;
 try {
@@ -295,10 +294,33 @@ async function fetchClickBankTopProducts() {
 }
 
 // ============================================================
-// MULTI-AI FALLBACK
+// MULTI-AI PROVIDERS
+// Order matters: most reliable first, last-resort last
 // ============================================================
 
 const AI_PROVIDERS = [
+  {
+    name: 'Mistral',
+    apiKeyEnv: ['MISTRAL_API_KEY1', 'MISTRAL_API_KEY2'],
+    modelEnv: 'MISTRAL_MODEL',
+    defaultModel: 'open-mistral-7b',
+    availableModels: [
+      'open-mistral-7b',
+      'open-mixtral-8x7b',
+      'mistral-small-latest',
+      'mistral-tiny'
+    ],
+    buildRequest: (prompt, key, model) => ({
+      url: 'https://api.mistral.ai/v1/chat/completions',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      data: {
+        model: model || 'open-mistral-7b',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 2500
+      }
+    }),
+    parseResponse: response => response?.data?.choices?.[0]?.message?.content
+  },
   {
     name: 'Groq',
     apiKeyEnv: ['GROQ_API_KEY1', 'GROQ_API_KEY2'],
@@ -316,29 +338,11 @@ const AI_PROVIDERS = [
       data: {
         model: model || 'llama-3.1-8b-instant',
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: 3500,
+        max_tokens: 800,
         temperature: 0.7
       }
     }),
     parseResponse: response => response?.data?.choices?.[0]?.message?.content
-  },
-  {
-    name: 'Gemini',
-    apiKeyEnv: ['GEMINI_API_KEY1', 'GEMINI_API_KEY2'],
-    modelEnv: 'GEMINI_MODEL',
-    defaultModel: 'gemini-2.0-flash',
-    availableModels: [
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
-      'gemini-1.5-pro',
-      'gemini-2.5-flash'
-    ],
-    buildRequest: (prompt, key, model) => ({
-      url: `https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-2.0-flash'}:generateContent?key=${key}`,
-      headers: { 'Content-Type': 'application/json' },
-      data: { contents: [{ parts: [{ text: prompt }] }] }
-    }),
-    parseResponse: response => response?.data?.candidates?.[0]?.content?.parts?.[0]?.text
   },
   {
     name: 'OpenRouter',
@@ -362,53 +366,57 @@ const AI_PROVIDERS = [
       data: {
         model: model || 'meta-llama/llama-3.3-70b-instruct:free',
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: 3500
+        max_tokens: 2500
       }
     }),
     parseResponse: response => response?.data?.choices?.[0]?.message?.content
   },
   {
-    name: 'Mistral',
-    apiKeyEnv: ['MISTRAL_API_KEY1', 'MISTRAL_API_KEY2'],
-    modelEnv: 'MISTRAL_MODEL',
-    defaultModel: 'open-mistral-7b',
+    name: 'Gemini',
+    apiKeyEnv: ['GEMINI_API_KEY1', 'GEMINI_API_KEY2'],
+    modelEnv: 'GEMINI_MODEL',
+    defaultModel: 'gemini-2.0-flash',
     availableModels: [
-      'open-mistral-7b',
-      'open-mixtral-8x7b',
-      'mistral-small-latest',
-      'mistral-tiny'
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
+      'gemini-2.5-flash'
     ],
     buildRequest: (prompt, key, model) => ({
-      url: 'https://api.mistral.ai/v1/chat/completions',
-      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      url: `https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-2.0-flash'}:generateContent?key=${key}`,
+      headers: { 'Content-Type': 'application/json' },
       data: {
-        model: model || 'open-mistral-7b',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 3500
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          maxOutputTokens: 2500,
+          temperature: 0.7
+        }
       }
     }),
-    parseResponse: response => response?.data?.choices?.[0]?.message?.content
+    parseResponse: response => response?.data?.candidates?.[0]?.content?.parts?.[0]?.text
   },
   {
     name: 'HuggingFace',
     apiKeyEnv: ['HUGGINGFACE_TOKEN1', 'HUGGINGFACE_TOKEN2'],
     modelEnv: 'HUGGINGFACE_MODEL',
-    defaultModel: 'mistralai/Mistral-7B-Instruct-v0.3',
+    defaultModel: 'meta-llama/Llama-3.2-3B-Instruct',
     availableModels: [
-      'mistralai/Mistral-7B-Instruct-v0.3',
-      'meta-llama/Meta-Llama-3-8B-Instruct',
-      'HuggingFaceH4/zephyr-7b-beta'
+      'meta-llama/Llama-3.2-3B-Instruct',
+      'meta-llama/Llama-3.1-8B-Instruct',
+      'Qwen/Qwen2.5-7B-Instruct',
+      'mistralai/Mistral-7B-Instruct-v0.3'
     ],
     buildRequest: (prompt, key, model) => ({
-      url: `https://router.huggingface.co/hf-inference/models/{model}/v1/chat/completions`,
+      url: 'https://router.huggingface.co/v1/chat/completions',
       headers: {
         Authorization: `Bearer ${key}`,
         'Content-Type': 'application/json'
       },
       data: {
-        model: model || 'mistralai/Mistral-7B-Instruct-v0.3',
+        model: model || 'meta-llama/Llama-3.2-3B-Instruct',
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: 3500
+        max_tokens: 2000,
+        temperature: 0.7
       }
     }),
     parseResponse: response => response?.data?.choices?.[0]?.message?.content
@@ -416,7 +424,7 @@ const AI_PROVIDERS = [
 ];
 
 // ============================================================
-// AUTO-MODEL DISCOVERY (Future-Proof)
+// AUTO-MODEL DISCOVERY
 // Fetch live models from each provider's API, cache for 24h
 // ============================================================
 
@@ -445,14 +453,12 @@ async function fetchLiveModels(provider) {
           .map(m => m.id)
           .filter(id => {
             const lower = id.toLowerCase();
-            // ⛔ Exclude non-chat models
             if (lower.includes('guard')) return false;
             if (lower.includes('whisper')) return false;
             if (lower.includes('tts')) return false;
             if (lower.includes('embed')) return false;
             if (lower.includes('audio')) return false;
             if (lower.includes('moderation')) return false;
-            // ✅ Only known chat model families
             return (
               lower.includes('llama') ||
               lower.includes('mixtral') ||
@@ -464,7 +470,6 @@ async function fetchLiveModels(provider) {
               lower.includes('mistral')
             );
           })
-          // Prefer bigger/faster chat models first
           .sort((a, b) => {
             const score = id => {
               const l = id.toLowerCase();
@@ -490,9 +495,7 @@ async function fetchLiveModels(provider) {
           .map(m => m.name.replace('models/', ''))
           .filter(id => {
             const lower = id.toLowerCase();
-            // Must be a gemini chat model
             if (!lower.startsWith('gemini')) return false;
-            // ⛔ Exclude non-text / specialized models
             if (lower.includes('tts')) return false;
             if (lower.includes('vision')) return false;
             if (lower.includes('embedding')) return false;
@@ -500,10 +503,8 @@ async function fetchLiveModels(provider) {
             if (lower.includes('image')) return false;
             if (lower.includes('learnlm')) return false;
             if (lower.includes('thinking')) return false;
-            // ✅ Only flash / pro families
             return lower.includes('flash') || lower.includes('pro');
           })
-          // Prefer 2.5 flash > 2.5 pro > 2.0 flash > others
           .sort((a, b) => {
             const score = id => {
               const l = id.toLowerCase();
@@ -526,26 +527,26 @@ async function fetchLiveModels(provider) {
       models = (res.data?.data || [])
         .filter(m => {
           if (!m.id.endsWith(':free')) return false;
-          // ⛔ Skip vision / specialized variants
           const lower = m.id.toLowerCase();
           if (lower.includes('-vl')) return false;
           if (lower.includes('vision')) return false;
           if (lower.includes('guard')) return false;
           if (lower.includes('embed')) return false;
-          // ✅ Truly free (price = 0)
+          // ⭐ Skip "agentic harness only" models
+          if (lower.includes('inkling')) return false;
+          if (lower.includes('thinkingmachines')) return false;
           const promptPrice = Number(m.pricing?.prompt ?? 0);
           const completionPrice = Number(m.pricing?.completion ?? 0);
           if (promptPrice > 0 || completionPrice > 0) return false;
           return true;
         })
-        // Prefer larger context models first
         .sort((a, b) => {
           const ctxA = Number(a.context_length || 0);
           const ctxB = Number(b.context_length || 0);
           return ctxB - ctxA;
         })
         .map(m => m.id)
-        .slice(0, 20);
+        .slice(0, 15);
     } else if (provider.name === 'Mistral') {
       const key = process.env.MISTRAL_API_KEY1 || process.env.MISTRAL_API_KEY2;
       if (key) {
@@ -563,7 +564,6 @@ async function fetchLiveModels(provider) {
             if (lower.includes('codestral')) return false;
             return true;
           })
-          // Prefer latest > small > open models
           .sort((a, b) => {
             const score = id => {
               const l = id.toLowerCase();
@@ -580,12 +580,26 @@ async function fetchLiveModels(provider) {
           });
       }
     } else if (provider.name === 'HuggingFace') {
-      // ⚠️ HF inference API has moved; kept for backward compat
-      // New endpoint: router.huggingface.co
-      models = [
-        'mistralai/Mistral-7B-Instruct-v0.3',
-        'meta-llama/Meta-Llama-3-8B-Instruct'
-      ];
+      const key = process.env.HUGGINGFACE_TOKEN1 || process.env.HUGGINGFACE_TOKEN2;
+      if (key) {
+        try {
+          const res = await axios.get('https://router.huggingface.co/v1/models', {
+            headers: { Authorization: `Bearer ${key}` },
+            timeout: 15000
+          });
+          models = (res.data?.data || [])
+            .map(m => m.id)
+            .filter(id => {
+              const lower = id.toLowerCase();
+              if (lower.includes('embed')) return false;
+              if (lower.includes('rerank')) return false;
+              return true;
+            })
+            .slice(0, 10);
+        } catch (e) {
+          models = provider.availableModels;
+        }
+      }
     }
   } catch (error) {
     console.warn(`⚠️ Could not fetch live models for ${provider.name}:`, error.message);
@@ -601,68 +615,108 @@ async function fetchLiveModels(provider) {
   return models;
 }
 
+// ============================================================
+// MODEL PRE-TEST — एक बार test, पूरे run के लिए save
+// ============================================================
 
-async function generateContentWithFallback(prompt, repoName) {
+const workingModelsCache = {}; // per-run cache
+
+async function preTestProviders() {
+  console.log('\n🧪 Pre-testing providers to find working models...');
+  const testPrompt = 'Reply with exactly this word and nothing else: OK';
+
   for (const provider of AI_PROVIDERS) {
     const keys = provider.apiKeyEnv.map(env => process.env[env]).filter(Boolean);
-    const keyList = keys.length > 0 ? keys : [null];
+    if (keys.length === 0) {
+      console.log(`⏭️ ${provider.name}: No keys configured, skipping`);
+      continue;
+    }
 
-    // ⭐ Live models fetch (auto-discovery)
     const liveModels = await fetchLiveModels(provider);
-
-    // ⭐ IMPORTANT: Live models को सबसे पहले try करें
-    // क्योंकि hardcoded defaultModel पुराने हो सकते हैं (deprecated)
-    const modelsToTry = [
-      process.env[provider.modelEnv], // manual override
-      ...liveModels,                  // ⭐ fresh from API — पहले
-      provider.defaultModel,          // hardcoded fallback — बाद में
-      ...provider.availableModels     // legacy — सबसे आखिर में
+    const testModels = [
+      ...liveModels.slice(0, 5),
+      provider.defaultModel,
+      ...provider.availableModels.slice(0, 2)
     ].filter(Boolean);
+    const uniqueTest = [...new Set(testModels)];
 
-    // Duplicate hatao (order preserve करते हुए)
-    const uniqueModels = [...new Set(modelsToTry)];
+    let found = false;
 
-    for (const key of keyList) {
-      for (const model of uniqueModels) {
+    // ⭐ दोनों keys try करें
+    for (const key of keys) {
+      if (found) break;
+      for (const model of uniqueTest) {
         try {
-          console.log(`🔍 Trying ${provider.name} with model: ${model}`);
-          const request = provider.buildRequest(prompt, key, model);
-          const response = await axios.post(request.url, request.data, {
-            headers: request.headers,
-            timeout: 90000
+          const req = provider.buildRequest(testPrompt, key, model);
+          const res = await axios.post(req.url, req.data, {
+            headers: req.headers,
+            timeout: 20000
           });
-          const content = provider.parseResponse(response);
-          if (content && String(content).trim().length > 200) {
-            console.log(`✅ AI generated via ${provider.name} (model: ${model}) for ${repoName}`);
-            return String(content).trim();
+          const content = provider.parseResponse(res);
+          if (content && String(content).trim().length > 0) {
+            workingModelsCache[provider.name] = { model, key };
+            console.log(`  ✅ ${provider.name}: working model = ${model}`);
+            found = true;
+            break;
           }
         } catch (error) {
           const status = error.response?.status || 'N/A';
-          const msg = error.response?.data?.error?.message || error.message;
-          console.warn(`⚠️ ${provider.name} (${model}) failed [${status}]:`, msg);
-
-          // 🎯 Smart error handling
           if (status === 429) {
-            // Rate limit — is provider को छोड़ो, अगले पर जाओ
-            console.warn(`⏸️ Rate limited on ${provider.name}, moving to next provider`);
-            await delay(3000);
-            break;
+            console.log(`  ⏸️ ${provider.name}: rate limited on key, trying next`);
+            break; // इस key के लिए skip, अगली key try
           }
-          if (status === 401) {
-            // Key invalid — दूसरी key try करो
-            console.warn(`🔑 Key invalid for ${provider.name}, trying next key`);
-            break;
-          }
-          if (status === 402) {
-            // Payment required — पूरा provider skip
-            console.warn(`💳 Payment required for ${provider.name}, skipping provider`);
-            break;
-          }
-          // 404 (model not found), 403 (model access denied), 400, 5xx
-          // → अगला model try करो, same key के साथ
-          // NO break, NO delay (fast fallback)
+          // बाकी errors silently ignore during pre-test
         }
       }
+    }
+
+    if (!found) {
+      console.log(`  ❌ ${provider.name}: no working model found`);
+    }
+    await delay(500);
+  }
+
+  console.log('🧪 Pre-test complete.\n');
+}
+
+// ============================================================
+// CONTENT GENERATION — uses pre-test results
+// ============================================================
+
+async function generateContentWithFallback(prompt, repoName) {
+  for (const provider of AI_PROVIDERS) {
+    const cached = workingModelsCache[provider.name];
+
+    // Pre-test में provider fail हुआ तो skip
+    if (!cached) {
+      console.log(`⏭️ ${provider.name}: skipped (no working model from pre-test)`);
+      continue;
+    }
+
+    try {
+      console.log(`🔍 Trying ${provider.name} with model: ${cached.model}`);
+      const request = provider.buildRequest(prompt, cached.key, cached.model);
+      const response = await axios.post(request.url, request.data, {
+        headers: request.headers,
+        timeout: 120000
+      });
+      const content = provider.parseResponse(response);
+      if (content && String(content).trim().length > 200) {
+        console.log(`✅ AI generated via ${provider.name} (model: ${cached.model}) for ${repoName}`);
+        return String(content).trim();
+      }
+      console.warn(`⚠️ ${provider.name} returned short content, trying next provider`);
+    } catch (error) {
+      const status = error.response?.status || 'N/A';
+      const msg = error.response?.data?.error?.message || error.message;
+      console.warn(`⚠️ ${provider.name} (${cached.model}) failed [${status}]:`, msg);
+
+      if (status === 429) {
+        console.warn(`⏸️ ${provider.name} rate limited, removing from this run`);
+        delete workingModelsCache[provider.name];
+        continue;
+      }
+      // 402/401/403/404/5xx → next provider
     }
   }
   console.log(`⚠️ All AI providers failed for ${repoName}. Skipping blog.`);
@@ -680,8 +734,8 @@ async function generateBlogContentIfNotExists(keyword, repoName, allBlogsForRepo
   }
 
   const prompt = `
-Write a very detailed, natural, human-readable,
-SEO-optimized blog post of at least 3000 words.
+Write a detailed, natural, human-readable,
+SEO-optimized blog post of around 1500-1800 words.
 
 Topic:
 "${keyword}"
@@ -885,6 +939,14 @@ p { line-height: 1.7; }
     console.log(`💰 Money page generated: ${moneyPagePath}`);
   }
 
+  // Cache CSV copy per repo
+  const repoCacheDir = path.join(CACHE_DIR, 'money-pages');
+  fs.ensureDirSync(repoCacheDir);
+  const repoCsv = path.join(repoCacheDir, `${sanitizeSlug(repoName)}.csv`);
+  try {
+    fs.copySync(csvPath, repoCsv);
+  } catch (e) { /* ignore */ }
+
   return generatedFiles;
 }
 
@@ -1046,8 +1108,6 @@ async function fetchGoogleTrendsKeywords() {
 
 // ============================================================
 // TRENDING KEYWORDS
-// Primary source: data/keywords.json
-// Fallback: Google News RSS -> Google Trends
 // ============================================================
 
 function loadMasterKeywords() {
@@ -1067,10 +1127,8 @@ function findKeywordsForRepo(masterData, repoName) {
 
   const targetSlug = sanitizeSlug(repoName);
 
-  // 1. Exact match
   if (masterData[repoName]) return masterData[repoName];
 
-  // 2. Case-insensitive / slug match
   for (const key of Object.keys(masterData)) {
     if (sanitizeSlug(key) === targetSlug) {
       return masterData[key];
@@ -1081,16 +1139,12 @@ function findKeywordsForRepo(masterData, repoName) {
 }
 
 async function getTrendingKeywords(seed, repoName) {
-  // ----------------------------------------------------------
-  // STEP 1: data/keywords.json (primary source)
-  // ----------------------------------------------------------
   const masterData = loadMasterKeywords();
   const repoKeywords = findKeywordsForRepo(masterData, repoName);
 
   if (Array.isArray(repoKeywords) && repoKeywords.length > 0) {
     console.log(`📚 Using ${repoKeywords.length} keywords from data/keywords.json for ${repoName}`);
 
-    // Shuffle so each run picks a different order
     const shuffled = [...repoKeywords]
       .map(value => ({ value, sort: Math.random() }))
       .sort((a, b) => a.sort - b.sort)
@@ -1099,9 +1153,6 @@ async function getTrendingKeywords(seed, repoName) {
     return shuffled;
   }
 
-  // ----------------------------------------------------------
-  // STEP 2: Cached keywords (Google News based)
-  // ----------------------------------------------------------
   const cacheFile = path.join(CACHE_DIR, `keywords_${sanitizeSlug(repoName)}.json`);
   const now = Date.now();
   const CACHE_TTL = 10 * 60 * 1000;
@@ -1118,9 +1169,6 @@ async function getTrendingKeywords(seed, repoName) {
     }
   }
 
-  // ----------------------------------------------------------
-  // STEP 3: Google News RSS
-  // ----------------------------------------------------------
   let keywords = [];
   const newsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(seed)}&hl=en-US&gl=US&ceid=US:en`;
 
@@ -1258,16 +1306,9 @@ ${post.image ? `<img class="card-img" src="${escapeHtml(post.image)}" alt="${esc
 
   const indexPath = path.join(blogDir, 'index.html');
   let finalBlogIndexHtml = injectAdsAndAnalytics(templateHtml);
+  finalBlogIndexHtml = injectYandexBlogAds(finalBlogIndexHtml);
 
-// Yandex Ads ONLY for blog/index.html
-finalBlogIndexHtml = injectYandexBlogAds(finalBlogIndexHtml);
-
-fs.writeFileSync(
-  indexPath,
-  finalBlogIndexHtml,
-  'utf8'
-);
-
+  fs.writeFileSync(indexPath, finalBlogIndexHtml, 'utf8');
 
   const postsJsonPath = path.join(blogDir, 'posts.json');
   fs.writeFileSync(postsJsonPath, JSON.stringify(posts, null, 2), 'utf8');
@@ -1399,26 +1440,6 @@ async function processRepo(repo) {
   fs.ensureDirSync(blogDir);
   fs.ensureDirSync(path.join(repoPath, 'images'));
 
-  // ============================================================
-  // YANDEX ADS — BLOG DIRECTORY ONLY
-  // Updates existing blog pages without regenerating them
-  // ============================================================
-
-  try {
-    const updatedYandexBlogs = updateExistingBlogFiles(repoPath);
-
-    if (updatedYandexBlogs > 0) {
-      console.log(
-        `📢 ${updatedYandexBlogs} existing blog page(s) updated with Yandex Ads`
-      );
-    }
-  } catch (error) {
-    console.warn(
-      `⚠️ Existing blog Yandex update failed for ${repo.name}:`,
-      error.message
-    );
-  }
-
   if (typeof rotateMoneyPages === 'function') {
     try {
       await rotateMoneyPages(repo.name);
@@ -1454,12 +1475,10 @@ async function processRepo(repo) {
   const newBlogFiles = [];
   const newBlogs = [];
 
-  // ⭐ हर रन में हर रेपो से सिर्फ 1 ब्लॉग बनेगा
   const MAX_BLOGS_PER_REPO_PER_RUN = 1;
   let blogsGeneratedThisRun = 0;
 
   for (const keyword of keywords) {
-    // अगर इस रन का कोटा पूरा हो गया, तो अगले रेपो पर जाओ
     if (blogsGeneratedThisRun >= MAX_BLOGS_PER_REPO_PER_RUN) {
       console.log(`⏸️ Reached ${MAX_BLOGS_PER_REPO_PER_RUN} blog limit for ${repo.name} this run. Moving to next repo.`);
       break;
@@ -1493,7 +1512,6 @@ async function processRepo(repo) {
     let html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${escapeHtml(keyword)} | ${escapeHtml(repo.name)}</title><meta name="description" content="${escapeHtml(metaDescription)}"><meta name="robots" content="index, follow, max-image-preview:large"><link rel="canonical" href="${escapeHtml(canonical)}"><meta property="og:type" content="article"><meta property="og:title" content="${escapeHtml(keyword)}"><meta property="og:description" content="${escapeHtml(metaDescription)}"><meta property="og:url" content="${escapeHtml(canonical)}"><meta property="og:image" content="${escapeHtml(imageUrl)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escapeHtml(keyword)}"><meta name="twitter:description" content="${escapeHtml(metaDescription)}"><meta name="twitter:image" content="${escapeHtml(imageUrl)}">${schema}<style>*{box-sizing:border-box}body{margin:0;padding:20px;background:#f5f7fb;color:#1f2937;font-family:Arial,Helvetica,sans-serif;line-height:1.7}.container{max-width:1100px;margin:auto;background:#ffffff;border-radius:22px;overflow:hidden;box-shadow:0 15px 40px rgba(0,0,0,.08)}.article-header{padding:30px}.article-image{width:100%;display:block;max-height:630px;object-fit:cover}article{padding:30px}article h1{font-size:2.4rem;line-height:1.2}article h2{margin-top:40px}article h3{margin-top:30px}article p{margin:0 0 18px}article ul,article ol{padding-left:25px}.ads{margin:25px 0}footer{padding:25px;text-align:center;border-top:1px solid #e5e7eb}footer a{text-decoration:none}@media(max-width:700px){body{padding:0}.container{border-radius:0}article{padding:20px}article h1{font-size:1.8rem}}</style></head><body><div class="container"><header class="article-header"><h1>${escapeHtml(keyword)}</h1></header><article><img class="article-image" src="${escapeHtml(imageUrl)}" alt="${escapeHtml(keyword)}" loading="lazy">${content}</article><footer><p>© ${new Date().getFullYear()} ${escapeHtml(repo.name)}</p><p><a href="/">Home</a> &nbsp;|&nbsp; <a href="index.html">Blog</a></p></footer></div></body></html>`;
 
     html = injectAdsAndAnalytics(html);
-    // Yandex Ads ONLY for blog pages
     html = injectYandexBlogAds(html);
 
     fs.writeFileSync(blogPath, html, 'utf8');
@@ -1519,7 +1537,6 @@ async function processRepo(repo) {
     }
     blogsGeneratedThisRun++;
     await delay(5000);
-    
   }
 
   await enhanceNewPostsWithSmartAds(repoPath, repo.name, newBlogFiles);
@@ -1554,7 +1571,7 @@ async function processRepo(repo) {
 }
 
 // ============================================================
-// MAIN
+// MAIN — 1 repo per run, hour-based rotation
 // ============================================================
 
 async function main() {
@@ -1573,22 +1590,31 @@ async function main() {
   console.log('🗺️ Sitemap generation is disabled.');
   console.log('📚 Keywords source: data/keywords.json (primary)');
 
-  for (const repo of REPOS_WITH_URL) {
-    try {
-      await processRepo(repo);
-    } catch (error) {
-      console.error(`❌ Repository failed: ${repo.name}`, error);
-    }
+  // ⭐ 1 repo per run based on current hour (UTC)
+  // 24 hours / 10 repos ≈ every 2 hours a different repo
+  const currentHour = new Date().getUTCHours();
+  const repoIndex = Math.floor(currentHour / 2) % REPOS_WITH_URL.length;
+  const repoToProcess = REPOS_WITH_URL[repoIndex];
+
+  console.log(`\n🕐 Hour ${currentHour} UTC → Repo #${repoIndex}: ${repoToProcess.name}`);
+
+  // ⭐ Pre-test providers once per run
+  await preTestProviders();
+
+  // ⭐ Process ONLY the selected repo
+  try {
+    await processRepo(repoToProcess);
+  } catch (error) {
+    console.error(`❌ Repository failed: ${repoToProcess.name}`, error);
   }
 
+  // ⭐ Refresh old blogs ONLY for the selected repo
   if (refreshOldBlogs) {
-    console.log('\n♻️ Refreshing old blog posts (90+ days) using content-rewriter...');
-    for (const repo of REPOS_WITH_URL) {
-      try {
-        await refreshOldBlogs(repo.name, 90);
-      } catch (error) {
-        console.warn(`⚠️ Content refresh failed for ${repo.name}:`, error.message);
-      }
+    console.log(`\n♻️ Refreshing old blog posts (90+ days) for ${repoToProcess.name}...`);
+    try {
+      await refreshOldBlogs(repoToProcess.name, 90);
+    } catch (error) {
+      console.warn(`⚠️ Content refresh failed for ${repoToProcess.name}:`, error.message);
     }
   }
 
