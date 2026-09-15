@@ -14,14 +14,42 @@ const YANDEX_BLOCK_RIGHT = 'R-A-20036618-14';
 
 const YANDEX_MARKER = '<!-- ULTRA-ENGINE-YANDEX-BLOG-ADS -->';
 
+// ⭐ Inline CSS (external file की ज़रूरत नहीं — हर repo में काम करेगा)
+const YANDEX_INLINE_CSS = `<style>
+.yandex-ad-container{background:transparent;border-radius:12px;padding:0;margin:25px auto;max-width:100%;overflow:hidden;text-align:center;transition:all .3s ease}
+.yandex-ad-label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;text-align:center;margin-bottom:8px}
+[id^="yandex_rtb"]{min-height:90px;display:block;width:100%;max-width:100%}
+.yandex-sidebar-ad{position:fixed;top:120px;width:160px;z-index:100;display:none;background:transparent;padding:0;transition:all .3s ease}
+.ad-sidebar-left{left:15px}
+.ad-sidebar-right{right:15px}
+.yandex-sidebar-ad .yandex-ad-label{font-size:9px;margin-bottom:6px}
+@media(min-width:1400px){.yandex-sidebar-ad{display:block}}
+@media(max-width:1399px){.yandex-sidebar-ad{display:none !important}}
+@media(max-width:768px){
+.yandex-ad-container{padding:5px;margin:12px auto;border-radius:6px;max-height:130px;overflow:hidden}
+.yandex-ad-label{font-size:8px;letter-spacing:.5px;margin-bottom:4px}
+.yandex-blog-top-ad{max-height:120px}
+[id^="yandex_rtb"]{min-height:70px;max-height:110px;overflow:hidden}
+}
+@media(max-width:480px){
+.yandex-ad-container{padding:4px;margin:10px auto;max-height:115px}
+[id^="yandex_rtb"]{min-height:60px;max-height:95px}
+.yandex-ad-label{font-size:7px}
+}
+@media(min-width:769px){
+.yandex-ad-container{max-height:none}
+[id^="yandex_rtb"]{max-height:none;min-height:90px}
+}
+.ad-fallback{padding:20px;background:#f5f5f5;color:#999;font-size:12px;border-radius:8px}
+</style>`;
+
 function yandexHeadCode() {
   return `
 ${YANDEX_MARKER}
 
 <meta name="yandex-verification" content="${YANDEX_VERIFICATION}">
 
-<!-- Yandex Ads CSS -->
-<link rel="stylesheet" href="/assets/css/yandex-ads.css">
+${YANDEX_INLINE_CSS}
 
 <!-- Yandex Autoplacement -->
 <script src="https://yandex.ru/ads/system/context.js" async></script>
@@ -181,6 +209,51 @@ function injectYandexBlogAds(html) {
   return result;
 }
 
+// ============================================================
+// MIGRATION — Purane blogs में inline CSS add करें
+// जिनमें marker है लेकिन inline CSS नहीं
+// ============================================================
+
+function migrateOldBlogsCss(repoPath) {
+  const blogDir = `${repoPath}/blog`;
+  if (!fs.existsSync(blogDir)) return 0;
+
+  const files = fs.readdirSync(blogDir);
+  let fixed = 0;
+
+  for (const file of files) {
+    if (!file.toLowerCase().endsWith('.html')) continue;
+
+    const filePath = `${blogDir}/${file}`;
+    try {
+      let html = fs.readFileSync(filePath, 'utf8');
+
+      // Skip अगर marker नहीं है (non-Yandex blog)
+      if (!html.includes(YANDEX_MARKER)) continue;
+
+      // Skip अगर inline CSS already है
+      if (html.includes('.yandex-ad-container{background:transparent')) continue;
+
+      // External CSS link हटाएँ (अगर है)
+      html = html.replace(/<link[^>]*yandex-ads\.css[^>]*>\s*/gi, '');
+
+      // Marker के तुरंत बाद inline CSS add करें
+      html = html.replace(
+        YANDEX_MARKER,
+        `${YANDEX_MARKER}\n${YANDEX_INLINE_CSS}`
+      );
+
+      fs.writeFileSync(filePath, html, 'utf8');
+      fixed++;
+      console.log(`🎨 Yandex CSS migrated: blog/${file}`);
+    } catch (error) {
+      console.warn(`⚠️ CSS migration failed for ${file}:`, error.message);
+    }
+  }
+
+  return fixed;
+}
+
 function updateExistingBlogFiles(repoPath) {
   const blogDir = `${repoPath}/blog`;
 
@@ -226,5 +299,7 @@ function updateExistingBlogFiles(repoPath) {
 
 module.exports = {
   injectYandexBlogAds,
-  updateExistingBlogFiles
+  updateExistingBlogFiles,
+  migrateOldBlogsCss,
+  YANDEX_MARKER
 };

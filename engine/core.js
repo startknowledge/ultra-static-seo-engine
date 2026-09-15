@@ -31,7 +31,7 @@ const { marked } = require('marked');
 const { JSDOM } = require('jsdom');
 const createDOMPurify = require('dompurify');
 
-const { injectYandexBlogAds } = require('./yandex-ads.js');
+const { injectYandexBlogAds, migrateOldBlogsCss } = require('./yandex-ads.js');
 
 let rotateMoneyPages = null;
 try {
@@ -1320,7 +1320,7 @@ async function generateStaticBlogIndex(repoPath, repoName) {
   if (fs.existsSync(templatePath)) {
     templateHtml = fs.readFileSync(templatePath, 'utf8');
   } else {
-    templateHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${escapeHtml(repoName)} Blog</title><meta name="description" content="Latest articles from ${escapeHtml(repoName)}."><style>body { margin: 0; padding: 30px 20px; font-family: Arial, sans-serif; background: #f5f7fb; color: #1f2937; } .container { max-width: 1100px; margin: auto; } .blog-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; } .post-card { background: white; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.08); } .post-card img { width: 100%; height: 180px; object-fit: cover; } .card-content { padding: 22px; } .card-content a { text-decoration: none; font-weight: 700; }</style></head><body><div class="container"><h1>${escapeHtml(repoName)} Blog</h1><div id="blogGrid" class="blog-grid"><!-- BLOG_POSTS_PLACEHOLDER --></div></div></body></html>`;
+    templateHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${escapeHtml(repoName)} Blog</title><meta name="description" content="Latest articles from ${escapeHtml(repoName)}."><style>body { margin: 0; padding: 30px 20px; font-family: Arial, sans-serif; background: #f5f7fb; color: #1f2937; } .container { max-width: 1100px; margin: auto; } .blog-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; } .post-card { background: white; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.08); } .post-card img { width: 100%; height: 180px; object-fit: cover; } .card-content { padding: 22px; } .card-content a { text-decoration: none; font-weight: 700; } .ads { margin: 25px 0; } @media(max-width:768px){ .ads { margin: 12px 0; max-height: 130px; overflow: hidden; } .ads ins { max-height: 120px; display: block; overflow: hidden; } } @media(max-width:480px){ .ads { margin: 10px 0; max-height: 115px; } .ads ins { max-height: 100px; } }</style></head><body><div class="container"><h1>${escapeHtml(repoName)} Blog</h1><div id="blogGrid" class="blog-grid"><!-- BLOG_POSTS_PLACEHOLDER --></div></div></body></html>`;
   }
 
   const blogListHtml = posts
@@ -1487,6 +1487,19 @@ async function processRepo(repo) {
   fs.ensureDirSync(blogDir);
   fs.ensureDirSync(path.join(repoPath, 'images'));
 
+  // ============================================================
+  // ⭐ YANDEX CSS MIGRATION
+  // Purane blogs में inline CSS add करें (जिनमें marker है)
+  // ============================================================
+  try {
+    const migrated = migrateOldBlogsCss(repoPath);
+    if (migrated > 0) {
+      console.log(`🎨 Migrated ${migrated} old blog(s) with inline Yandex CSS`);
+    }
+  } catch (error) {
+    console.warn(`⚠️ Yandex CSS migration failed for ${repo.name}:`, error.message);
+  }
+
   if (typeof rotateMoneyPages === 'function') {
     try {
       await rotateMoneyPages(repo.name);
@@ -1556,7 +1569,7 @@ async function processRepo(repo) {
     const canonical = `${domain}/blog/${slug}.html`;
     const metaDescription = `Complete guide to ${keyword}. Learn practical strategies, common mistakes and useful information.`;
 
-    let html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${escapeHtml(keyword)} | ${escapeHtml(repo.name)}</title><meta name="description" content="${escapeHtml(metaDescription)}"><meta name="robots" content="index, follow, max-image-preview:large"><link rel="canonical" href="${escapeHtml(canonical)}"><meta property="og:type" content="article"><meta property="og:title" content="${escapeHtml(keyword)}"><meta property="og:description" content="${escapeHtml(metaDescription)}"><meta property="og:url" content="${escapeHtml(canonical)}"><meta property="og:image" content="${escapeHtml(imageUrl)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escapeHtml(keyword)}"><meta name="twitter:description" content="${escapeHtml(metaDescription)}"><meta name="twitter:image" content="${escapeHtml(imageUrl)}">${schema}<style>*{box-sizing:border-box}body{margin:0;padding:20px;background:#f5f7fb;color:#1f2937;font-family:Arial,Helvetica,sans-serif;line-height:1.7}.container{max-width:1100px;margin:auto;background:#ffffff;border-radius:22px;overflow:hidden;box-shadow:0 15px 40px rgba(0,0,0,.08)}.article-header{padding:30px}.article-image{width:100%;display:block;max-height:630px;object-fit:cover}article{padding:30px}article h1{font-size:2.4rem;line-height:1.2}article h2{margin-top:40px}article h3{margin-top:30px}article p{margin:0 0 18px}article ul,article ol{padding-left:25px}.ads{margin:25px 0}footer{padding:25px;text-align:center;border-top:1px solid #e5e7eb}footer a{text-decoration:none}@media(max-width:700px){body{padding:0}.container{border-radius:0}article{padding:20px}article h1{font-size:1.8rem}}</style></head><body><div class="container"><header class="article-header"><h1>${escapeHtml(keyword)}</h1></header><article><img class="article-image" src="${escapeHtml(imageUrl)}" alt="${escapeHtml(keyword)}" loading="lazy">${content}</article><footer><p>© ${new Date().getFullYear()} ${escapeHtml(repo.name)}</p><p><a href="/">Home</a> &nbsp;|&nbsp; <a href="index.html">Blog</a></p></footer></div></body></html>`;
+    let html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${escapeHtml(keyword)} | ${escapeHtml(repo.name)}</title><meta name="description" content="${escapeHtml(metaDescription)}"><meta name="robots" content="index, follow, max-image-preview:large"><link rel="canonical" href="${escapeHtml(canonical)}"><meta property="og:type" content="article"><meta property="og:title" content="${escapeHtml(keyword)}"><meta property="og:description" content="${escapeHtml(metaDescription)}"><meta property="og:url" content="${escapeHtml(canonical)}"><meta property="og:image" content="${escapeHtml(imageUrl)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escapeHtml(keyword)}"><meta name="twitter:description" content="${escapeHtml(metaDescription)}"><meta name="twitter:image" content="${escapeHtml(imageUrl)}">${schema}<style>*{box-sizing:border-box}body{margin:0;padding:20px;background:#f5f7fb;color:#1f2937;font-family:Arial,Helvetica,sans-serif;line-height:1.7}.container{max-width:1100px;margin:auto;background:#ffffff;border-radius:22px;overflow:hidden;box-shadow:0 15px 40px rgba(0,0,0,.08)}.article-header{padding:30px}.article-image{width:100%;display:block;max-height:630px;object-fit:cover}article{padding:30px}article h1{font-size:2.4rem;line-height:1.2}article h2{margin-top:40px}article h3{margin-top:30px}article p{margin:0 0 18px}article ul,article ol{padding-left:25px}.ads{margin:25px 0}footer{padding:25px;text-align:center;border-top:1px solid #e5e7eb}footer a{text-decoration:none}@media(max-width:768px){body{padding:0}.container{border-radius:0}article{padding:20px}article h1{font-size:1.8rem}.ads{margin:12px 0;max-height:130px;overflow:hidden}.ads ins{max-height:120px;display:block;overflow:hidden}}@media(max-width:480px){.ads{margin:10px 0;max-height:115px}.ads ins{max-height:100px}}</style></head><body><div class="container"><header class="article-header"><h1>${escapeHtml(keyword)}</h1></header><article><img class="article-image" src="${escapeHtml(imageUrl)}" alt="${escapeHtml(keyword)}" loading="lazy">${content}</article><footer><p>© ${new Date().getFullYear()} ${escapeHtml(repo.name)}</p><p><a href="/">Home</a> &nbsp;|&nbsp; <a href="index.html">Blog</a></p></footer></div></body></html>`;
 
     html = injectAdsAndAnalytics(html);
     html = injectYandexBlogAds(html);

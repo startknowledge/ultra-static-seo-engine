@@ -1,28 +1,27 @@
-/* =========================================================
-   YANDEX ADS — BLOG ONLY
-========================================================= */
-
 .yandex-ad-container {
-  background: #ffffff;
+  background: transparent;
   border-radius: 12px;
-  padding: 10px;
+  padding: 0;
   margin: 25px auto;
   max-width: 100%;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e5e9f2;
+  border: none;
   text-align: center;
+  transition: all 0.3s ease;
 }
 
+/* Ad label */
 .yandex-ad-label {
   font-size: 10px;
-  color: #999999;
+  color: #999;
   text-transform: uppercase;
   letter-spacing: 1px;
   text-align: center;
   margin-bottom: 8px;
 }
 
+/* All RTB blocks — responsive */
 [id^="yandex_rtb"] {
   min-height: 90px;
   display: block;
@@ -30,17 +29,23 @@
   max-width: 100%;
 }
 
+/* =========================================================
+   SIDEBAR ADS — Desktop Only
+========================================================= */
+
 .yandex-sidebar-ad {
   position: fixed;
   top: 120px;
   width: 160px;
   z-index: 100;
-  display: none;
-  background: #ffffff;
+  display: none;              /* Default: hidden */
+  background: transparent;
   border-radius: 12px;
-  padding: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e5e9f2;
+  padding: 0;
+  box-shadow: none;
+  border: none;
+  border-radius: 12px;
+  transition: all 0.3s ease;
 }
 
 .ad-sidebar-left {
@@ -56,17 +61,23 @@
   margin-bottom: 6px;
 }
 
+/* Sidebar ads sirf 1400px+ screens pe show */
 @media (min-width: 1400px) {
   .yandex-sidebar-ad {
     display: block;
   }
 }
 
+/* 1400px se chhoti screens pe sidebar ads hide */
 @media (max-width: 1399px) {
   .yandex-sidebar-ad {
     display: none !important;
   }
 }
+
+/* =========================================================
+   MOBILE RESPONSIVE
+========================================================= */
 
 @media (max-width: 576px) {
   .yandex-ad-container {
@@ -75,11 +86,67 @@
     border-radius: 8px;
   }
 }
+@media (max-width: 768px) {
+  .yandex-ad-container {
+    padding: 5px;
+    margin: 12px auto;
+    border-radius: 6px;
+    max-height: 130px;         /* ⭐ छोटा size */
+    overflow: hidden;
+  }
 
-.ad-fallback {
-  padding: 20px;
-  background: #f5f5f5;
-  color: #999;
-  font-size: 12px;
-  border-radius: 8px;
+  .yandex-ad-label {
+    font-size: 8px;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  /* Top ad — mobile पर compact */
+  .yandex-blog-top-ad {
+    max-height: 120px;
+  }
+
+  /* RTB blocks — mobile पर छोटा */
+  [id^="yandex_rtb"] {
+    min-height: 70px;
+    max-height: 110px;
+    overflow: hidden;
+  }
+}
+
+/* =========================================================
+   VERY SMALL PHONES (max-width: 480px)
+========================================================= */
+
+@media (max-width: 480px) {
+  .yandex-ad-container {
+    padding: 4px;
+    margin: 10px auto;
+    max-height: 115px;
+  }
+
+  [id^="yandex_rtb"] {
+    min-height: 60px;
+    max-height: 95px;
+  }
+
+  .yandex-ad-label {
+    font-size: 7px;
+  }
+}
+
+/* =========================================================
+   DESKTOP + TABLET — unchanged
+========================================================= */
+
+@media (min-width: 769px) {
+  .yandex-ad-container {
+    /* पुराने size ही रहेंगे */
+    max-height: none;
+  }
+
+  [id^="yandex_rtb"] {
+    max-height: none;
+    min-height: 90px;
+  }
 }
