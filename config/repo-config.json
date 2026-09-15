@@ -1,11 +1,30 @@
 {
-  "bn-ration-scale": 40,
-  "Calculator-Library-Portal": 100,
-  "startknowledge": 100,
-  "pension-calculator": 40,
-  "ultra-static-seo-engine": 100,
-  "ai-mosaic-studio": 100,
-  "design-painting": 100,
-  "Motionix": 100,
-  "youtube-video-intelligence-analyzer": 100
+  "rotation": {
+    "hoursPerRepo": 2,
+    "reposPerRun": 1,
+    "sequence": [
+      "startknowledge",
+      "universal-image-data-explorer-forge",
+      "ai-mosaic-studio",
+      "Motionix",
+      "youtube-video-intelligence-analyzer",
+      "pension-calculator",  
+      "Calculator-Library-Portal",
+      "bn-ration-scale",  
+      "ultra-static-seo-engine",
+      "design-painting"
+    ]
+  },
+  "domains": {
+    "startknowledge": "https://www.startknowledge.in/",
+    "universal-image-data-explorer-forge": "https://universalimagedataexplorerforge.startknowledge.in/",
+    "ai-mosaic-studio": "https://aimosaicstudio.startknowledge.in/",
+    "Motionix": "https://motionix.startknowledge.in/",
+    "youtube-video-intelligence-analyzer": "https://youtubevideointanalyzer.startknowledge.in/",
+    "pension-calculator": "https://pencalculator.startknowledge.in/",
+    "Calculator-Library-Portal": "https://calculatorlibraryportal.startknowledge.in/",
+    "bn-ration-scale": "https://bnrationscale.startknowledge.in/",
+    "ultra-static-seo-engine": "https://ultrastaticseoengine.startknowledge.in/",
+    "design-painting": "https://designpainting.startknowledge.in/"
+  }
 }

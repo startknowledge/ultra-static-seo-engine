@@ -2,7 +2,7 @@ name: 🚀 GOD-LEVEL-SYSTEM AUTONOMOUS SEO SYSTEM
 
 on:
   schedule:
-    - cron: '0 */2 * * *'
+    - cron: '0 */2 * * *'    # Engine — हर 2 घंटे
   workflow_dispatch:
 
 permissions:
@@ -44,7 +44,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-      # GitHub token for repo detection
+      # GitHub token
       ALL_REPO: ${{ secrets.ALL_REPO }}
       GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
 
@@ -65,12 +65,19 @@ jobs:
 
       - name: 🧹 Clean .cache folder
         run: rm -rf .cache || true
-        
-      - name: 🔑 Test API keys
-        env:
-          GROQ_API_KEY1: ${{ secrets.GROQ_API_KEY1 }}
-          GEMINI_API_KEY1: ${{ secrets.GEMINI_API_KEY1 }}
-        run: node test-api.js
+
+      # ⭐ test-api.js — सिर्फ Sunday 03:00 UTC (या manual) पर
+      - name: 🔑 Test API models (Sundays only)
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            echo "▶️ Manual trigger — running test-api.js"
+            node test-api.js
+          elif [ "$(date -u +%u)" = "7" ] && [ "$(date -u +%H)" = "03" ]; then
+            echo "▶️ Sunday 03:00 UTC — running test-api.js"
+            node test-api.js
+          else
+            echo "⏭️ Skipping test-api.js (Sundays 03:00 UTC only)"
+          fi
 
       - name: 🧠 Run GOD-LEVEL SYSTEM
         run: node engine/core.js

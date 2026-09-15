@@ -129,10 +129,18 @@ function loadRepoConfig() {
 const REPO_CONFIG = loadRepoConfig();
 
 function getRepoDomain(repoName) {
+  // ⭐ New format — check domains map first
+  if (REPO_CONFIG?.domains?.[repoName]) {
+    return String(REPO_CONFIG.domains[repoName]).replace(/\/+$/, '');
+  }
+  // Old format — direct entry
   const configured = REPO_CONFIG?.[repoName];
   if (typeof configured === 'string') return configured.replace(/\/+$/, '');
   if (configured && typeof configured.domain === 'string')
     return configured.domain.replace(/\/+$/, '');
+
+  // ⚠️ Fallback — log warning (config में add करें)
+  console.warn(`⚠️ No domain in config for "${repoName}" — using fallback URL`);
   return `https://${repoName}.startknowledge.in`;
 }
 
@@ -305,10 +313,10 @@ const AI_PROVIDERS = [
     modelEnv: 'MISTRAL_MODEL',
     defaultModel: 'open-mistral-7b',
     availableModels: [
-      'open-mistral-7b',
-      'open-mixtral-8x7b',
       'mistral-small-latest',
-      'mistral-tiny'
+      'mistral-large-latest',
+      'open-mistral-nemo',
+      'open-mistral-7b'
     ],
     buildRequest: (prompt, key, model) => ({
       url: 'https://api.mistral.ai/v1/chat/completions',
@@ -327,10 +335,10 @@ const AI_PROVIDERS = [
     modelEnv: 'GROQ_MODEL',
     defaultModel: 'llama-3.1-8b-instant',
     availableModels: [
-      'llama-3.1-8b-instant',
+      'qwen/qwen3-32b',
       'llama-3.3-70b-versatile',
-      'llama-3.1-70b-versatile',
-      'mixtral-8x7b-32768'
+      'llama-3.1-8b-instant',
+      'openai/gpt-oss-20b'
     ],
     buildRequest: (prompt, key, model) => ({
       url: 'https://api.groq.com/openai/v1/chat/completions',
@@ -351,7 +359,6 @@ const AI_PROVIDERS = [
     defaultModel: 'meta-llama/llama-3.3-70b-instruct:free',
     availableModels: [
       'meta-llama/llama-3.3-70b-instruct:free',
-      'google/gemma-4-26b-a4b-it:free',
       'nvidia/nemotron-3-super-120b-a12b:free',
       'qwen/qwen3-next-80b-a3b-instruct:free'
     ],
@@ -377,10 +384,10 @@ const AI_PROVIDERS = [
     modelEnv: 'GEMINI_MODEL',
     defaultModel: 'gemini-2.0-flash',
     availableModels: [
+      'gemini-2.5-flash',
+      'gemini-2.5-pro',
       'gemini-2.0-flash',
-      'gemini-1.5-flash',
-      'gemini-1.5-pro',
-      'gemini-2.5-flash'
+      'gemini-flash-latest'
     ],
     buildRequest: (prompt, key, model) => ({
       url: `https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-2.0-flash'}:generateContent?key=${key}`,
@@ -422,6 +429,36 @@ const AI_PROVIDERS = [
     parseResponse: response => response?.data?.choices?.[0]?.message?.content
   }
 ];
+
+// ============================================================
+// DYNAMIC MODEL LOADER (from test-api.js output)
+// test-api.js saves working models to data/provider-models.json
+// ============================================================
+
+const PROVIDER_MODELS_FILE = path.join(DATA_DIR, 'provider-models.json');
+
+function loadProviderModels() {
+  if (!fs.existsSync(PROVIDER_MODELS_FILE)) return {};
+  try {
+    const data = JSON.parse(fs.readFileSync(PROVIDER_MODELS_FILE, 'utf8'));
+    return data?.providers || {};
+  } catch (e) {
+    console.warn('⚠️ Could not load provider-models.json:', e.message);
+    return {};
+  }
+}
+
+const DYNAMIC_PROVIDER_MODELS = loadProviderModels();
+
+if (Object.keys(DYNAMIC_PROVIDER_MODELS).length > 0) {
+  console.log('📚 Loaded dynamic models from provider-models.json:');
+  for (const [name, info] of Object.entries(DYNAMIC_PROVIDER_MODELS)) {
+    console.log(`   • ${name}: ${info.models?.length || 0} models`);
+  }
+} else {
+  console.log('📚 No provider-models.json yet — using hardcoded fallback');
+}
+
 
 // ============================================================
 // AUTO-MODEL DISCOVERY
@@ -632,8 +669,15 @@ async function preTestProviders() {
       continue;
     }
 
+    // ⭐ Dynamic models from test-api.js output (highest priority)
+    const dynamicModels = DYNAMIC_PROVIDER_MODELS[provider.name]?.models || [];
+
+    // Live models
     const liveModels = await fetchLiveModels(provider);
+
+    // Priority: dynamic → live → default → hardcoded
     const testModels = [
+      ...dynamicModels,
       ...liveModels.slice(0, 5),
       provider.defaultModel,
       ...provider.availableModels.slice(0, 2)
@@ -642,7 +686,6 @@ async function preTestProviders() {
 
     let found = false;
 
-    // ⭐ दोनों keys try करें
     for (const key of keys) {
       if (found) break;
       for (const model of uniqueTest) {
@@ -650,7 +693,7 @@ async function preTestProviders() {
           const req = provider.buildRequest(testPrompt, key, model);
           const res = await axios.post(req.url, req.data, {
             headers: req.headers,
-            timeout: 20000
+            timeout: 30000  // ⭐ 20s → 30s (Mistral cold start के लिए)
           });
           const content = provider.parseResponse(res);
           if (content && String(content).trim().length > 0) {
@@ -661,11 +704,15 @@ async function preTestProviders() {
           }
         } catch (error) {
           const status = error.response?.status || 'N/A';
+          const msg = error.response?.data?.error?.message || error.message;
+          // Silent fail, but log rate limits
           if (status === 429) {
-            console.log(`  ⏸️ ${provider.name}: rate limited on key, trying next`);
-            break; // इस key के लिए skip, अगली key try
+            console.log(`  ⏸️ ${provider.name}: rate limited, trying next key`);
+            break;
           }
-          // बाकी errors silently ignore during pre-test
+          if (status === 404 || status === 400 || status === 403) {
+            console.log(`  ⚠️  ${provider.name} (${model}) [${status}] — trying next`);
+          }
         }
       }
     }
@@ -1038,7 +1085,7 @@ async function prepareRepo(repoName, repoUrl) {
 // ARCHIVE OLD BLOG POSTS
 // ============================================================
 
-async function archiveOldPosts(repoPath, repoName, retentionDays = 90) {
+async function archiveOldPosts(repoPath, repoName, retentionDays = 180) {
   const blogDir = path.join(repoPath, 'blog');
   if (!fs.existsSync(blogDir)) return 0;
 
@@ -1540,7 +1587,7 @@ async function processRepo(repo) {
   }
 
   await enhanceNewPostsWithSmartAds(repoPath, repo.name, newBlogFiles);
-  await archiveOldPosts(repoPath, repo.name, 90);
+  await archiveOldPosts(repoPath, repo.name, 180);
 
   const posts = await generateStaticBlogIndex(repoPath, repo.name);
   generatedFiles.push(path.join(repoPath, 'blog', 'index.html'));
@@ -1590,13 +1637,19 @@ async function main() {
   console.log('🗺️ Sitemap generation is disabled.');
   console.log('📚 Keywords source: data/keywords.json (primary)');
 
+  // ⭐ Rotation from config (fallback to default order)
+  const rotationSeq = REPO_CONFIG?.rotation?.sequence || REPOS.map(r => r.name);
+  const hoursPerRepo = Number(REPO_CONFIG?.rotation?.hoursPerRepo) || 2;
+
   // ⭐ 1 repo per run based on current hour (UTC)
   // 24 hours / 10 repos ≈ every 2 hours a different repo
   const currentHour = new Date().getUTCHours();
-  const repoIndex = Math.floor(currentHour / 2) % REPOS_WITH_URL.length;
-  const repoToProcess = REPOS_WITH_URL[repoIndex];
+  const index = Math.floor(currentHour / hoursPerRepo) % rotationSeq.length;
+  const repoName = rotationSeq[index];
+  const repoToProcess = REPOS_WITH_URL.find(r => r.name === repoName) || REPOS_WITH_URL[0];
 
-  console.log(`\n🕐 Hour ${currentHour} UTC → Repo #${repoIndex}: ${repoToProcess.name}`);
+  console.log(`\n🕐 Hour ${currentHour} UTC → Repo #${index}: ${repoToProcess.name}`);
+  console.log(`📋 Sequence (first 3): ${rotationSeq.slice(0, 3).join(' → ')}...`);
 
   // ⭐ Pre-test providers once per run
   await preTestProviders();
@@ -1610,9 +1663,9 @@ async function main() {
 
   // ⭐ Refresh old blogs ONLY for the selected repo
   if (refreshOldBlogs) {
-    console.log(`\n♻️ Refreshing old blog posts (90+ days) for ${repoToProcess.name}...`);
+    console.log(`\n♻️ Refreshing old blog posts (180+ days) for ${repoToProcess.name}...`);
     try {
-      await refreshOldBlogs(repoToProcess.name, 90);
+      await refreshOldBlogs(repoToProcess.name, 180);
     } catch (error) {
       console.warn(`⚠️ Content refresh failed for ${repoToProcess.name}:`, error.message);
     }
