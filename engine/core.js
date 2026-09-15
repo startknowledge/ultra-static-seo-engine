@@ -584,7 +584,7 @@ async function fetchLiveModels(provider) {
         })
         .map(m => m.id)
         .slice(0, 15);
-    } else if (provider.name === 'Mistral') {
+       } else if (provider.name === 'Mistral') {
       const key = process.env.MISTRAL_API_KEY1 || process.env.MISTRAL_API_KEY2;
       if (key) {
         const res = await axios.get('https://api.mistral.ai/v1/models', {
@@ -599,18 +599,30 @@ async function fetchLiveModels(provider) {
             if (lower.includes('moderation')) return false;
             if (lower.includes('ocr')) return false;
             if (lower.includes('codestral')) return false;
+            // ⭐ Exclude non-chat specialized models
+            if (lower.includes('voxtral')) return false;    // voice/audio
+            if (lower.includes('magistral')) return false;  // reasoning-heavy
+            if (lower.includes('code')) return false;       // coding
+            if (lower.includes('fim')) return false;        // fill-in-middle
             return true;
           })
           .sort((a, b) => {
             const score = id => {
               const l = id.toLowerCase();
-              if (l.includes('large-latest')) return 10;
-              if (l.includes('medium-latest')) return 9;
-              if (l.includes('small-latest')) return 8;
-              if (l.includes('large')) return 7;
-              if (l.includes('small')) return 6;
-              if (l.includes('open-mixtral')) return 5;
-              if (l.includes('open-mistral')) return 4;
+              // ⭐ Top priority: general chat models
+              if (l.includes('mistral-medium-latest')) return 100;
+              if (l.includes('mistral-small-latest')) return 99;
+              if (l.includes('mistral-large-latest')) return 98;
+              if (l.includes('mistral-large-2411')) return 90;
+              if (l.includes('mistral-small-2409')) return 85;
+              if (l.includes('open-mistral-nemo')) return 80;
+              if (l.includes('open-mixtral-8x7b')) return 70;
+              if (l.includes('open-mixtral-8x22b')) return 65;
+              if (l.includes('open-mistral-7b')) return 60;
+              // Lower priority: dated versions
+              if (l.includes('large')) return 50;
+              if (l.includes('medium')) return 45;
+              if (l.includes('small')) return 40;
               return 1;
             };
             return score(b) - score(a);
