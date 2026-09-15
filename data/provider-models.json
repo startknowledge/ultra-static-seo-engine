@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-15T11:31:48.344Z",
+  "updatedAt": "2026-09-15T12:54:46.810Z",
   "providers": {
     "Mistral": {
       "models": [
@@ -19,7 +19,10 @@
     "OpenRouter": {
       "models": [
         "nvidia/nemotron-3.5-lightning:free",
-        "nex-agi/nex-n2.5-pro:free"
+        "nex-agi/nex-n2.5-mini:free",
+        "nex-agi/nex-n2.5-pro:free",
+        "poolside/laguna-s-2.1:free",
+        "google/gemma-4-26b-a4b-it:free"
       ],
       "keyEnv": "OPENAI_OPENROUTER1"
     },
@@ -35,7 +38,6 @@
       "models": [
         "deepseek-ai/DeepSeek-V4.1-Flash",
         "meta-llama/Llama-3.1-8B-Instruct",
-        "zai-org/GLM-5.3-Flash",
         "deepseek-ai/DeepSeek-R1",
         "inclusionAI/Ling-3.0-flash-VL"
       ],
