@@ -1,15 +1,6 @@
 {
-  "updatedAt": "2026-09-15T12:54:46.810Z",
+  "updatedAt": "2026-10-18T03:43:51.354Z",
   "providers": {
-    "Mistral": {
-      "models": [
-        "voxtral-small-latest",
-        "voxtral-small-2507",
-        "mistral-code-latest",
-        "mistral-code-fim-latest"
-      ],
-      "keyEnv": "MISTRAL_API_KEY1"
-    },
     "Groq": {
       "models": [
         "qwen/qwen3.8-27b"
@@ -18,30 +9,19 @@
     },
     "OpenRouter": {
       "models": [
-        "nvidia/nemotron-3.5-lightning:free",
-        "nex-agi/nex-n2.5-mini:free",
-        "nex-agi/nex-n2.5-pro:free",
-        "poolside/laguna-s-2.1:free",
-        "google/gemma-4-26b-a4b-it:free"
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "xingchen-agi/xing4.0-29b-a4b:free",
+        "poolside/laguna-s-2.1:free"
       ],
       "keyEnv": "OPENAI_OPENROUTER1"
     },
     "Gemini": {
       "models": [
-        "gemini-2.5-flash",
         "gemini-flash-lite-latest",
+        "gemini-3-flash-preview",
         "gemini-3.1-flash-lite-preview"
       ],
       "keyEnv": "GEMINI_API_KEY1"
-    },
-    "HuggingFace": {
-      "models": [
-        "deepseek-ai/DeepSeek-V4.1-Flash",
-        "meta-llama/Llama-3.1-8B-Instruct",
-        "deepseek-ai/DeepSeek-R1",
-        "inclusionAI/Ling-3.0-flash-VL"
-      ],
-      "keyEnv": "HUGGINGFACE_TOKEN1"
     }
   }
 }
